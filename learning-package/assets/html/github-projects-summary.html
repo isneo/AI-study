@@ -1,0 +1,1631 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Agent GitHub 项目分析总览</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f4ef;
+      --ink: #202124;
+      --muted: #686b73;
+      --line: #d9d6ce;
+      --panel: #ffffff;
+      --panel-2: #f0eee8;
+      --green: #0f7a5f;
+      --blue: #275cb5;
+      --red: #b1483d;
+      --amber: #9b6a13;
+      --violet: #6750a4;
+      --shadow: 0 18px 45px rgba(34, 31, 25, .08);
+      --radius: 8px;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(32,33,36,.04) 1px, transparent 1px) 0 0 / 42px 42px,
+        linear-gradient(rgba(32,33,36,.035) 1px, transparent 1px) 0 0 / 42px 42px,
+        var(--bg);
+      color: var(--ink);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      width: min(1220px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 36px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.4fr .8fr;
+      gap: 28px;
+      align-items: end;
+      padding: 18px 0 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kicker {
+      color: var(--blue);
+      font-weight: 750;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 6vw, 72px);
+      line-height: .95;
+      letter-spacing: 0;
+      max-width: 880px;
+    }
+
+    .subtitle {
+      margin: 18px 0 0;
+      font-size: 18px;
+      line-height: 1.65;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .snapshot {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .snapshot h2,
+    .section-title h2,
+    .card h3,
+    .note h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    .snapshot dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px 14px;
+      margin: 16px 0 0;
+      font-size: 14px;
+    }
+
+    dt { color: var(--muted); }
+    dd { margin: 0; font-weight: 650; }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 14px 0;
+      margin: 0 0 16px;
+      background: rgba(246, 244, 239, .92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(217, 214, 206, .65);
+    }
+
+    button,
+    .link-button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 999px;
+      min-height: 38px;
+      padding: 0 14px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button.active {
+      border-color: #1f2937;
+      background: #1f2937;
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .overview {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 24px 0;
+    }
+
+    .metric {
+      min-height: 128px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin: 34px 0 14px;
+      padding-top: 12px;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 620px;
+    }
+
+    .route {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .route-step {
+      background: #1f2937;
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 18px;
+      min-height: 190px;
+    }
+
+    .route-step:nth-child(2) { background: #173f35; }
+    .route-step:nth-child(3) { background: #3d3427; }
+
+    .route-step .num {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 50%;
+      font-weight: 800;
+      margin-bottom: 28px;
+    }
+
+    .route-step h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .route-step p {
+      margin: 0;
+      line-height: 1.65;
+      color: rgba(255,255,255,.78);
+      font-size: 14px;
+    }
+
+    .cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 20px rgba(34, 31, 25, .045);
+      min-height: 360px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card.hide { display: none; }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 64px;
+    }
+
+    .card h3 {
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .repo {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 5px;
+      word-break: break-word;
+    }
+
+    .tag {
+      white-space: nowrap;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 750;
+      color: #fff;
+    }
+
+    .agent { background: var(--blue); }
+    .memory { background: var(--green); }
+    .mobile { background: var(--red); }
+    .router { background: var(--amber); }
+    .platform { background: var(--violet); }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .facts {
+      display: grid;
+      gap: 9px;
+      margin-top: auto;
+    }
+
+    .fact {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 9px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .fact b { color: var(--ink); }
+    .fact span { color: var(--muted); }
+
+    .deep {
+      margin-top: 4px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+
+    details.deep-block {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 11px;
+      margin-top: 8px;
+    }
+
+    details.deep-block summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ink);
+      list-style-position: outside;
+    }
+
+    .deep-block ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    .deep-block li + li { margin-top: 5px; }
+
+    .diagram-button {
+      justify-content: center;
+      border-radius: var(--radius);
+      width: 100%;
+      margin-top: 2px;
+      background: #263238;
+      color: #fff;
+      border-color: #263238;
+    }
+
+    .diagram-preview {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--panel-2);
+      cursor: zoom-in;
+    }
+
+    .diagram-preview svg,
+    .diagram-canvas svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .diagram-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background: rgba(20, 24, 28, .58);
+      z-index: 40;
+    }
+
+    .diagram-modal.show { display: flex; }
+
+    .diagram-dialog {
+      width: min(1060px, calc(100vw - 32px));
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: 0 26px 80px rgba(0,0,0,.24);
+    }
+
+    .diagram-dialog-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .diagram-dialog-head h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .diagram-canvas { padding: 18px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    th {
+      background: #262b31;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    td:first-child { font-weight: 750; }
+
+    .score {
+      display: inline-flex;
+      min-width: 68px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--panel-2);
+      font-weight: 800;
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .note {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .note h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .note ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .source-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .source-list a {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(120px);
+      background: #1f2937;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      transition: transform .2s ease;
+      font-size: 14px;
+      z-index: 30;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 960px) {
+      header,
+      .overview,
+      .route,
+      .cards,
+      .note-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 { font-size: 42px; }
+      .toolbar { position: static; }
+      table { display: block; overflow-x: auto; }
+      .fact { grid-template-columns: 78px 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <div class="kicker">Local AI Agent Stack Map</div>
+        <h1>之前分析过的 GitHub 项目总览</h1>
+        <p class="subtitle">这份文档把前面聊过、部署过或作为对照提到的项目，整理成你的个人 AI 工具链地图。它不是排行榜，而是帮你判断每个项目该放在什么位置：做底座、做入口、做记忆、做路由，还是做移动端控制面。</p>
+      </div>
+      <aside class="snapshot">
+        <h2>当前结论</h2>
+        <dl>
+          <dt>最贴近你现状</dt><dd>Dinotty + Tailscale + Codex/Claude CLI</dd>
+          <dt>最值得跟进</dt><dd>agentmemory、OpenHuman、pi</dd>
+          <dt>最适合实验</dt><dd>GenericAgent、mini-swe-agent</dd>
+          <dt>成本/路由方向</dt><dd>9router、Sub2API</dd>
+        </dl>
+      </aside>
+    </header>
+
+    <nav class="toolbar" aria-label="项目筛选与导出">
+      <button class="active" data-filter="all">全部</button>
+      <button data-filter="agent">Agent 框架</button>
+      <button data-filter="memory">记忆/上下文</button>
+      <button data-filter="mobile">手机/远程</button>
+      <button data-filter="router">路由/网关</button>
+      <button data-filter="platform">个人助手平台</button>
+      <button id="copyJson">复制 JSON</button>
+      <button id="copyPrompt">复制为后续分析 Prompt</button>
+    </nav>
+
+    <section class="grid overview" aria-label="总体数字">
+      <div class="metric"><strong>24</strong><span>个项目/方案被纳入，包括本地源码项目、对话中用于对照的远程项目，以及这次新增的业界/社区代表项目。</span></div>
+      <div class="metric"><strong>4</strong><span>条主线：Agent 执行、长期记忆、移动控制、API 路由。</span></div>
+      <div class="metric"><strong>3</strong><span>个项目已明显进入你的实际工作流：Dinotty、Tailscale、sub2api 配置链路。</span></div>
+      <div class="metric"><strong>1</strong><span>条建议路线：先稳住远程终端，再补记忆层，最后再做个人助手平台。</span></div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>推荐路线</h2>
+        <p>如果目标是“手机上随时管理 Claude/Codex，并逐步进化成个人助理”，不要一开始就把所有平台都装上。先把入口跑稳，再把记忆和数据接进来。</p>
+      </div>
+      <div class="route">
+        <div class="route-step">
+          <div class="num">1</div>
+          <h3>先把入口稳定下来</h3>
+          <p>用 Dinotty 做手机 Web 终端，Tailscale 提供安全内网访问。这个组合最符合你已经在 Mac 和三星手机上跑通的状态。</p>
+        </div>
+        <div class="route-step">
+          <div class="num">2</div>
+          <h3>再补上下文记忆</h3>
+          <p>引入 agentmemory 或 OpenHuman 的记忆树，让 Codex、Claude、pi 等工具共享长期背景，减少每次重新解释项目和偏好的成本。</p>
+        </div>
+        <div class="route-step">
+          <div class="num">3</div>
+          <h3>最后考虑平台化</h3>
+          <p>OpenHuman、GenericAgent、cc-connect 属于更大的个人助手/自动化平台。它们潜力大，但配置面和权限面也更复杂，适合在入口稳定后逐步试。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>项目卡片</h2>
+        <p>每张卡片都按同一套问题整理：它是什么、靠什么工作、源码如何分层、工程架构怎么跑、对你有什么用、需要注意什么。</p>
+      </div>
+      <div class="grid cards" id="cards"></div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>决策矩阵</h2>
+        <p>分数是基于你这段时间的目标估算：手机可用性、个人助理潜力、部署复杂度、隐私控制、近期实用价值。5 分最高。</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>项目</th>
+            <th>手机可用</th>
+            <th>个人助理潜力</th>
+            <th>部署复杂度</th>
+            <th>隐私控制</th>
+            <th>近期建议</th>
+          </tr>
+        </thead>
+        <tbody id="matrix"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>新增代表项目横向对比</h2>
+        <p>这张表只看这次补进来的业界/社区代表项目，帮助你快速判断它们和已有 Dinotty、agentmemory、OpenHuman、GenericAgent 的关系。</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>类别</th>
+            <th>项目</th>
+            <th>最强点</th>
+            <th>和你当前工具链的关系</th>
+            <th>主要风险</th>
+          </tr>
+        </thead>
+        <tbody id="communityCompare"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>怎么取舍</h2>
+        <p>这些项目不是互斥关系。它们更像不同层：网络层、入口层、Agent 层、记忆层、路由层。</p>
+      </div>
+      <div class="note-grid">
+        <div class="note">
+          <h3>适合你立刻用的组合</h3>
+          <ul>
+            <li>Dinotty 负责手机终端入口，Tailscale 负责安全联网。</li>
+            <li>Codex/Claude 继续跑在 Mac 上，手机只是控制和查看。</li>
+            <li>如果要看成本，再把 9router 或 Sub2API 放到 API 网关层。</li>
+          </ul>
+        </div>
+        <div class="note">
+          <h3>不建议现在一口气全上</h3>
+          <ul>
+            <li>OpenHuman 和 GenericAgent 都会触达大量本地数据和账号权限，需要慢慢验证边界。</li>
+            <li>Happy、cc-connect、Dinotty 都是“远程控制 Coding Agent”的入口形态，先选一个主入口。</li>
+            <li>9router 和 Sub2API 都涉及模型请求转发，要单独评估账号风险、服务稳定性和合规边界。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>资料来源</h2>
+        <p>本文件主要来自本机源码 README、package/Cargo/pyproject 信息，以及对话中已分析过的项目定位；对本机没有源码的项目补充了 GitHub 页面信息。</p>
+      </div>
+      <div class="source-list">
+        <a href="https://github.com/iii-hq/iii">iii-hq/iii</a>
+        <a href="https://github.com/decolua/9router">decolua/9router</a>
+        <a href="https://github.com/SWE-agent/mini-swe-agent">SWE-agent/mini-swe-agent</a>
+        <a href="https://github.com/lsdefine/GenericAgent">lsdefine/GenericAgent</a>
+        <a href="https://github.com/rohitg00/agentmemory">rohitg00/agentmemory</a>
+        <a href="https://github.com/xichan96/dinotty">xichan96/dinotty</a>
+        <a href="https://github.com/slopus/happy">slopus/happy</a>
+        <a href="https://github.com/tinyhumansai/openhuman">tinyhumansai/openhuman</a>
+        <a href="https://github.com/earendil-works/pi">earendil-works/pi</a>
+        <a href="https://github.com/chenhg5/cc-connect">chenhg5/cc-connect</a>
+        <a href="https://code.claude.com/docs/en/overview">Claude Code</a>
+        <a href="https://github.com/openai/codex">OpenAI Codex CLI</a>
+        <a href="https://github.com/openclaw/openclaw">OpenClaw</a>
+        <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a>
+        <a href="https://github.com/cline/cline">Cline</a>
+        <a href="https://github.com/Aider-AI/aider">Aider</a>
+        <a href="https://github.com/mem0ai/mem0">Mem0</a>
+        <a href="https://github.com/getzep/graphiti">Graphiti/Zep</a>
+        <a href="https://github.com/letta-ai/letta">Letta</a>
+        <a href="https://github.com/langchain-ai/langmem">LangMem</a>
+        <a href="https://github.com/khoj-ai/khoj">Khoj</a>
+        <a href="https://github.com/langgenius/dify">Dify</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="diagram-modal" id="diagramModal" aria-hidden="true">
+    <div class="diagram-dialog">
+      <div class="diagram-dialog-head">
+        <h2 id="diagramTitle">架构图</h2>
+        <button id="closeDiagram" aria-label="关闭架构图">关闭</button>
+      </div>
+      <div id="diagramCanvas" class="diagram-canvas"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制</div>
+
+  <script>
+    const projects = [
+      {
+        name: 'iii',
+        repo: 'iii-hq/iii',
+        category: 'memory',
+        categoryLabel: '基础设施',
+        local: '未保留本地源码',
+        summary: '把 Worker、Function、Trigger 抽象成统一运行时，用来组合后端服务、队列、HTTP、cron、状态、观测和 agent 能力。',
+        architecture: 'Rust engine + 多语言 SDK + console。核心心智模型是 Worker 注册函数，Trigger 触发函数，所有能力进入可观测 catalog。',
+        use: '对你来说更像“agent/服务底座”，agentmemory 就建立在 iii engine 之上。适合研究长期记忆、工具编排和可观测 agent runtime。',
+        caution: 'Engine 采用 Elastic License 2.0，SDK/Console 多为 Apache 2.0。作为个人工具可试，做商业内嵌要看许可证边界。',
+        scores: [2, 4, 2, 4, '作为底层概念跟进，不急着部署']
+      },
+      {
+        name: '9router',
+        repo: 'decolua/9router',
+        category: 'router',
+        categoryLabel: '路由网关',
+        local: '曾部署，后已停掉并删除',
+        summary: '面向 Claude Code、Codex、Cursor、Cline 等 CLI 的本地 AI 请求路由器，提供 OpenAI 兼容入口、格式转换、配额追踪、fallback 和 token 压缩。',
+        architecture: '本地 dashboard + localhost API 网关。请求从 CLI 进入 9router，再根据模型组合转发到订阅、便宜或免费 provider。',
+        use: '适合你想把多个订阅、免费额度、备用模型统一调度，尤其关注 token 成本和配额吃满时。',
+        caution: '路由免费不等于 provider 免费。还要考虑账号风控、OAuth token 安全、上游服务条款。',
+        scores: [2, 2, 3, 3, '按需再装，先不要作为主链路依赖']
+      },
+      {
+        name: 'mini-swe-agent',
+        repo: 'SWE-agent/mini-swe-agent',
+        category: 'agent',
+        categoryLabel: 'Agent 框架',
+        local: '~/projects/mini-swe-agent',
+        summary: '极简软件工程 agent。只靠 bash 和线性历史，让模型自己使用 shell 完成代码任务，是 SWE-bench 方向的轻量基线。',
+        architecture: 'Python 包，核心 agent loop 很薄；模型层走 LiteLLM/OpenRouter 等，环境层可切换 local、Docker、Podman、Singularity 等。',
+        use: '适合你学习 coding agent 原理、跑 SWE-bench/批量任务、做自己的轻量 agent 实验。',
+        caution: '它偏研究/CLI，不是个人助理产品。对移动端体验、权限交互、长期记忆没有完整产品化设计。',
+        scores: [1, 2, 4, 4, '保留源码，作为 agent 原理学习和实验基线']
+      },
+      {
+        name: 'GenericAgent',
+        repo: 'lsdefine/GenericAgent',
+        category: 'agent',
+        categoryLabel: '自进化 Agent',
+        local: '~/projects/GenericAgent',
+        summary: '极简自进化自主 agent 框架，强调 9 个原子工具、约 100 行 agent loop、自动把任务路径沉淀成 skill。',
+        architecture: 'Python 项目，包含 CLI、Textual/Streamlit/pywebview 等前端；通过浏览器、终端、文件系统、键鼠、屏幕视觉和 ADB 控制真实电脑/手机。',
+        use: '适合你探索“个人自动化助理”：读微信、操作网页、ADB 控手机、沉淀自己的技能树。',
+        caution: '权限很大，适合在受控环境慢慢试。要做 Android 个人助理，思路合适，但更像桌面/本地控制中枢，不是现成手机 App。',
+        scores: [2, 5, 3, 3, '小范围实验，不要一开始接太多隐私账号']
+      },
+      {
+        name: 'agentmemory',
+        repo: 'rohitg00/agentmemory',
+        category: 'memory',
+        categoryLabel: '长期记忆',
+        local: '~/projects/agentmemory',
+        summary: '给 Claude Code、Codex、Cursor、Gemini CLI、pi、OpenHuman 等 coding agent 使用的持久化记忆服务器。',
+        architecture: 'Node/TypeScript CLI 和 MCP/API 服务，底层依赖 iii engine；提供 hooks、MCP tools、viewer、混合搜索和生命周期管理。',
+        use: '非常适合你这种同时用 Claude、Codex、移动端终端的人。它可以让多个 agent 共享项目背景、偏好和历史决策。',
+        caution: '它会保存大量工作记忆。需要明确哪些项目/会话进入记忆，哪些敏感信息排除。',
+        scores: [3, 5, 3, 4, '建议下一阶段重点试，先从 Codex/Claude 的项目记忆开始']
+      },
+      {
+        name: 'Dinotty',
+        repo: 'xichan96/dinotty',
+        category: 'mobile',
+        categoryLabel: '手机终端',
+        local: '~/projects/dinotty',
+        summary: '移动优先的 Web 终端服务器，为在手机上运行 Claude Code、Codex、OpenClaw 等 coding agent 设计。',
+        architecture: 'Rust/Axum 后端 + PTY + 服务端 VT Screen + Vue/xterm 前端 + Tauri 桌面壳。支持会话持久化、重连、文件预览、网页预览、快捷键盘。',
+        use: '这是当前最贴近你需求的项目：Mac 跑 agent，三星手机通过浏览器访问，配合 Tailscale 实现安全远程控制。',
+        caution: '公网暴露要谨慎。最好继续用 Tailscale/内网穿透加认证。移动端输入、重连历史、滚动体验是你正在打磨的核心点。',
+        scores: [5, 3, 4, 4, '继续作为主入口，优先修体验问题']
+      },
+      {
+        name: 'happy',
+        repo: 'slopus/happy',
+        category: 'mobile',
+        categoryLabel: '移动客户端',
+        local: '~/projects/happy',
+        summary: 'Claude Code 和 Codex 的移动/Web 客户端，通过本机 CLI wrapper 和加密同步，让你从手机控制 coding agent。',
+        architecture: 'pnpm monorepo，包含 happy-app、happy-cli、happy-agent、happy-server、happy-wire 等组件；强调端到端加密和设备切换。',
+        use: '定位和 Dinotty/cc-connect 接近，但更产品化，有 App/Web/Server 组合。适合对比移动端体验和通知机制。',
+        caution: '它引入自己的 wrapper 和服务端同步链路。你已经有 Dinotty + Tailscale 时，不一定需要同时维护第二套入口。',
+        scores: [5, 3, 3, 3, '作为竞品/备选观察，暂不替换 Dinotty']
+      },
+      {
+        name: 'OpenHuman',
+        repo: 'tinyhumansai/openhuman',
+        category: 'platform',
+        categoryLabel: '个人 AI 平台',
+        local: '~/projects/openhuman',
+        summary: '开源个人 AI 超级智能，强调桌面 UI、第三方集成、记忆树、Obsidian Wiki、本地优先知识库和模型路由。',
+        architecture: 'Tauri/Rust + pnpm monorepo + 桌面 app + 集成系统 + SQLite/Markdown 记忆树。支持可选 agentmemory 后端。',
+        use: '如果你最终想要“个人助理”，OpenHuman 是最接近完整产品形态的候选：接邮件、日历、文档、GitHub、Slack 等，然后形成长期上下文。',
+        caution: '早期 beta，权限面很宽。它要接大量个人数据，最好先在测试账号或低风险数据上验证。',
+        scores: [3, 5, 2, 4, '中长期重点观察，先跑小范围本地实验']
+      },
+      {
+        name: 'pi',
+        repo: 'earendil-works/pi',
+        category: 'agent',
+        categoryLabel: 'Agent Harness',
+        local: '~/projects/pi',
+        summary: 'Agent harness monorepo，包含 coding-agent CLI、agent runtime、统一多 provider LLM API、TUI 和 Web UI 组件。',
+        architecture: 'TypeScript monorepo，包包括 pi-coding-agent、pi-agent-core、pi-ai、pi-tui、pi-web-ui。关注可扩展 coding agent 和真实 session 数据。',
+        use: '适合你研究新一代开源 coding agent 架构，也可能成为 Dinotty/agentmemory 的一个可接入 agent。',
+        caution: '生态还在演进，作为主力工具前需要看 CLI 稳定性、模型支持和与现有 Codex/Claude 工作流的摩擦。',
+        scores: [2, 3, 3, 4, '保留跟进，适合源码学习和局部试用']
+      },
+      {
+        name: 'cc-connect',
+        repo: 'chenhg5/cc-connect',
+        category: 'mobile',
+        categoryLabel: '聊天桥接',
+        local: '未保留本地源码',
+        summary: '把本地 AI coding agent 桥接到飞书、钉钉、Slack、Telegram、Discord、企业微信、LINE、QQ、个人微信等聊天平台。',
+        architecture: 'Go 项目，支持多 agent、多平台、多项目、slash commands、定时任务、语音/图片转发和 ACP agent。',
+        use: '如果你希望在微信/飞书/Telegram 里直接遥控 Codex/Claude，而不是打开 Web 终端，它比 Dinotty 更像“聊天入口”。',
+        caution: '聊天平台接入复杂度高，个人微信/企业微信等还有平台规则和安全边界。它适合消息驱动，不适合完整终端体验。',
+        scores: [4, 4, 2, 3, '需要聊天入口时再试，当前不是第一优先级']
+      },
+      {
+        name: 'Sub2API',
+        repo: 'Wei-Shaw/sub2api',
+        category: 'router',
+        categoryLabel: 'API 网关',
+        local: '~/projects/sub2api',
+        summary: 'AI API 网关平台，用于订阅配额分发、API Key 管理、鉴权、计费、负载均衡、并发和速率限制。',
+        architecture: 'Go/Gin/Ent 后端 + Vue/Vite/Tailwind 前端 + PostgreSQL + Redis。偏平台化运营后台。',
+        use: '适合你管理多个上游账号或给自己/团队分发统一 API key。和 9router 相比，它更像管理后台和商业化网关。',
+        caution: '部署和安全责任更重，涉及支付、用户、账单、上游账号。个人单机用可能偏重。',
+        scores: [2, 2, 2, 3, '作为 API 管理平台保留，个人日常先轻量使用']
+      },
+      {
+              "name": "Claude Code",
+              "repo": "anthropic/claude-code",
+              "category": "agent",
+              "categoryLabel": "商业 Coding Agent",
+              "local": "官方闭源/托管产品，非本地源码项目",
+              "summary": "Anthropic 的 agentic coding 工具，可在终端、IDE、桌面和浏览器中读代码、改文件、运行命令并接入开发工具。",
+              "architecture": "CLI/IDE/Web 多入口 + Claude 模型 + 工具执行层 + 权限模式 + .claude 目录记忆/配置 + MCP 扩展。",
+              "use": "你已经在使用 Claude 订阅，它适合作为高质量 coding agent 主力之一；Dinotty 可以把 Claude Code 变成手机可访问的远程工作台。",
+              "caution": "闭源，内部实现不可审计；使用订阅或 API 时要关注额度、权限模式、auto-accept 风险和第三方 harness 计费边界。",
+              "scores": [
+                      4,
+                      3,
+                      5,
+                      3,
+                      "继续作为主力 coding agent，与 Codex 分工使用"
+              ]
+      },
+      {
+              "name": "OpenAI Codex CLI",
+              "repo": "openai/codex",
+              "category": "agent",
+              "categoryLabel": "开源 Coding Agent",
+              "local": "可按需克隆；当前以已安装 CLI/订阅使用为主",
+              "summary": "OpenAI 的轻量本地 coding agent，运行在终端，可用 ChatGPT 订阅或 API key，源码以 Rust 为主。",
+              "architecture": "Rust CLI core + sandbox/approval + terminal UI + project instructions/AGENTS.md + SDK/IDE/Web 关联入口。",
+              "use": "你当前使用 Codex 订阅，适合处理代码修改、审查、长任务执行；和 Dinotty/Tailscale 组合后可在手机上遥控。",
+              "caution": "项目更新很快，CLI、App、Web Codex 边界要区分；使用 API key 时成本与权限策略要单独配置。",
+              "scores": [
+                      4,
+                      3,
+                      5,
+                      4,
+                      "继续作为主力 coding agent，并关注 CLI 新版本"
+              ]
+      },
+      {
+              "name": "Cline",
+              "repo": "cline/cline",
+              "category": "agent",
+              "categoryLabel": "IDE Agent",
+              "local": "未保留本地源码",
+              "summary": "开源 coding agent，可作为 SDK、IDE 扩展或 CLI 使用，强调 VS Code 内文件编辑、终端命令、浏览器和 MCP 工具。",
+              "architecture": "VS Code/webview UI + extension host agent runtime + tools/terminal/browser/MCP + SDK/CLI/headless/kanban 多入口。",
+              "use": "适合你在 IDE 里做可视化代码修改、并行任务和有审批感的 agent 工作流。和 Dinotty 不是同一层：Cline 是 IDE 内 agent。",
+              "caution": "IDE 权限和自动执行要谨慎；长期远程手机操作不如 Dinotty 直接，但桌面开发体验更完整。",
+              "scores": [
+                      2,
+                      3,
+                      4,
+                      3,
+                      "作为 IDE 侧候选，和 Codex/Claude CLI 对比体验"
+              ]
+      },
+      {
+              "name": "Aider",
+              "repo": "Aider-AI/aider",
+              "category": "agent",
+              "categoryLabel": "终端 Pair Programming",
+              "local": "未保留本地源码",
+              "summary": "经典终端 AI pair programming 工具，特点是 repo map、Git 集成、自动提交和多模型支持。",
+              "architecture": "Python CLI + repo map/tree-sitter 索引 + chat/edit loop + Git diff/commit + provider adapter。",
+              "use": "适合做明确代码改动、维护 Git 历史、在大仓库里让模型理解结构；比自主 agent 更像结对编程工具。",
+              "caution": "自主规划和多工具自动化弱于 Claude/Codex/OpenClaw；但可控性和 Git 体验强。",
+              "scores": [
+                      2,
+                      2,
+                      5,
+                      4,
+                      "适合保留为低风险代码修改工具"
+              ]
+      },
+      {
+              "name": "Mem0",
+              "repo": "mem0ai/mem0",
+              "category": "memory",
+              "categoryLabel": "通用记忆层",
+              "local": "未保留本地源码",
+              "summary": "面向 AI agent 的通用长期记忆层，提供 SDK/API/CLI/自托管和云服务，用于保存、检索、更新用户与任务记忆。",
+              "architecture": "SDK/API + memory extraction + vector/graph/metadata retrieval + server/admin UI + skills/MCP/agent 集成。",
+              "use": "适合你给多个 assistant 或应用统一接一套用户记忆，开发接入速度快。",
+              "caution": "记忆层是高敏感资产；需要单独评估自托管安全、数据隔离、删除策略和 prompt injection 防护。",
+              "scores": [
+                      3,
+                      5,
+                      3,
+                      3,
+                      "作为 agentmemory 外的通用记忆层重点对比"
+              ]
+      },
+      {
+              "name": "Graphiti / Zep",
+              "repo": "getzep/graphiti",
+              "category": "memory",
+              "categoryLabel": "时间知识图谱",
+              "local": "未保留本地源码",
+              "summary": "Zep 的开源 temporal context graph engine，用时间感知知识图谱为 agent 构建动态上下文。",
+              "architecture": "Episode ingest + entity/fact extraction + temporal graph + hybrid search + ontology/custom types + MCP/agent 接入。",
+              "use": "适合你处理会随时间变化的人、项目、关系、偏好和事实，比普通向量库更适合长期个人上下文。",
+              "caution": "图谱建模和实体消歧复杂度高；小规模个人使用可能比 SQLite/Markdown 记忆重。",
+              "scores": [
+                      2,
+                      5,
+                      2,
+                      4,
+                      "适合研究时间感知记忆，暂不急着替换 agentmemory"
+              ]
+      },
+      {
+              "name": "Letta",
+              "repo": "letta-ai/letta",
+              "category": "memory",
+              "categoryLabel": "状态化 Agent 平台",
+              "local": "未保留本地源码",
+              "summary": "MemGPT 演进而来的 stateful agents 平台，强调 agent 自己管理 context、memory blocks 和长期自我改进。",
+              "architecture": "Agent server + ADE/开发环境 + memory blocks + tools(memory_insert/replace) + storage + multi-model runtime。",
+              "use": "适合你研究“让 agent 自己维护记忆”的范式，而不是简单外挂检索。",
+              "caution": "和现有 Claude/Codex CLI 工作流结合度不如 MCP 型记忆层，需要围绕 Letta 自身 agent 架构开发。",
+              "scores": [
+                      2,
+                      4,
+                      3,
+                      4,
+                      "作为记忆架构学习样本，非常值得看"
+              ]
+      },
+      {
+              "name": "LangMem",
+              "repo": "langchain-ai/langmem",
+              "category": "memory",
+              "categoryLabel": "LangGraph 记忆工具",
+              "local": "未保留本地源码",
+              "summary": "LangChain/LangGraph 生态的长期记忆工具，提供对话中 hot path 记忆管理和后台记忆抽取/合并。",
+              "architecture": "Core memory API + agent memory tools + background memory manager + LangGraph store integration。",
+              "use": "如果你未来用 LangGraph 自己搭 agent，LangMem 是最顺手的长期记忆层。",
+              "caution": "它偏开发框架组件，不是开箱即用的个人记忆服务器；对 Claude/Codex CLI 需要额外桥接。",
+              "scores": [
+                      1,
+                      4,
+                      4,
+                      4,
+                      "适合自研 agent 时使用"
+              ]
+      },
+      {
+              "name": "OpenClaw",
+              "repo": "openclaw/openclaw",
+              "category": "platform",
+              "categoryLabel": "个人助理平台",
+              "local": "未保留本地源码",
+              "summary": "本地优先个人 AI assistant，通过 Gateway 连接多聊天渠道、语音、Live Canvas、skills、tools 和多 agent routing。",
+              "architecture": "Node gateway daemon + workspace/agent sessions + channel adapters + skills/tools + model providers + local allowlist/security policy。",
+              "use": "如果你想把微信/Telegram/Slack/语音都变成个人助理入口，OpenClaw 是最接近“个人 OS”的开源路线之一。",
+              "caution": "权限和消息入口风险很高，特别是公开 DM、群聊和工具执行；必须先小范围、白名单、低权限部署。",
+              "scores": [
+                      5,
+                      5,
+                      2,
+                      3,
+                      "值得重点研究，但不要直接接全量账号"
+              ]
+      },
+      {
+              "name": "Hermes Agent",
+              "repo": "NousResearch/hermes-agent",
+              "category": "platform",
+              "categoryLabel": "自学习助理",
+              "local": "未保留本地源码",
+              "summary": "Nous Research 的自学习 AI agent，强调 built-in learning loop、技能生成、历史搜索、多渠道 gateway、cron 和多后端执行环境。",
+              "architecture": "Python agent + gateway + CLI/TUI + skills/memory/routines + cron + terminal backends(local/Docker/SSH/Modal/Daytona/Vercel)。",
+              "use": "适合你研究“会沉淀技能、能云端常驻、跨 Telegram/Discord/Slack/CLI 工作”的个人助理路线。",
+              "caution": "能力面很大，部署到 VPS 或云沙箱后要重点看 secret、权限、cron 自动化和消息入口安全。",
+              "scores": [
+                      4,
+                      5,
+                      2,
+                      3,
+                      "和 OpenClaw 一起作为个人助理平台重点对比"
+              ]
+      },
+      {
+              "name": "Khoj",
+              "repo": "khoj-ai/khoj",
+              "category": "platform",
+              "categoryLabel": "个人第二大脑",
+              "local": "未保留本地源码",
+              "summary": "开源、自托管个人 AI second brain，可读取文档、网页、Obsidian/Emacs/桌面/手机/WhatsApp，并创建自定义 agents。",
+              "architecture": "Web/Desktop/Chat clients + document/index/RAG pipeline + agent/persona/tool layer + local/cloud LLM adapters + scheduler。",
+              "use": "适合你把个人资料、笔记、文档、网页和聊天入口汇成一个个人知识助手。比 OpenHuman 更偏第二大脑和 RAG。",
+              "caution": "对“操作电脑/手机”的能力不如 OpenClaw/GenericAgent，主要价值在知识检索和个人上下文。",
+              "scores": [
+                      4,
+                      4,
+                      3,
+                      4,
+                      "适合做个人知识库助手候选"
+              ]
+      },
+      {
+              "name": "Dify",
+              "repo": "langgenius/dify",
+              "category": "platform",
+              "categoryLabel": "LLM 应用平台",
+              "local": "~/projects/dify",
+              "summary": "开源 LLM 应用开发平台，组合 workflow、RAG pipeline、agent、模型管理和可观测能力，偏从原型到生产。",
+              "architecture": "Web console + API/backend + workflow/RAG/agent engine + model provider management + observability + app publishing。",
+              "use": "适合你做面向别人或团队使用的 AI 应用，不一定是个人桌面助理，但可以承载很多 agent workflow。",
+              "caution": "部署较重，偏平台和应用生产，不是手机遥控 Claude/Codex 的最短路径。",
+              "scores": [
+                      3,
+                      3,
+                      2,
+                      3,
+                      "已有源码，适合需要做 AI 应用后台时再深入"
+              ]
+      },
+      {
+        name: 'Tailscale',
+        repo: 'tailscale/tailscale',
+        category: 'mobile',
+        categoryLabel: '组网',
+        local: '系统软件，非本地源码分析项目',
+        summary: '基于 WireGuard 的零配置私有网络，把 Mac、手机、NAS、VPS 组成安全内网。',
+        architecture: '每台设备加入同一 tailnet，获得 100.x Tailscale IP；支持 MagicDNS、ACL、Exit Node、Subnet Router。',
+        use: '对你的价值非常直接：手机访问 Mac 上的 Dinotty、代理端口或开发服务，不需要把服务直接暴露到公网。',
+        caution: '它会增加一张虚拟网卡和路由。一般不影响公网访问，但 Exit Node、Subnet Router、手机全局代理叠加时要单独规划路由。',
+        scores: [5, 3, 5, 5, '保留为远程访问底座，优先于公网暴露']
+      }
+    ];
+
+    const deepAnalyses = {
+      iii: {
+        source: [
+          '仓库是一个运行时 monorepo：engine/ 放 Rust 核心引擎，sdk/ 放 Node/Python/Rust SDK，console/ 是开发运维控制台，skills/ 是给 agent 读取的操作说明，docs/ 和 website/ 承载文档站。',
+          '源码组织围绕 iii engine 展开：引擎负责 worker 连接、函数注册、触发器分发、状态、队列、cron、stream、trace；SDK 让不同语言的服务用统一协议接入。',
+          '它不是单个业务应用，而是“后端能力总线”。业务能力被拆成 worker，worker 再暴露稳定 function id，console 负责观察 worker、function、trigger、trace、queue 和实时状态。'
+        ],
+        arch: [
+          '核心抽象是 Worker、Function、Trigger：进程启动后成为 Worker，注册函数；HTTP、cron、queue、state change、直接调用都可以成为 Trigger；调用结果进入统一 trace。',
+          'Agent 场景下，agent 不需要为每个能力单独接 SDK。它可以查看 catalog，发现已有 function，必要时安装或生成新的 worker，再通过 trigger 调用。',
+          '可以把它理解成“给后端和 agent 共用的插件运行时”：比普通微服务多了实时注册、统一调用、可观测和 agent-readable skill 层。'
+        ]
+      },
+      '9router': {
+        source: [
+          '本地没有保留源码，当前解析来自 GitHub README 和此前部署体验。项目形态是一个本地 AI 请求代理，带 dashboard、provider 配置、模型组合和请求日志。',
+          '源码重点应关注三块：OpenAI/Claude/Gemini 等协议适配层、provider/account/quota 调度层、RTK/Caveman 等 token 压缩与输出控制层。',
+          '它的配置面通常围绕 provider、account、combo、API key、fallback priority 展开；dashboard 展示的 cost 多为估算和节省对照，不是 9router 自己收费。'
+        ],
+        arch: [
+          '运行链路是 CLI 工具指向本地 endpoint，例如 localhost:20128/v1；9router 接收请求后做格式转换、token 压缩、配额判断，然后转发给选中的上游 provider。',
+          '调度逻辑是多层 fallback：优先用已有订阅，其次便宜 API，最后免费 provider；还支持多账号轮询、OAuth token 刷新和请求日志。',
+          '它位于“模型访问层”，不负责执行 agent 任务，也不保存项目状态；它解决的是成本、额度、可用性和协议兼容。'
+        ]
+      },
+      'mini-swe-agent': {
+        source: [
+          'src/minisweagent/agents/ 是核心 agent loop，default.py 负责线性对话、动作解析、停止条件和每轮执行；interactive.py 提供交互式体验。',
+          'src/minisweagent/environments/ 把执行环境抽象出来：local.py 直接在本机 subprocess.run，docker.py、singularity.py 等把同一动作放进隔离环境。',
+          'src/minisweagent/models/ 是模型适配层，包含 LiteLLM、OpenRouter、Portkey、Requesty、Responses/TextBased 等变体；run/mini.py 和 hello_world.py 是 CLI 入口。'
+        ],
+        arch: [
+          '主循环非常克制：把系统提示、历史消息和环境反馈发给模型，模型输出 bash 动作，环境执行并把 stdout/stderr/exit code 作为下一轮上下文。',
+          '它刻意不依赖复杂 tool-calling，也不维护长生命周期 shell；每次动作都是独立 subprocess，这让沙箱、重放、SWE-bench 批量评测更简单。',
+          '工程上是“Agent、Model、Environment、Run Script”四层分离。要改模型就换 models，要改执行边界就换 environments，要做新入口就改 run。'
+        ]
+      },
+      GenericAgent: {
+        source: [
+          '根目录 agent_loop.py、agentmain.py、llmcore.py 是主体：分别承载 agent 循环、任务调度入口和 LLM 调用封装。',
+          'memory/ 不是普通缓存，而是一组可被复用的 SOP、脚本和经验文件，例如 ADB UI、OCR、浏览器控制、计划、验证、supervisor、scheduled task 等。',
+          'frontends/ 非常丰富：tuiapp、stapp、qtapp、wechatapp、tgapp、dingtalkapp、wecomapp、genericagent_acp_bridge 等，说明它把同一个 agent core 接到多个交互界面。'
+        ],
+        arch: [
+          '运行链路是“用户请求 -> 前端入口 -> agent loop -> 原子工具执行 -> 反思/沉淀到 memory”。任务成功后会把过程结晶成可复用 skill/SOP。',
+          '它的能力边界比普通 coding agent 宽：浏览器、终端、文件、键鼠、屏幕视觉、ADB 手机控制都可以进入同一决策循环。',
+          '工程设计偏自举型个人自动化系统。优点是越用越贴合你，风险是权限面很大，需要用白名单、隔离目录和低风险账号逐步放开。'
+        ]
+      },
+      agentmemory: {
+        source: [
+          'src/hooks/ 放 agent 生命周期钩子：session-start/end、pre/post-tool-use、prompt-submit、pre-compact、notification、task-completed 等，用来自动捕获上下文。',
+          'src/functions/ 是记忆能力主体：remember、search、context、summarize、compress、consolidate、graph、relations、timeline、profile、lessons、crystallize、obsidian-export 等。',
+          'src/state/ 负责存储和检索基础设施：KV、schema、search-index、vector-index、hybrid-search、reranker、CJK 分词、index persistence；src/mcp/ 暴露 MCP server/tools。'
+        ],
+        arch: [
+          '它把 coding agent 的会话、工具调用、决策、文件变化和总结变成结构化记忆，再通过 MCP/REST/hooks 回喂给 Claude、Codex、Cursor、pi 等客户端。',
+          '检索不是单一路径：关键词/BM25 风格索引、向量索引、rerank、图关系、时间线和 profile 共同决定应该召回什么上下文。',
+          '底层依赖 iii engine 作为函数/状态/触发器运行时，agentmemory 自己则是“记忆业务层”：采集、压缩、合并、淘汰、搜索和导出。'
+        ]
+      },
+      Dinotty: {
+        source: [
+          'Rust 后端 src/ 很清晰：pty.rs 创建终端进程，session.rs 管理 pane/session，ws.rs 处理 WebSocket 协议，vt_screen.rs 做服务端虚拟终端仿真，routes.rs 汇总 HTTP 路由。',
+          '文件与预览能力拆在 workspace.rs、file_preview.rs、file_watcher.rs、proxy.rs；settings/history/notification/monitor/auth 各自成模块。',
+          '前端 frontend/src 以 App.vue 为壳，useTerminal.ts 封装 xterm 和 WebSocket，TerminalPane/MobileKeyboard/FileWorkspacePreview/PreviewPanel 等组件分别负责终端、移动键盘、文件和预览。'
+        ],
+        arch: [
+          '浏览器通过 /ws 连接后端，后端为每个 pane 绑定 PTY；PTY 输出一边广播给客户端，一边喂给 vt_screen 维护服务端屏幕状态。',
+          '断线重连时不是新建终端，而是找到旧 session，发送 reconnected、回放部分 scrollback、发送当前 snapshot，再继续接收 live output。',
+          '它和 ttyd/gotty 最大差异是服务端知道屏幕状态，因此能恢复会话、限制历史回放、做文件/网页预览。Tailscale 放在网络层，Dinotty 自己仍是本机 Web 服务。'
+        ]
+      },
+      happy: {
+        source: [
+          'pnpm monorepo。packages/happy-cli 是你电脑上替代 claude/codex 的 wrapper；packages/happy-agent 提供远程 agent 控制命令；happy-wire 定义消息和 session protocol。',
+          'packages/happy-server 是同步后端，包含 Prisma schema 和 standalone/server 入口；packages/happy-app 是 Expo/React Native/Web/Tauri 客户端；codium 是独立桌面 UI 实验。',
+          '源码里能看到 encryption、auth、credentials、session、machineRpc、output 等模块，说明它重点处理身份、加密、会话同步和远程输出。'
+        ],
+        arch: [
+          '本机用 happy claude 或 happy codex 启动 agent，wrapper 监控本地会话并在需要时切到远程模式；手机/Web 客户端通过 happy server 同步会话状态。',
+          'happy-wire 把消息协议抽出来，CLI、server、app 都围绕这套协议通信；加密层保证服务端尽量只做转发/同步，不直接读取明文内容。',
+          '它和 Dinotty 的架构差别：Dinotty 是 Web 终端直连你的 Mac；Happy 是“本地 wrapper + 中继/同步服务 + 原生/移动客户端”。'
+        ]
+      },
+      OpenHuman: {
+        source: [
+          'Rust core 在 src/：core/ 负责 JSON-RPC、CLI、auth、dispatch、socketio、memory_cli、agent_cli；api/ 提供 REST/JWT/socket；rpc/ 做结构化 RPC 分发。',
+          '桌面/前端在 app/src：providers 管 core/socket/chat runtime，services 管 core process、backend url、chat、memory sync、notification，pages 覆盖 Home、Accounts、Intelligence、Mnemonic、Skills 等。',
+          '还有 app/src-tauri 桌面壳、remotion 吉祥物/视频资产、gitbooks/docs 文档、docker-compose/e2e 和 scripts，整体是完整产品工程而不是单一库。'
+        ],
+        arch: [
+          '整体链路是 Tauri 桌面 App 启动/连接本地 Rust core，前端通过 REST/Socket/RPC 驱动对话、账户连接、记忆同步和通知。',
+          '数据层强调本地优先：把第三方集成拉回的数据规范化成 Markdown/SQLite 记忆树，并可导出/同步到 Obsidian 风格知识库。',
+          '它的架构目标不是单个 coding agent，而是“个人上下文操作系统”：集成账号、记忆、模型路由、语音/吉祥物/UI，让 agent 长期围绕你工作。'
+        ]
+      },
+      pi: {
+        source: [
+          'packages/coding-agent 是 CLI 主体，src/main.ts、cli.ts、config.ts、index.ts 提供入口、配置和导出，test/ 覆盖 session、compaction、RPC、tools、skills、clipboard、model resolver 等大量行为。',
+          'packages/agent 是 runtime 与 tool calling/state 管理，packages/ai 封装多 provider LLM API，packages/tui 是终端 UI 渲染库，packages/web-ui 提供 Web 组件。',
+          'docs/ 下有 compaction、providers、extensions、rpc、sessions、skills、tmux、termux 等，说明它把“可扩展 coding agent”做成可文档化平台。'
+        ],
+        arch: [
+          'pi 把 LLM provider、agent runtime、TUI、coding-agent CLI 分包拆开。coding-agent 只是一种产品入口，底层 agent-core 和 ai 包可被其他入口复用。',
+          '会话能力是重点：session tree、auto compaction、branching、runtime events、RPC、extensions、skills 都被测试覆盖，适合长期交互式 coding。',
+          '和 mini-swe-agent 相比，pi 更工程化、更重交互和扩展；和 Codex/Claude CLI 相比，它更像可被研究和二次开发的开源 harness。'
+        ]
+      },
+      'cc-connect': {
+        source: [
+          '本地没有保留源码，当前解析来自 GitHub README。项目是 Go 实现的 bridge，重点模块应围绕 agent adapter、platform adapter、project config、command parser 和 scheduler。',
+          '它支持 Claude Code、Codex、Cursor、Gemini CLI、OpenCode、Pi、ACP agent 等多 agent，也支持飞书、钉钉、Slack、Telegram、Discord、企业微信、LINE、QQ、个人微信等平台。',
+          '配置通常在 ~/.cc-connect/config.toml 或 Web UI 中管理，project 维度绑定 work_dir、agent、platform、admin 用户和权限命令。'
+        ],
+        arch: [
+          '消息从聊天平台进入 cc-connect，先被平台适配器规范化，再路由到某个 project 的 agent session；agent 输出再被转成平台消息发回群聊或私聊。',
+          'Slash command 是控制面：/model、/reasoning、/mode、/dir、/memory、定时任务等都通过聊天完成。',
+          '它不是完整终端，而是消息驱动的远程控制层。适合“在微信/飞书里遥控 agent”，不适合需要持续查看 curses/TUI 或复杂终端 UI 的场景。'
+        ]
+      },
+      Sub2API: {
+        source: [
+          'backend 是 Go 服务，go.mod 显示 Gin、Ent、Redis、JWT、Stripe、Alipay、WechatPay、cron、gopsutil、testcontainers 等依赖；migrations/ 大量 SQL 说明数据模型很重。',
+          'backend/ent 是 Ent ORM 生成层，migrations 覆盖账号、分组、usage logs、payment orders、channel、monitor、pricing、auth identity、affiliate 等业务表。',
+          'frontend 是 Vue/Vite/Tailwind 管理后台，deploy/docker-compose.yml 负责 PostgreSQL、Redis、后端和前端的组合部署。'
+        ],
+        arch: [
+          '请求链路是客户端拿平台 API Key 调用 Sub2API，后端鉴权、查用户/分组/额度/速率限制，选择 channel/account，转发上游模型，再记录 usage 和账单。',
+          '它比 9router 更像运营系统：有用户、充值、订阅、支付、公告、监控、渠道定价、风控和后台管理，不只是本地请求转发。',
+          '如果你只自己用，复杂度偏高；如果以后要给多个设备/团队/用户统一分发 Claude/Codex/Gemini 额度，它的后台模型更完整。'
+        ]
+      },
+      "Claude Code": {
+              "source": [
+                      "官方 CLI 源码不开放，能分析的是产品外露结构：terminal/IDE/desktop/web 多入口，.claude 目录保存项目指令、记忆、hooks、commands、MCP 配置。",
+                      "核心可配置面包括 settings.json、permission modes、session 管理、MCP server、Agent SDK、IDE extension 和远程控制。",
+                      "它的工程边界不是仓库代码，而是“Claude 模型 + 本机工具权限 + 项目上下文 + 开发工具集成”的产品系统。"
+              ],
+              "arch": [
+                      "用户从 CLI/IDE/Web 发起任务，Claude Code 读取代码库和 .claude 上下文，规划后通过工具层读写文件、运行命令、调用 MCP，再把 diff/结果回显给用户。",
+                      "权限模式是关键控制点：不同操作会被审批、自动允许或禁止；这决定它适合安全协作还是全自动执行。",
+                      "在你的链路中，它是 Agent 执行层；Dinotty/Happy/cc-connect 是远程入口，agentmemory/OpenHuman 是记忆层。"
+              ]
+      },
+      "OpenAI Codex CLI": {
+              "source": [
+                      "openai/codex 仓库是开源 monorepo，目录包括 codex-rs、codex-cli、sdk、docs、scripts、patches、third_party 等。GitHub 页面显示 Rust 占比很高。",
+                      "codex-rs 是当前核心 CLI/runtime，codex-cli 保留兼容或包装层，sdk/docs 提供外部集成和开发说明。",
+                      "AGENTS.md、sandbox、approval、project instructions 和 release binaries 是使用者最需要关注的源码/配置入口。"
+              ],
+              "arch": [
+                      "Codex 在本机读取工作区和指令，模型生成计划与文件操作，CLI runtime 通过 sandbox/approval 控制 shell、文件写入和网络等能力。",
+                      "它支持 ChatGPT 订阅登录，也支持 API key；同一 agent 能在 CLI、IDE、桌面 App、Web Codex 等形态之间形成产品矩阵。",
+                      "对你来说，它和 Claude Code 位于同一层：真正执行 coding 任务；远程手机访问通过 Dinotty/Tailscale 实现。"
+              ]
+      },
+      "Cline": {
+              "source": [
+                      "GitHub 目录显示 src、webview-ui、sdk、proto、standalone/runtime-files、evals、docs、tests/specs 等，说明它已不只是 VS Code 插件，也在做 SDK/CLI/headless 化。",
+                      "webview-ui 是 IDE 内交互面，src 是 extension/agent runtime 主体，proto/sdk 暴露外部协议，standalone 支持脱离 VS Code 的运行文件。",
+                      "Cline 还内置 .clinerules、skills、MCP/浏览器/终端工具集成，是“IDE agent 产品 + 可编程 agent SDK”的混合体。"
+              ],
+              "arch": [
+                      "用户在 IDE webview 提交任务，extension host 负责读取文件、展示 diff、运行终端、访问浏览器/MCP，并通过 provider adapter 调用模型。",
+                      "审批/自动批准决定操作是否落地；IDE 提供上下文和可视化 diff，agent runtime 负责编排多步工具调用。",
+                      "和 CLI agent 相比，它牺牲部分终端纯粹性，换来更强的 IDE 感知、可视化和并行任务面板。"
+              ]
+      },
+      "Aider": {
+              "source": [
+                      "Aider 是 Python CLI，核心在 chat/edit loop、model adapter、repo map、Git integration、diff/commit 管理。",
+                      "repo map 使用代码结构索引帮助模型理解大仓库，编辑发生在真实 Git 工作区，变更通过 diff 和 commit 管控。",
+                      "它不追求全自动电脑控制，而是围绕“用户与模型结对修改代码”优化。"
+              ],
+              "arch": [
+                      "用户把文件加入上下文或让 Aider 根据 repo map 找相关文件；模型提出 patch；Aider 应用 diff，并可自动提交。",
+                      "Git 是安全带：每步修改都能 diff、commit、rollback。相比自主 agent，它更可控、可审查。",
+                      "对你来说，它适合低风险代码改动，不适合作为长期个人助理。"
+              ]
+      },
+      "Mem0": {
+              "source": [
+                      "Mem0 提供 Python/JS SDK、server、自托管 dashboard、CLI、skills 和云平台。源码重点是 memory add/search/update、用户过滤、嵌入/图/metadata 存储和服务端 API。",
+                      "它把记忆作为独立产品层，而不是绑定某个 agent framework；因此可嵌入 ChatGPT-like app、CrewAI、LangGraph、Claude/Codex skills。",
+                      "自托管路径涉及 server、数据库/向量存储、admin/API key 配置。"
+              ],
+              "arch": [
+                      "应用或 agent 在对话后调用 add/retain，Mem0 抽取可持久化事实并存储；下次请求前调用 search，根据 user_id/session/filter 返回相关记忆。",
+                      "它的位置是“外部记忆服务”：agent 本身可以是 Codex、Claude、OpenClaw、LangGraph app，只要能在 prompt 前后调用 API。",
+                      "相比 agentmemory，Mem0 更通用产品化；相比 Graphiti，它更易接入但图谱/时间关系表达可能没那么强。"
+              ]
+      },
+      "Graphiti / Zep": {
+              "source": [
+                      "Graphiti 是 Python temporal context graph engine，核心对象包括 episodes、entities、facts/edges、validity windows、ontology/custom types、hybrid search。",
+                      "它是 Zep context infrastructure 的开源核心，面向不断变化的真实世界数据，而不是静态文档块。",
+                      "源码重点应看 ingestion、LLM extraction、graph store、search/rerank、MCP server 和 custom entity models。"
+              ],
+              "arch": [
+                      "输入的聊天、JSON、文档等先成为 episode；LLM/规则抽取实体和关系；每条 fact 带时间有效性和 provenance；查询时融合语义、关键词和图遍历。",
+                      "这样 agent 可以问“现在为真是什么”“过去什么时候变了”“这个事实来自哪里”，适合个人关系、项目状态、客户上下文。",
+                      "复杂度在实体消歧、图谱维护和事实冲突处理；适合中长期记忆，不一定适合轻量 CLI 记忆。"
+              ]
+      },
+      "Letta": {
+              "source": [
+                      "Letta 源自 MemGPT，核心围绕 stateful agent、memory blocks、context management、agent server、ADE 开发环境和 tool-using memory operations。",
+                      "它把“记忆”放进 agent 内部状态，而不是只做外部检索服务；memory_insert/memory_replace 等工具让 agent 主动管理自己的上下文。",
+                      "源码重点是 agent types、block/state store、tool execution、server/API 和可视化开发环境。"
+              ],
+              "arch": [
+                      "Agent 每轮对话看到固定 context window，其中一部分是可编辑 memory blocks；当信息需要长期保留时，agent 调用 memory tools 更新状态。",
+                      "后台/睡眠式机制可以在非交互时整理记忆、优化提示和状态，使 agent 逐步自我改进。",
+                      "它适合构建“原生有记忆的 agent”，但要让 Claude/Codex CLI 共用，需要额外桥接。"
+              ]
+      },
+      "LangMem": {
+              "source": [
+                      "LangMem 是 LangChain/LangGraph 生态库，源码重点是 memory API、memory tools、background manager、prompt refinement 和 LangGraph store 集成。",
+                      "它提供两种路径：hot path 中让 agent 主动写/查记忆，background path 中自动抽取、合并、更新记忆。",
+                      "和独立记忆服务器不同，它更像框架组件，嵌在 LangGraph app 里使用。"
+              ],
+              "arch": [
+                      "LangGraph agent 运行时从 store 取短期/长期状态；LangMem 工具让 agent 在对话中写入偏好、事实、经验；后台 manager 周期性整理知识。",
+                      "它天然适配 LangGraph checkpoint/store，适合你自研工作流 agent。",
+                      "如果目标是给现成 Codex/Claude CLI 加记忆，agentmemory/Mem0/MCP 型方案更直接。"
+              ]
+      },
+      "OpenClaw": {
+              "source": [
+                      "openclaw/openclaw 是 Node/pnpm 风格 monorepo，GitHub 目录包括 apps、config、deploy、docs、extensions、packages、skills、src、ui、security 等。",
+                      "README 明确 Gateway 是 control plane；产品主体是本地个人助理，连接 WhatsApp、Telegram、Slack、Discord、Signal、iMessage、Teams、Matrix、飞书、微信、QQ 等渠道。",
+                      "源码应重点看 gateway、channel adapters、skills/tools、agent workspace/session、security allowlist、onboard/daemon 和 Live Canvas/A2UI。"
+              ],
+              "arch": [
+                      "多渠道消息进入 Gateway，Gateway 根据账号/peer/route 找到对应 agent workspace 和 session，装载 skills、memory、tools 和模型配置后执行任务。",
+                      "执行结果再通过原渠道发回，也可在 Canvas/语音/CLI 中继续交互；daemon 让它常驻。",
+                      "它的关键风险点也是架构核心：真实聊天入口 + 本机工具权限 + 长期记忆，所以安全默认、pairing、allowlist 必须认真配置。"
+              ]
+      },
+      "Hermes Agent": {
+              "source": [
+                      "NousResearch/hermes-agent 目录包含 agent、gateway、hermes_cli、skills、optional-skills、providers、cron、acp_adapter、mcp_serve.py、trajectory_compressor.py 等。",
+                      "README 强调 built-in learning loop：从经验创建技能、使用中改进技能、搜索历史会话、构建用户模型，并支持 Telegram/Discord/Slack/WhatsApp/Signal/CLI。",
+                      "执行环境支持 local、Docker、SSH、Singularity、Modal、Daytona、Vercel Sandbox，说明它不是只绑定一台笔记本。"
+              ],
+              "arch": [
+                      "用户从 CLI/TUI 或聊天渠道发消息，gateway 归一化请求，agent runtime 装载记忆/技能/模型/provider，然后在选定 terminal backend 中执行工具。",
+                      "任务完成后，Hermes 会把经验沉淀为 memory/routines/skills；cron 可让任务定时无人值守运行。",
+                      "它和 OpenClaw 都是个人助理平台，但 Hermes 更强调自学习和多执行后端，OpenClaw 更强调本地 Gateway 和多渠道个人入口。"
+              ]
+      },
+      "Khoj": {
+              "source": [
+                      "Khoj 是个人 second brain 工程，包含 server/backend、web/desktop/mobile/Obsidian/Emacs/WhatsApp 等入口，文档/网页/图片/PDF/Notion/GitHub 等索引能力。",
+                      "核心源码通常分为 content ingestion、indexing/RAG、chat/agent、scheduler、model adapters、client integrations。",
+                      "它不是纯 coding agent，更像可自托管的个人知识和任务助手。"
+              ],
+              "arch": [
+                      "用户把文档、笔记、网页和应用连接给 Khoj，系统建立索引；聊天时根据问题检索相关资料，并可调用 agent/tools/scheduler 做任务。",
+                      "多入口让它能从浏览器、桌面、手机、Obsidian、Emacs 或 WhatsApp 使用，适合日常知识查询。",
+                      "它对“记住我知道什么”强，对“替我操作电脑/代码仓库”弱于 OpenClaw/Claude/Codex。"
+              ]
+      },
+      "Dify": {
+              "source": [
+                      "Dify 是大体量应用平台，后端/API、Web console、workflow/agent/RAG、model provider、dataset/indexing、observability 和部署脚本分层清晰。",
+                      "本地仓库已有 dify 源码，可重点看 api、web、docker、sdks、docs 和 packages。",
+                      "它的抽象单位是 app/workflow/dataset/model provider，不是个人桌面会话。"
+              ],
+              "arch": [
+                      "管理员在 Web console 配置模型、知识库、workflow 和 agent；用户通过 Web/API 调用应用；后端负责检索、编排、模型调用和日志可观测。",
+                      "适合从原型到生产部署 AI 应用，尤其是团队共享的 RAG/客服/流程自动化。",
+                      "对你的个人手机遥控 coding agent 场景帮助间接，但若你要把某些自动化做成可复用 API/App，Dify 很合适。"
+              ]
+      },
+      Tailscale: {
+        source: [
+          '这不是这次本地源码分析项目，而是安装在 Mac 和三星手机上的组网基础设施。代码层面它由 tailscaled 后台服务、客户端 UI、控制面和 WireGuard 数据面组成。',
+          '在你的工作流里需要关注的不是源码，而是配置对象：设备、100.x tailnet IP、MagicDNS、ACL、Exit Node、Subnet Router、Serve/Funnel。',
+          'Mac 上 Dinotty 监听 8999，手机通过 Mac 的 Tailscale IP 访问；这条链路不要求公网端口暴露。'
+        ],
+        arch: [
+          '控制面负责登录、设备发现、密钥交换和 ACL；数据面尽量点对点 WireGuard，打不通时走 DERP 中继。',
+          'Exit Node 会改变默认路由，Subnet Router 会把某段局域网路由进 tailnet，Serve/Funnel 可以把本地服务包装成 Tailscale 内部或公网可访问服务。',
+          '对你当前 Dinotty 场景，最稳的是只用 tailnet 内部访问，不急着开 Funnel 公网暴露。'
+        ]
+      }
+    };
+
+    function enrichedProjects() {
+      return projects.map((project) => ({
+        ...project,
+        sourceAnalysis: deepAnalyses[project.name]?.source || [],
+        architectureAnalysis: deepAnalyses[project.name]?.arch || []
+      }));
+    }
+
+    function renderList(items) {
+      return `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`;
+    }
+
+    const diagramCategories = new Set(['agent', 'memory', 'platform']);
+
+    const projectDiagramSpecs = {
+      iii: {
+        nodes: ['Worker 进程', 'Function Catalog', 'Trigger 层', 'iii Engine', 'State / Queue / Cron', 'Console / SDK'],
+        edges: ['注册函数', '发现能力', '触发调用', '持久状态', '观测/开发']
+      },
+      'mini-swe-agent': {
+        nodes: ['CLI / Run Script', '线性消息历史', 'Default Agent Loop', 'Model Adapter', 'Environment', 'stdout / diff'],
+        edges: ['启动任务', '拼上下文', '请求模型', '生成 bash', '执行反馈']
+      },
+      GenericAgent: {
+        nodes: ['多前端入口', 'agent_loop.py', '9 原子工具', '电脑/浏览器/ADB', 'Memory SOP', 'Skill Tree'],
+        edges: ['接收任务', '规划执行', '控制系统', '验证结果', '沉淀技能']
+      },
+      agentmemory: {
+        nodes: ['Agent Hooks', 'Observe / Remember', 'Compress / Graph', 'Hybrid Index', 'MCP / REST', 'Agent Context'],
+        edges: ['采集事件', '结构化', '建索引', '检索排序', '注入上下文']
+      },
+      'Claude Code': {
+        nodes: ['CLI / IDE / Web', '.claude 配置', 'Claude Agent', 'Permission Gate', 'Tools / MCP', '代码库结果'],
+        edges: ['发起任务', '加载规则', '规划步骤', '审批动作', '修改/运行']
+      },
+      'OpenAI Codex CLI': {
+        nodes: ['Codex CLI', 'AGENTS.md', 'Rust Runtime', 'Sandbox / Approval', 'Shell / File Tools', 'Patch / Review'],
+        edges: ['输入任务', '读取指令', '调模型', '授权执行', '输出变更']
+      },
+      Cline: {
+        nodes: ['VS Code Webview', 'Extension Host', 'Cline Runtime', 'Provider Adapter', 'Terminal / Browser / MCP', 'Diff UI'],
+        edges: ['用户指令', '收集上下文', '模型循环', '工具调用', '展示审批']
+      },
+      Aider: {
+        nodes: ['Terminal Chat', 'Repo Map', 'LLM Edit Loop', 'Patch Apply', 'Git Diff / Commit', '工作区'],
+        edges: ['选择任务', '定位文件', '生成修改', '应用补丁', '版本管理']
+      },
+      Mem0: {
+        nodes: ['App / Agent', 'Memory SDK / API', 'Extract / Update', 'Memory Store', 'Search / Rank', 'Prompt Context'],
+        edges: ['提交事件', '抽取事实', '持久化', '召回', '回填模型']
+      },
+      'Graphiti / Zep': {
+        nodes: ['Episodes', 'Entity Extraction', 'Temporal Facts', 'Context Graph', 'Hybrid Search', 'Agent Answer'],
+        edges: ['摄入', '抽实体', '建关系', '带时间查询', '返回上下文']
+      },
+      Letta: {
+        nodes: ['Stateful Agent', 'Context Window', 'Memory Blocks', 'Memory Tools', 'Agent Server', 'ADE / API'],
+        edges: ['对话', '管理上下文', '自改记忆', '持久状态', '调试观察']
+      },
+      LangMem: {
+        nodes: ['LangGraph Agent', 'Hot Path Tools', 'Memory API', 'Background Manager', 'Long-term Store', 'Updated Context'],
+        edges: ['运行中写入', '读写记忆', '异步整理', '保存', '下轮使用']
+      },
+      OpenHuman: {
+        nodes: ['Tauri App', 'React UI', 'Rust Core', 'Integrations', 'Memory Tree', 'Obsidian / SQLite'],
+        edges: ['启动本地核', 'RPC/Socket', '拉取数据', '压缩摘要', '本地落库']
+      },
+      pi: {
+        nodes: ['pi CLI / TUI', 'coding-agent', 'agent-core', 'pi-ai Providers', 'Tools / Sessions', 'Session Data'],
+        edges: ['交互任务', '编排', '模型调用', '执行工具', '记录轨迹']
+      },
+      OpenClaw: {
+        nodes: ['聊天/语音渠道', 'Gateway Daemon', 'Routing / Allowlist', 'Agent Workspace', 'Skills / Tools', '渠道回传'],
+        edges: ['消息进入', '鉴权路由', '选择会话', '执行任务', '回复用户']
+      },
+      'Hermes Agent': {
+        nodes: ['CLI / Gateway', 'Agent Runtime', 'Memory Search', 'Skills / Routines', 'Terminal Backend', 'Learning Loop'],
+        edges: ['接收任务', '装载上下文', '调用技能', '执行环境', '沉淀经验']
+      },
+      Khoj: {
+        nodes: ['Web / App / WhatsApp', 'Khoj Server', 'Document Ingest', 'Index / RAG', 'Agent / Scheduler', 'Answer / Action'],
+        edges: ['提问', '路由', '解析资料', '检索', '生成执行']
+      },
+      Dify: {
+        nodes: ['Web Console', 'App / Workflow', 'RAG Pipeline', 'Model Providers', 'Observability', 'API / Published App'],
+        edges: ['配置应用', '编排流程', '检索知识', '调用模型', '发布监控']
+      }
+    };
+
+    function getDiagramSpec(p) {
+      const spec = projectDiagramSpecs[p.name];
+      if (!spec) return null;
+      return { title: `${p.name} 架构图`, ...spec };
+    }
+
+    function wrapLabel(label, max = 11) {
+      if (label.length <= max) return [label];
+      const separators = [' / ', ' + ', ' ', '/'];
+      for (const sep of separators) {
+        if (label.includes(sep)) {
+          const parts = label.split(sep).filter(Boolean);
+          if (parts.length > 1) return parts.slice(0, 3);
+        }
+      }
+      return [label.slice(0, max), label.slice(max, max * 2)];
+    }
+
+    function diagramSvg(p, large = false) {
+      const spec = getDiagramSpec(p);
+      if (!spec) return '';
+      const w = large ? 980 : 620;
+      const h = large ? 360 : 230;
+      const nodeW = large ? 128 : 88;
+      const nodeH = large ? 52 : 40;
+      const topY = large ? 92 : 66;
+      const gap = (w - 80 - nodeW * spec.nodes.length) / (spec.nodes.length - 1);
+      const nodes = spec.nodes.map((label, i) => ({
+        label,
+        x: 40 + i * (nodeW + gap),
+        y: topY + (i % 2 ? 54 : 0)
+      }));
+      const lines = nodes.slice(0, -1).map((n, i) => {
+        const next = nodes[i + 1];
+        const x1 = n.x + nodeW;
+        const y1 = n.y + nodeH / 2;
+        const x2 = next.x;
+        const y2 = next.y + nodeH / 2;
+        const tx = (x1 + x2) / 2 - 26;
+        const ty = (y1 + y2) / 2 - 8;
+        return `<path d="M ${x1} ${y1} C ${x1 + 24} ${y1}, ${x2 - 24} ${y2}, ${x2} ${y2}" stroke="#6f756f" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="${tx}" y="${ty}" font-size="${large ? 12 : 10}" fill="#686b73">${spec.edges[i]}</text>`;
+      }).join('');
+      const boxes = nodes.map((n) => {
+        const lines = wrapLabel(n.label, large ? 12 : 9);
+        const lineHeight = large ? 15 : 12;
+        const startY = n.y + nodeH / 2 - ((lines.length - 1) * lineHeight) / 2 + 5;
+        const text = lines.map((line, idx) => `<tspan x="${n.x + nodeW / 2}" y="${startY + idx * lineHeight}">${line}</tspan>`).join('');
+        return `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${nodeH}" rx="8" fill="#ffffff" stroke="#d9d6ce"/><text text-anchor="middle" font-size="${large ? 13 : 10}" font-weight="700" fill="#202124">${text}</text>`;
+      }).join('');
+      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${spec.title}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6f756f"/></marker></defs><rect x="0" y="0" width="${w}" height="${h}" rx="10" fill="#f6f4ef"/><text x="28" y="38" font-size="${large ? 22 : 15}" font-weight="800" fill="#202124">${spec.title}</text><text x="28" y="${large ? 64 : 56}" font-size="${large ? 13 : 10}" fill="#686b73">${p.summary}</text>${lines}${boxes}</svg>`;
+    }
+
+    function openDiagram(name) {
+      const p = enrichedProjects().find((x) => x.name === name);
+      if (!p) return;
+      document.getElementById('diagramTitle').textContent = `${p.name} 架构图`;
+      document.getElementById('diagramCanvas').innerHTML = diagramSvg(p, true);
+      document.getElementById('diagramModal').classList.add('show');
+    }
+
+    function closeDiagram() {
+      document.getElementById('diagramModal').classList.remove('show');
+    }
+
+    const cards = document.getElementById('cards');
+    const matrix = document.getElementById('matrix');
+    const toast = document.getElementById('toast');
+
+    function renderCards(filter = 'all') {
+      cards.innerHTML = '';
+      projects.forEach((p) => {
+        const el = document.createElement('article');
+        el.className = `card ${filter !== 'all' && p.category !== filter ? 'hide' : ''}`;
+        el.dataset.category = p.category;
+        el.innerHTML = `
+          <div class="card-head">
+            <div>
+              <h3>${p.name}</h3>
+              <div class="repo">${p.repo}</div>
+            </div>
+            <span class="tag ${p.category}">${p.categoryLabel}</span>
+          </div>
+          <p>${p.summary}</p>
+          <div class="facts">
+            <div class="fact"><b>架构/原理</b><span>${p.architecture}</span></div>
+            <div class="fact"><b>对你用途</b><span>${p.use}</span></div>
+            <div class="fact"><b>注意点</b><span>${p.caution}</span></div>
+            <div class="fact"><b>本地状态</b><span>${p.local}</span></div>
+          </div>
+          ${diagramCategories.has(p.category) ? `<button class="diagram-button" data-name="${p.name}">查看架构图</button><div class="diagram-preview" data-name="${p.name}">${diagramSvg(p)}</div>` : ''}
+          <div class="deep">
+            <details class="deep-block" open>
+              <summary>源码解析</summary>
+              ${renderList(deepAnalyses[p.name]?.source || ['暂无源码解析。'])}
+            </details>
+            <details class="deep-block" open>
+              <summary>工程架构解析</summary>
+              ${renderList(deepAnalyses[p.name]?.arch || ['暂无工程架构解析。'])}
+            </details>
+          </div>
+        `;
+        cards.appendChild(el);
+      });
+    }
+
+    function renderMatrix() {
+      matrix.innerHTML = projects.map((p) => `
+        <tr>
+          <td>${p.name}</td>
+          <td><span class="score">${p.scores[0]}/5</span></td>
+          <td><span class="score">${p.scores[1]}/5</span></td>
+          <td><span class="score">${p.scores[2]}/5</span></td>
+          <td><span class="score">${p.scores[3]}/5</span></td>
+          <td>${p.scores[4]}</td>
+        </tr>
+      `).join('');
+    }
+
+    const communityComparisons = [
+      ['Agent 框架', 'Claude Code', '官方产品成熟度、模型质量、终端/IDE/Web 覆盖', '和 Codex 并列主力执行层，可通过 Dinotty 在手机上操作', '闭源、额度和权限模式需要持续关注'],
+      ['Agent 框架', 'OpenAI Codex CLI', '开源 CLI、Rust runtime、ChatGPT 订阅接入', '你当前主力之一，适合代码修改、审查和自动化执行', '版本变化快，CLI/App/Web 边界容易混淆'],
+      ['Agent 框架', 'Cline', 'IDE 内可视化 diff、终端、浏览器、MCP、SDK/CLI', '适合补充 VS Code 工作流，不替代 Dinotty', 'IDE 权限和自动执行风险'],
+      ['Agent 框架', 'Aider', 'repo map、Git diff/commit、低风险结对编程', '可作为更可控的代码修改工具', '不适合长期个人助理和多渠道控制'],
+      ['记忆/上下文', 'Mem0', '通用长期记忆 SDK/API，接入快', '可和 agentmemory 做对照，适合应用级记忆', '记忆安全、隔离、删除和注入风险'],
+      ['记忆/上下文', 'Graphiti / Zep', '时间感知知识图谱，适合变化事实', '适合研究个人关系/项目状态的长期记忆', '图谱建模和实体消歧复杂'],
+      ['记忆/上下文', 'Letta', 'agent 自己管理 memory blocks/context', '适合学习 stateful agent 设计', '和现成 Claude/Codex CLI 接入不如 MCP 直接'],
+      ['记忆/上下文', 'LangMem', 'LangGraph 原生长期记忆组件', '适合未来自研 LangGraph agent', '不是开箱即用个人记忆服务器'],
+      ['个人助手平台', 'OpenClaw', '本地 Gateway、多聊天渠道、语音、skills、多 agent routing', '最像“个人 OS”，可作为 OpenHuman/GenericAgent 对照', '真实消息入口加工具权限，安全配置要求高'],
+      ['个人助手平台', 'Hermes Agent', '自学习 loop、技能生成、cron、多执行后端', '适合研究云端常驻/自学习助理', 'VPS/云端 secret、cron 自动化风险'],
+      ['个人助手平台', 'Khoj', '个人 second brain、文档/网页/Obsidian/WhatsApp RAG', '适合作为个人知识库助手候选', '操作电脑和代码能力弱于 OpenClaw/Claude/Codex'],
+      ['个人助手平台', 'Dify', 'AI workflow/RAG/agent 应用生产平台', '适合把自动化做成团队或外部可用 App/API', '部署重，偏平台不是个人手机入口']
+    ];
+
+    function renderCommunityCompare() {
+      document.getElementById('communityCompare').innerHTML = communityComparisons.map((row) => `
+        <tr>
+          <td>${row[0]}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+          <td>${row[4]}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function copyText(text) {
+      await navigator.clipboard.writeText(text);
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1400);
+    }
+
+    document.querySelectorAll('[data-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach((x) => x.classList.remove('active'));
+        btn.classList.add('active');
+        renderCards(btn.dataset.filter);
+      });
+    });
+
+    cards.addEventListener('click', (event) => {
+      const target = event.target.closest('.diagram-button, .diagram-preview');
+      if (target) openDiagram(target.dataset.name);
+    });
+
+    document.getElementById('closeDiagram').addEventListener('click', closeDiagram);
+    document.getElementById('diagramModal').addEventListener('click', (event) => {
+      if (event.target.id === 'diagramModal') closeDiagram();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeDiagram();
+    });
+
+    document.getElementById('copyJson').addEventListener('click', () => {
+      copyText(JSON.stringify(enrichedProjects(), null, 2));
+    });
+
+    document.getElementById('copyPrompt').addEventListener('click', () => {
+      copyText(`基于这份项目清单，帮我为个人 AI 助理工具链做下一步实施规划。请按短期、中期、长期拆分，并评估隐私、安全、部署复杂度、手机端体验。项目数据：\n\n${JSON.stringify(enrichedProjects(), null, 2)}`);
+    });
+
+    renderCards();
+    renderMatrix();
+    renderCommunityCompare();
+  </script>
+</body>
+</html>

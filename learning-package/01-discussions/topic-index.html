@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学习主题索引</title>
+  <style>
+    body{margin:0;background:#f7f7f4;color:#222;font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+    main{max-width:1040px;margin:0 auto;padding:40px 22px 80px}
+    h1{font-size:32px;line-height:1.2;margin:0 0 22px}
+    h2{font-size:24px;margin:34px 0 14px;border-bottom:1px solid #deded7;padding-bottom:8px}
+    h3{font-size:19px;margin:26px 0 10px}
+    p,li{color:#343834}
+    a{color:#225f54;text-underline-offset:3px}
+    table{width:100%;border-collapse:collapse;margin:16px 0;background:#fff}
+    th,td{border:1px solid #deded7;padding:9px 10px;vertical-align:top;text-align:left}
+    th{background:#eef2ef}
+    code{background:#ecece7;border:1px solid #d9d9d2;border-radius:4px;padding:1px 5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+    pre{background:#222;color:#f3f3f3;border-radius:8px;padding:16px;overflow:auto}
+    pre code{background:transparent;border:0;color:inherit;padding:0}
+    .top{margin-bottom:24px}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="top"><a href="/AI-study/">返回首页</a></p>
+<h1>学习主题索引</h1>
+<h2>1. 横向认知到风控应用</h2>
+<p>核心问题：业界 Agent 能力如何迁移到风控业务，而不是停留在概念复述。</p>
+<p>可复习要点：</p>
+<ul>
+<li>泛化能力：哪些 Agent 能力是跨业务可复用的，例如工具调用、trace、任务分解。</li>
+<li>延展性：如何从单点任务扩展到流程级自动化。</li>
+<li>风控优势：B 端场景更容易拿到 Ground Truth，更适合做数据闭环和效果验证。</li>
+</ul>
+<h2>2. Agent 业界调研和架构选型</h2>
+<p>核心问题：不同框架和 SDK 解决的问题不同，不能直接横向混比。</p>
+<p>可复习要点：</p>
+<ul>
+<li>LangGraph：偏底层 orchestration runtime。</li>
+<li>Pi / DeerFlow：偏完整 agent harness。</li>
+<li>OpenAI / Anthropic SDK：偏模型厂商提供的 runner、tool、handoff、trace SDK。</li>
+<li>Spring AI 等框架：可作为工程集成层参考。</li>
+</ul>
+<p>选型时优先回答：</p>
+<ul>
+<li>它解决 runtime、harness、tool、memory、trace 中哪一层。</li>
+<li>是直接集成、借鉴思想，还是需要自研。</li>
+<li>它和风控系统边界是否一致。</li>
+</ul>
+<h2>3. Agent 三层表达框架</h2>
+<p>群内讨论倾向用更容易记忆的结构表达：</p>
+<ul>
+<li>上下文与记忆：决定模型知道什么、保留什么。</li>
+<li>约束与验证：决定模型能不能被业务系统接受。</li>
+<li>运行时与编排：决定任务怎么执行、如何流转、如何观测。</li>
+</ul>
+<p>这个框架适合用于面试、复盘和方案汇报。</p>
+<h2>4. 差异化故事</h2>
+<p>核心问题：不只是说「用了 Agent」，而是说明为什么跑得快、怎么跑、和行业有什么不同。</p>
+<p>可复习要点：</p>
+<ul>
+<li>跑得快：是否有业务数据闭环、工程底座、评估体系。</li>
+<li>怎么跑：是否有从 workflow 到 agentic workflow 的清晰演进路径。</li>
+<li>为什么不同：是否结合了风控场景的 Ground Truth、约束验证和业务专家经验。</li>
+</ul>
+<h2>5. 后续独立专题</h2>
+<ul>
+<li>Memory 机制：技术和业务一起讨论。</li>
+<li>落地方案选型：集成、借鉴、自研的边界。</li>
+<li>系统演进复盘：如果重做，哪些地方会从一开始引入 agentic workflow。</li>
+</ul>
+  </main>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026-05-24 AI Agent 技术架构讨论纪要</title>
+  <style>
+    body{margin:0;background:#f7f7f4;color:#222;font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+    main{max-width:1040px;margin:0 auto;padding:40px 22px 80px}
+    h1{font-size:32px;line-height:1.2;margin:0 0 22px}
+    h2{font-size:24px;margin:34px 0 14px;border-bottom:1px solid #deded7;padding-bottom:8px}
+    h3{font-size:19px;margin:26px 0 10px}
+    p,li{color:#343834}
+    a{color:#225f54;text-underline-offset:3px}
+    table{width:100%;border-collapse:collapse;margin:16px 0;background:#fff}
+    th,td{border:1px solid #deded7;padding:9px 10px;vertical-align:top;text-align:left}
+    th{background:#eef2ef}
+    code{background:#ecece7;border:1px solid #d9d9d2;border-radius:4px;padding:1px 5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+    pre{background:#222;color:#f3f3f3;border-radius:8px;padding:16px;overflow:auto}
+    pre code{background:transparent;border:0;color:inherit;padding:0}
+    .top{margin-bottom:24px}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="top"><a href="/AI-study/">返回首页</a></p>
+<h1>2026-05-24 AI Agent 技术架构讨论纪要</h1>
+<h2>背景</h2>
+<p>群内原定围绕三件事持续对齐：</p>
+<ol>
+<li>横向认知到风控应用：泛化能力、延展性。</li>
+<li>Agent 业界调研、架构选型，以及什么适合风控场景。</li>
+<li>差异化故事：为什么我们跑得快、怎么跑、和行业有什么不同。</li>
+</ol>
+<p>2026-05-24 的讨论主要聚焦第 2 点，也延伸到第 1 点和第 3 点的表达框架。</p>
+<h2>核心共识</h2>
+<h3>1. Agent 架构不是单一框架问题</h3>
+<p>讨论中把 Agent 相关能力拆成几个层次理解：</p>
+<ul>
+<li>LangGraph 更像底层 orchestration runtime。</li>
+<li>Pi / DeerFlow 更像完整 agent harness。</li>
+<li>OpenAI / Anthropic SDK 更像模型厂商提供的 agent runner、tool、handoff、trace SDK。</li>
+</ul>
+<p>这个拆法的价值是避免把所有产品或框架混在一起比较，而是先判断它解决的是运行时、工具调用、流程编排、观测追踪，还是业务 harness。</p>
+<h3>2. Memory 需要独立研究</h3>
+<p>大家认为「记忆」强依赖业务场景，不能只停留在泛泛概念。后续需要结合技术机制和风控业务一起展开，例如：</p>
+<ul>
+<li>哪些信息值得沉淀为长期记忆。</li>
+<li>哪些上下文只适合单次任务内使用。</li>
+<li>如何避免 memory 污染判断。</li>
+<li>如何验证 memory 对业务效果有真实收益。</li>
+</ul>
+<h3>3. Runtime、编排和观测要一起看</h3>
+<p>架构讨论涉及：</p>
+<ul>
+<li>编排：链式流程、handoff、可能的多 agent 协作。</li>
+<li>工具调用：模型如何调用业务工具、查询数据、写回结果。</li>
+<li>观测：trace、日志、效果评估，群内提到类似 Langfuse 这一类观测能力。</li>
+<li>上下文传递：对 a-to-a 交互能否有效解决上下文传递问题持保留态度。</li>
+</ul>
+<h3>4. 循环结束条件必须工程化</h3>
+<p>Agent 循环不能只依赖模型自觉停止。讨论中认为结束条件至少应包括：</p>
+<ul>
+<li>任务已完成。</li>
+<li>验证通过。</li>
+<li>达到系统上限，例如重试次数、上下文长度、预算或时间上限。</li>
+<li>进入兜底策略，例如人工介入、降级为确定性流程、记录失败原因。</li>
+</ul>
+<h3>5. 技术落地要区分「集成」和「借鉴」</h3>
+<p>大家明确区分两类策略：</p>
+<ul>
+<li>可直接集成：通用性强、和业务边界匹配的框架，例如 LangGraph、Spring AI 这类底层能力。</li>
+<li>只做思路借鉴：闭源、场景不贴合、工程边界不一致的方案，只参考设计思想，不强行接入。</li>
+</ul>
+<p>自研部分需要说明为什么必须自研，以及自研解决的是业务约束、工程集成、效果验证还是组织协作问题。</p>
+<h2>对风控场景的启发</h2>
+<p>B 端风控场景很多时候存在 Ground Truth，更容易形成数据闭环。这个特点可以成为 Agent 落地的关键优势：</p>
+<ul>
+<li>更容易定义任务是否完成。</li>
+<li>更容易对输出做自动或半自动验证。</li>
+<li>更容易沉淀评估集和回归测试。</li>
+<li>更适合把 agentic workflow 与传统工程流程结合，而不是完全替代。</li>
+</ul>
+<h2>需要继续回答的问题</h2>
+<ul>
+<li>Memory 在风控场景中到底存什么、怎么更新、如何验证收益。</li>
+<li>Agent 循环的结束条件和兜底策略如何落到系统设计。</li>
+<li>技术选型中哪些部分直接集成，哪些部分借鉴，哪些必须自研。</li>
+<li>如果重新做，为什么一开始不是 agentic workflow，演进路径会怎样变化。</li>
+<li>面试或对外表达时，如何把「横向认知 -&gt; 风控应用 -&gt; 差异化故事」串成一个完整叙事。</li>
+</ul>
+<h2>来源说明</h2>
+<p>本纪要基于私有学习群 2026-05-24 10:41 至 12:55 附近的讨论和群内会议纪要整理，去除了会议链接、社交互动记录和无关闲聊。</p>
+  </main>
+</body>
+</html>

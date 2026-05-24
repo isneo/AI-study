@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude-Codex 三层协作框架 v2.2</title>
+  <style>
+    body{margin:0;background:#f7f7f4;color:#222;font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+    main{max-width:1040px;margin:0 auto;padding:40px 22px 80px}
+    h1{font-size:32px;line-height:1.2;margin:0 0 22px}
+    h2{font-size:24px;margin:34px 0 14px;border-bottom:1px solid #deded7;padding-bottom:8px}
+    h3{font-size:19px;margin:26px 0 10px}
+    p,li{color:#343834}
+    a{color:#225f54;text-underline-offset:3px}
+    table{width:100%;border-collapse:collapse;margin:16px 0;background:#fff}
+    th,td{border:1px solid #deded7;padding:9px 10px;vertical-align:top;text-align:left}
+    th{background:#eef2ef}
+    code{background:#ecece7;border:1px solid #d9d9d2;border-radius:4px;padding:1px 5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+    pre{background:#222;color:#f3f3f3;border-radius:8px;padding:16px;overflow:auto}
+    pre code{background:transparent;border:0;color:inherit;padding:0}
+    .top{margin-bottom:24px}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="top"><a href="/AI-study/">返回首页</a></p>
+<p>---</p>
+<p>title: Claude-Codex三层协作框架</p>
+<p>type: 框架</p>
+<p>tags: [Codex, 协作, 三层架构]</p>
+<p>input: 使用 Codex 进行多代理协作时</p>
+<p>output: Claude-Codex 三层协作模型的设计和使用指南</p>
+<p>updated: 2026-03-13</p>
+<p>---</p>
+<h1>Claude-Codex 三层协作框架 v2.2</h1>
+<p>&gt; <strong>⚠️ 重要</strong>：不要使用 <code>Skill(skill-codex:codex)</code> 工具。</p>
+<p>&gt; 必须使用 <code>CODEX_HOME=~/.codex codex exec ...</code> 命令。</p>
+<p>&gt; Skill 工具是为 resume 场景设计的，不适用于新的评审任务。</p>
+<p>&gt; 基于 Actor-Critic 模式，Claude 负责理解和实现，Codex 负责验证和审查。</p>
+<p>&gt; 配套文件：工具箱（Claude-Codex协作工具箱.md）、案例（Claude-Codex实战案例.md）</p>
+<h2>版本变更</h2>
+<h3>v2.2 (2026-03-03)</h3>
+<ul>
+<li>✅ 任务分类机制（new/modify/mixed）</li>
+<li>✅ 合约提取工具（自动提取接口定义）</li>
+<li>✅ Sub-Agent 触发标准明确化</li>
+<li>✅ 自检报告自动传递给 Codex</li>
+<li>✅ 内部系统安全原则（成本收益分析）</li>
+<li>✅ 动态迭代上限（3-7 轮）</li>
+</ul>
+<h3>v2.1 (2026-03-03)</h3>
+<ul>
+<li>✅ Layer 1 自动化信息提取</li>
+</ul>
+<h3>v2 (2026-03-03)</h3>
+<ul>
+<li>✅ Layer 2.5 自动化自检</li>
+<li>✅ Sub-Agent 增量验证</li>
+<li>✅ 迭代轮数控制</li>
+</ul>
+<h2>核心理念</h2>
+<p><strong>分工明确 + 自动化自检 + 增量验证 + 迭代控制</strong></p>
+<h3>角色分工</h3>
+<table>
+<thead><tr><th>任务类型</th><th>Claude 擅长</th><th>Codex 擅长</th><th>建议分工</th></tr></thead>
+<tbody>
+<tr><td>需求理解</td><td>✅ 快速理解用户意图</td><td>❌ 需要明确指令</td><td>Claude 主导</td></tr>
+<tr><td>方案设计</td><td>✅ 创造性方案</td><td>✅ 工程细节把控</td><td>Claude 初稿 → Codex 评审</td></tr>
+<tr><td>代码实现</td><td>✅ 快速原型</td><td>✅ 精确实现</td><td>Claude 实现</td></tr>
+<tr><td>边界测试</td><td>❌ 容易遗漏边界</td><td>✅ 深度边界检查</td><td>Codex 主导</td></tr>
+<tr><td>安全审查</td><td>❌ 可能遗漏漏洞</td><td>✅ 全面安全检查</td><td>Codex 主导</td></tr>
+</tbody></table>
+<p><strong>协作增益验证</strong>（2026-02-28 Actor-Critic 实战）：</p>
+<ul>
+<li>Codex 优势：深度代码理解、工程细节把控、风险识别全面（安全/合规/稳定性）</li>
+<li>Claude 优势：方向性设计、用户体验关注、实施可行性判断</li>
+<li>效果：方案质量从 3/10（愿景文档）→ 9/10（可执行计划），提升 200%</li>
+</ul>
+<h3>四层架构</h3>
+<pre><code>Layer 1: 规划层 (Planning)
+  ├─ 任务分类（new/modify/mixed）
+  ├─ 自动化信息提取
+  ├─ 合约提取
+  └─ 方案设计 → Codex 评审
+
+Layer 2: 实施层 (Implementation)
+  ├─ 快速实现
+  └─ Sub-Agent 增量验证
+
+Layer 2.5: 自动化自检 (Self-Check)
+  ├─ 测试套件
+  ├─ 语法检查
+  ├─ 文档一致性
+  └─ 生成报告 → 传递给 Codex
+
+Layer 3: 验证层 (Verification)
+  ├─ Codex 完整性检查 + 安全审查
+  ├─ 问题优先级判断（P0/P1/P2）
+  └─ 修复 → Sub-Agent 验证 → 重新评审</code></pre>
+<h2>Layer 1: 规划层</h2>
+<h3>任务分类</h3>
+<table>
+<thead><tr><th>任务类型</th><th>特征</th><th>Layer 1 策略</th></tr></thead>
+<tbody>
+<tr><td><strong>new</strong></td><td>全新功能，无现有代码</td><td>直接设计 + 用户确认</td></tr>
+<tr><td><strong>modify</strong></td><td>修改现有功能</td><td>自动提取现有定义 + 对比变更</td></tr>
+<tr><td><strong>mixed</strong></td><td>既有新增又有修改</td><td>提取现有 + 设计新增 + 整合</td></tr>
+</tbody></table>
+<h3>Claude 职责</h3>
+<ol>
+<li><strong>任务分类</strong> → 选择对应策略</li>
+<li><strong>自动化信息提取</strong> → 脚本/Sub-Agent 提取现有定义（避免&quot;凭记忆写&quot;）</li>
+<li><strong>合约提取</strong> → 接口定义、参数约束、返回值规范</li>
+<li><strong>方案设计</strong> → 拆解 Phase、技术方案、验收标准</li>
+<li><strong>产物</strong> → 实施计划文档 + 合约文档</li>
+</ol>
+<h3>Codex 职责</h3>
+<ol>
+<li><strong>方案评审</strong> → 可行性、架构风险、安全隐患</li>
+<li><strong>反馈</strong> → APPROVE / REVISE / REJECT + 问题分级</li>
+<li><strong>质量门槛</strong> → APPROVE 才能进入 Layer 2</li>
+</ol>
+<h2>Layer 2: 实施层</h2>
+<h3>Claude 职责</h3>
+<ol>
+<li><strong>快速实现</strong> → 按 Phase 顺序实现</li>
+<li><strong>增量交付</strong> → 关键功能点完成后立即 Sub-Agent 验证</li>
+</ol>
+<h3>Sub-Agent 增量验证</h3>
+<p><strong>触发时机</strong>：</p>
+<ul>
+<li>单个问题修复后 → 立即验证该问题</li>
+<li>关键模块完成后 → 验证该模块</li>
+<li>批量修复后 → 批量验证</li>
+</ul>
+<p><strong>不触发</strong>：文档更新、注释修改、变量重命名</p>
+<h2>Layer 2.5: 自动化自检</h2>
+<h3>自检项目</h3>
+<ol>
+<li>测试套件（必须通过）</li>
+<li>语法检查（必须通过）</li>
+<li>文档一致性（必须通过）</li>
+<li>生成报告 → 自动传递给 Codex</li>
+</ol>
+<h3>自检报告传递</h3>
+<pre><code># 生成自检报告
+SELF_CHECK_REPORT=$(bash hooks/lib/phase-self-check.sh phase1 docs/plans/T2_Phase1_实施报告.md)
+
+# 传递给 Codex
+codex exec --sandbox read-only --full-auto \
+  &quot;Review Phase 1 implementation.
+   Self-check report: $SELF_CHECK_REPORT
+   Focus on: security, edge cases, architecture.&quot;</code></pre>
+<h2>Layer 3: 验证层</h2>
+<h3>Codex 职责</h3>
+<ol>
+<li><strong>完整性检查</strong> → 测试、文档一致性、验收标准</li>
+<li><strong>安全审查</strong> → 输入验证、权限控制、TOCTOU、注入攻击</li>
+<li><strong>验收判定</strong> → APPROVE / REVISE / REJECT（评分 X/10）</li>
+</ol>
+<h3>Claude 职责</h3>
+<ol>
+<li><strong>问题优先级判断</strong></li>
+</ol>
+<p>   - P0（阻塞）→ 必须修复</p>
+<p>   - P1（重要）→ 应该修复</p>
+<p>   - P2（建议）→ 记录到任务清单</p>
+<ol>
+<li><strong>问题修复</strong> → Sub-Agent 验证 → 重新提交 Codex</li>
+</ol>
+<h3>代码审查协作要点</h3>
+<p><strong>Codex 验证逻辑</strong>：读取实际代码交叉验证、检查导出路径、验证类型兼容性、运行编译检查。</p>
+<p><strong>Claude 配合要点</strong>：</p>
+<ol>
+<li>提供完整的符号列表（不让 Codex 猜测）</li>
+<li>使用精确文件路径（<code>@/lib/storage</code> 而非 <code>../storage</code>）</li>
+<li>明确类型导入（<code>type { X }</code> vs <code>{ X }</code>）</li>
+<li>提供验证步骤（如 <code>tsc --noEmit</code>）</li>
+</ol>
+<p><strong>迭代节奏</strong>：</p>
+<ul>
+<li>1-3 轮：快速试错，建立理解</li>
+<li>4-8 轮：应收敛到架构正确性</li>
+<li>9+ 轮：应只剩细节</li>
+<li>15+ 轮：方法论有问题，需反思</li>
+</ul>
+<h3>评审结论决策流</h3>
+<p>Codex 给出评审结论后，Claude 独立判断是否接受：</p>
+<pre><code>Codex 给出结论（APPROVE / REVISE / REJECT + 问题清单）
+    │
+    ├── Claude 认可 → 按建议迭代实施
+    │     └── 实施完成 → 重新提交评审
+    │
+    └── Claude 不认可 → 分析分歧
+          │
+          ├── Codex 过度设计（内部系统追求完美）
+          │     └── Claude 说明理由，标记已知限制，跳过
+          │
+          ├── Codex 建议超出任务范围
+          │     └── 记录到任务清单，本轮不处理
+          │
+          ├── 分歧涉及架构/方向性问题
+          │     └── 提交给用户决策
+          │
+          └── 不确定谁对
+                └── Claude 列出双方论点 → 提交给用户决策</code></pre>
+<p><strong>原则</strong>：Claude 有独立判断权，不盲从 Codex。但分歧无法自行解决时，上报用户。</p>
+<h3>质量门槛</h3>
+<ul>
+<li><strong>公网服务</strong>：评分 ≥ 8/10，所有 HIGH 问题必须彻底修复</li>
+<li><strong>内部系统</strong>：评分 ≥ 6/10 可接受，可标记已知限制</li>
+</ul>
+<h2>迭代轮数控制</h2>
+<h3>动态上限</h3>
+<pre><code>基础上限：5 轮
+动态调整：
+├─ 评分持续上升（+2 分/轮）→ 延长至 7 轮
+├─ 评分停滞（±1 分波动）→ 保持 5 轮
+└─ 评分下降（-2 分/轮）→ 缩短至 3 轮</code></pre>
+<h3>触发暂停条件</h3>
+<ol>
+<li>连续 3 轮发现同类问题 → 方法论有问题</li>
+<li>评分无明显提升 → 陷入局部最优</li>
+<li>新问题数量不减反增 → 复杂度失控</li>
+<li>达到动态上限 → 根据评分趋势判断</li>
+</ol>
+<h3>暂停决策流程</h3>
+<pre><code>检测到暂停条件 → 生成暂停报告
+  ├─ 迭代历史总结
+  ├─ 问题模式分析
+  ├─ 成本收益分析
+  └─ 改进方向建议
+       ↓
+提交给用户决策：
+  ├─ 选项 A：继续迭代（调整策略）
+  ├─ 选项 B：架构变更（重新设计）
+  ├─ 选项 C：接受现状（标记已知限制）
+  └─ 选项 D：拆分任务（降低复杂度）</code></pre>
+<h2>内部系统安全原则</h2>
+<h3>适用场景</h3>
+<ul>
+<li>内部工具/系统（非面向公网）</li>
+<li>攻击面有限（单用户或小团队）</li>
+<li>数据敏感度低（无 PII/财务数据）</li>
+</ul>
+<h3>成本收益权衡</h3>
+<table>
+<thead><tr><th>维度</th><th>彻底修复</th><th>接受限制</th></tr></thead>
+<tbody>
+<tr><td>实现成本</td><td>高</td><td>低</td></tr>
+<tr><td>维护成本</td><td>高</td><td>低</td></tr>
+<tr><td>安全收益</td><td>高</td><td>中</td></tr>
+<tr><td>攻击难度</td><td>极高</td><td>高</td></tr>
+</tbody></table>
+<h3>决策标准</h3>
+<pre><code>IF 内部系统 AND 攻击面有限 AND 攻击难度高 THEN
+  接受已知限制（标记 + 文档）
+ELSE IF 公网服务 OR 高敏感数据 THEN
+  彻底修复（不惜成本）
+ELSE
+  成本收益分析（具体情况具体分析）</code></pre>
+<h3>已知限制标记规范</h3>
+<pre><code>## 已知限制（内部系统可接受）
+
+### 1. 问题名称（严重度 - 已接受）
+- **问题**：具体描述
+- **影响**：影响范围
+- **攻击难度**：高/中/低
+- **缓解措施**：当前采取的措施
+- **彻底修复方案**：完整解决方案（暂不实施）</code></pre>
+<h2>协作要点</h2>
+<ol>
+<li><strong>提前介入</strong> → Codex 在规划阶段就参与</li>
+<li><strong>增量验证</strong> → 核心功能完成就验证</li>
+<li><strong>自动化自检</strong> → Layer 2.5 减少低级错误</li>
+<li><strong>明确标准</strong> → 验收标准写入实施计划</li>
+<li><strong>快速迭代</strong> → 发现问题立即修复</li>
+<li><strong>上下文管理</strong> → Claude 保持连续性，Codex 专注验证</li>
+</ol>
+<h2>工具配置</h2>
+<p><strong>环境变量</strong>（必须）：</p>
+<pre><code>export CODEX_HOME=~/.codex</code></pre>
+<p>&gt; 原因：Claude Code sandbox 的 <code>$HOME</code> 被重定向，导致 <code>config.toml</code> 找不到。</p>
+<p>标准调用模板（Layer 1/2/3）、自检脚本、合约提取工具见：<a href="../../resource-catalog.html">Claude-Codex协作工具箱.md</a></p>
+<h2>适用场景</h2>
+<h3>高优先级（必须使用）</h3>
+<ul>
+<li>复杂架构设计方案</li>
+<li>安全敏感功能</li>
+<li>多文件协同修改</li>
+</ul>
+<h3>中优先级（建议使用）</h3>
+<ul>
+<li>新功能实现（3+ 文件修改）</li>
+<li>重构任务</li>
+<li>性能优化</li>
+</ul>
+<h3>低优先级（可选）</h3>
+<ul>
+<li>单文件小改动</li>
+<li>文档更新</li>
+<li>配置调整</li>
+</ul>
+<h2>触发条件</h2>
+<p>当用户说以下关键词时，使用本框架：</p>
+<ul>
+<li>&quot;和 Codex 协作&quot;</li>
+<li>&quot;让 Codex 评审&quot;</li>
+<li>&quot;复杂任务&quot;</li>
+<li>&quot;需要深度验证&quot;</li>
+<li>&quot;安全敏感&quot;</li>
+</ul>
+<h2>常见错误</h2>
+<ol>
+<li>忘记设置 CODEX_HOME</li>
+<li>跳过 Layer 1 评审 → 方向性错误</li>
+<li>跳过 Layer 2.5 自检 → Codex 发现低级错误</li>
+<li>等全部完成再评审 → 大规模返工</li>
+<li>超过 5 轮仍继续 → 方法论有问题</li>
+<li>忘记任务分类 → 使用错误策略</li>
+<li>内部系统追求完美 → 过度设计</li>
+</ol>
+<p>---</p>
+<p><strong>配套文件</strong>：</p>
+<ul>
+<li>工具箱：记忆库/语义记忆/Claude-Codex协作工具箱.md</li>
+<li>案例：记忆库/语义记忆/Claude-Codex实战案例.md</li>
+</ul>
+<p><em>最后更新：2026-03-03</em></p>
+<p>---</p>
+<h2>Claude-Codex协作工具箱</h2>
+<h1>Claude-Codex 协作工具箱</h1>
+<p>&gt; <strong>⚠️ 重要</strong>：不要使用 <code>Skill(skill-codex:codex)</code> 工具。</p>
+<p>&gt; 必须使用 <code>CODEX_HOME=~/.codex codex exec ...</code> 命令。</p>
+<p>&gt; Skill 工具是为 resume 场景设计的，不适用于新的评审任务。</p>
+<p>&gt; 配套 Claude-Codex三层协作框架_v2.2.md 使用</p>
+<h2>目录</h2>
+<ol>
+<li><a href="#layer-25-自检脚本">Layer 2.5 自检脚本</a></li>
+<li><a href="#codex-cli-配置">Codex CLI 配置</a></li>
+<li><a href="#sub-agent-验证模板">Sub-Agent 验证模板</a></li>
+<li><a href="#合约提取工具">合约提取工具</a></li>
+<li><a href="#信息提取脚本">信息提取脚本</a></li>
+</ol>
+<p>---</p>
+<h2>Layer 2.5 自检脚本</h2>
+<h3>phase-self-check.sh</h3>
+<p>完整脚本：<code>hooks/lib/phase-self-check.sh</code></p>
+<pre><code>#!/usr/bin/env bash
+# Phase Self-Check - 自动化 Layer 2.5 Claude 自检
+
+set -euo pipefail
+
+PHASE=&quot;$1&quot;  # phase0, phase1, phase2, etc.
+REPORT=&quot;$2&quot;  # 实施报告路径
+
+echo &quot;=== Phase $PHASE Self-Check ===&quot;
+
+# 1. 运行测试套件
+echo &quot;[1/5] Running test suite...&quot;
+if bash &quot;hooks/tests/test-$PHASE.sh&quot;; then
+  echo &quot;✅ Tests passed&quot;
+  TEST_STATUS=&quot;PASS&quot;
+else
+  echo &quot;❌ Tests failed&quot;
+  TEST_STATUS=&quot;FAIL&quot;
+fi
+
+# 2. 检查语法
+echo &quot;[2/5] Checking syntax...&quot;
+SYNTAX_ERRORS=0
+for script in hooks/lib/*.sh; do
+  if ! bash -n &quot;$script&quot; 2&gt;/dev/null; then
+    echo &quot;❌ Syntax error in $script&quot;
+    ((SYNTAX_ERRORS++))
+  fi
+done
+if [ $SYNTAX_ERRORS -eq 0 ]; then
+  echo &quot;✅ Syntax OK&quot;
+  SYNTAX_STATUS=&quot;PASS&quot;
+else
+  echo &quot;❌ Found $SYNTAX_ERRORS syntax errors&quot;
+  SYNTAX_STATUS=&quot;FAIL&quot;
+fi
+
+# 3. 文档一致性检查
+echo &quot;[3/5] Checking doc consistency...&quot;
+CLAIMED_FIXES=$(grep -E &quot;^[0-9]+\. ✅&quot; &quot;$REPORT&quot; | wc -l | tr -d &#x27; &#x27;)
+echo &quot;Claimed fixes: $CLAIMED_FIXES&quot;
+DOC_STATUS=&quot;PASS&quot;
+
+# 4. 代码覆盖率检查（可选）
+echo &quot;[4/5] Checking code coverage...&quot;
+# TODO: 集成覆盖率工具
+COVERAGE_STATUS=&quot;SKIP&quot;
+
+# 5. 生成自检报告
+echo &quot;[5/5] Generating self-check report...&quot;
+REPORT_FILE=&quot;/tmp/self-check-$PHASE-$(date +%Y%m%d-%H%M%S).md&quot;
+cat &gt; &quot;$REPORT_FILE&quot; &lt;&lt;EOF
+# Phase $PHASE Self-Check Report
+
+Generated: $(date &#x27;+%Y-%m-%d %H:%M:%S&#x27;)
+
+## Test Results
+- Status: $TEST_STATUS
+- Test suite: hooks/tests/test-$PHASE.sh
+
+## Syntax Check
+- Status: $SYNTAX_STATUS
+- Errors: $SYNTAX_ERRORS
+
+## Doc Consistency
+- Status: $DOC_STATUS
+- Claimed fixes: $CLAIMED_FIXES
+
+## Code Coverage
+- Status: $COVERAGE_STATUS
+
+## Overall Status
+EOF
+
+if [ &quot;$TEST_STATUS&quot; = &quot;PASS&quot; ] &amp;&amp; [ &quot;$SYNTAX_STATUS&quot; = &quot;PASS&quot; ] &amp;&amp; [ &quot;$DOC_STATUS&quot; = &quot;PASS&quot; ]; then
+  echo &quot;✅ READY FOR CODEX VERIFICATION&quot; &gt;&gt; &quot;$REPORT_FILE&quot;
+  echo &quot;&quot;
+  echo &quot;✅ Self-check complete: $REPORT_FILE&quot;
+  echo &quot;✅ Ready for Codex verification&quot;
+  cat &quot;$REPORT_FILE&quot;
+  exit 0
+else
+  echo &quot;❌ FAILED - FIX ISSUES BEFORE CODEX VERIFICATION&quot; &gt;&gt; &quot;$REPORT_FILE&quot;
+  echo &quot;&quot;
+  echo &quot;❌ Self-check failed: $REPORT_FILE&quot;
+  echo &quot;❌ Fix issues before Codex verification&quot;
+  cat &quot;$REPORT_FILE&quot;
+  exit 1
+fi</code></pre>
+<h3>使用方式</h3>
+<pre><code># 在 Layer 2 完成后，Layer 3 之前运行
+bash hooks/lib/phase-self-check.sh phase1 docs/plans/T2_Phase1_实施报告_v1.5.md
+
+# 捕获报告并传递给 Codex
+SELF_CHECK_REPORT=$(bash hooks/lib/phase-self-check.sh phase1 docs/plans/T2_Phase1_实施报告_v1.5.md 2&gt;&amp;1)</code></pre>
+<p>---</p>
+<h2>Codex CLI 配置</h2>
+<h3>环境变量</h3>
+<p><strong>必须设置</strong>（Claude Code sandbox 环境）：</p>
+<pre><code>export CODEX_HOME=~/.codex</code></pre>
+<p>原因：Claude Code sandbox 的 <code>$HOME</code> 被重定向到 <code>~/.claude-api-env</code>，导致 <code>~/.codex/config.toml</code> 找不到。</p>
+<h3>配置文件</h3>
+<p><code>~/.codex/config.toml</code>：</p>
+<pre><code>model_provider = &quot;crs&quot;
+model = &quot;gpt-5.3-codex&quot;
+model_reasoning_effort = &quot;xhigh&quot;
+
+[model_providers.crs]
+base_url = &quot;https://your-proxy.com/openai&quot;
+env_key = &quot;CRS_OAI_KEY&quot;</code></pre>
+<h3>Sandbox 模式</h3>
+<ul>
+<li><code>--sandbox read-only</code>：只读分析（推荐 review）</li>
+<li><code>--sandbox workspace-write</code>：允许本地写入</li>
+<li><code>--sandbox danger-full-access</code>：完全访问（需谨慎）</li>
+</ul>
+<h3>CLI 踩坑</h3>
+<ul>
+<li><strong><code>-m</code> 参数陷阱</strong>：<code>-m gpt-5.3-codex</code> 可能忽略 config.toml 的自定义 provider，请求发往 <code>api.openai.com</code></li>
+<li><strong>review 模式</strong>：<code>codex exec review --uncommitted</code> 范围太广效果差；定向用 <code>codex exec --full-auto &quot;review prompt&quot;</code> 指定文件更高效</li>
+<li><code>--uncommitted</code> 与自定义 PROMPT 互斥，二选一</li>
+<li><code>--quiet</code> 不是合法参数</li>
+</ul>
+<h3>标准调用模板</h3>
+<h4>Layer 1: 规划层评审</h4>
+<pre><code>export CODEX_HOME=~/.codex
+
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Deeply review this implementation plan: docs/plans/T2_Phase1_实施报告_v1.0.md
+
+   Focus on:
+   1. Technical feasibility
+   2. Architecture risks
+   3. Security concerns
+   4. Completeness of acceptance criteria
+
+   Output format:
+   - Score: X/10
+   - Judgment: APPROVE / REVISE / REJECT
+   - Issues: [HIGH/MEDIUM/LOW] description
+   - Suggestions: specific improvements&quot;</code></pre>
+<h4>Layer 2: Sub-Agent 增量验证</h4>
+<pre><code>export CODEX_HOME=~/.codex
+
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Verify fix for MEDIUM #1 (test cleanup logic):
+
+   1. Check ORIGINAL_PROJECT_ROOT is saved before cd
+   2. Check cleanup restores original directory
+   3. Run isolated test to confirm no path issues
+
+   Files to check:
+   - hooks/tests/test-phase0.sh
+
+   Output: PASS/FAIL + specific issues if any&quot;</code></pre>
+<h4>Layer 3: 完整验收</h4>
+<pre><code>export CODEX_HOME=~/.codex
+
+# 生成自检报告
+SELF_CHECK_REPORT=$(bash hooks/lib/phase-self-check.sh phase1 docs/plans/T2_Phase1_实施报告_v1.5.md 2&gt;&amp;1)
+
+# 传递给 Codex
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Perform complete verification of Phase 1 implementation.
+
+   Implementation report: docs/plans/T2_Phase1_实施报告_v1.5.md
+
+   Self-check report:
+   $SELF_CHECK_REPORT
+
+   Focus on:
+   1. Completeness: all acceptance criteria met?
+   2. Security: input validation, TOCTOU, symlink bypass, injection
+   3. Edge cases: error handling, boundary conditions
+   4. Code quality: maintainability, clarity
+
+   Output format:
+   - Score: X/10
+   - Judgment: APPROVE / REVISE / REJECT
+   - Issues: [HIGH/MEDIUM/LOW] description
+   - Verification: specific tests to run&quot;</code></pre>
+<p>---</p>
+<h2>Sub-Agent 验证模板</h2>
+<h3>单个问题验证</h3>
+<pre><code>export CODEX_HOME=~/.codex
+
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Verify fix for [SEVERITY] #[N] ([problem description]):
+
+   Expected fix:
+   1. [具体修复点 1]
+   2. [具体修复点 2]
+
+   Files to check:
+   - [file1]
+   - [file2]
+
+   Verification steps:
+   1. [验证步骤 1]
+   2. [验证步骤 2]
+
+   Output: PASS/FAIL + specific issues if any&quot;</code></pre>
+<h3>关键模块验证</h3>
+<pre><code>export CODEX_HOME=~/.codex
+
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Verify [module name] implementation:
+
+   Module purpose: [简述功能]
+
+   Key requirements:
+   1. [需求 1]
+   2. [需求 2]
+
+   Files implemented:
+   - [file1]
+   - [file2]
+
+   Test coverage:
+   - [test file]
+
+   Verification focus:
+   1. Functionality: does it work as expected?
+   2. Security: any vulnerabilities?
+   3. Edge cases: error handling complete?
+
+   Output: PASS/FAIL + specific issues&quot;</code></pre>
+<h3>批量修复验证</h3>
+<pre><code>export CODEX_HOME=~/.codex
+
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Verify batch fixes for v[X.Y]:
+
+   Fixed issues:
+   1. [SEVERITY] #[N]: [description]
+   2. [SEVERITY] #[N]: [description]
+   3. [SEVERITY] #[N]: [description]
+
+   Changed files:
+   - [file1]
+   - [file2]
+
+   Verification:
+   For each issue, check:
+   1. Fix is correct
+   2. No regression
+   3. Test coverage added
+
+   Output:
+   - Issue #[N]: PASS/FAIL + details
+   - Overall: PASS/FAIL&quot;</code></pre>
+<p>---</p>
+<h2>合约提取工具</h2>
+<h3>Bash 函数签名提取</h3>
+<pre><code>#!/usr/bin/env bash
+# extract-bash-contract.sh - 提取 Bash 函数签名和参数
+
+SCRIPT_FILE=&quot;$1&quot;
+
+echo &quot;# Bash Contract: $SCRIPT_FILE&quot;
+echo &quot;&quot;
+
+# 提取函数定义
+grep -E &quot;^[a-zA-Z_][a-zA-Z0-9_]*\(\)&quot; &quot;$SCRIPT_FILE&quot; | while read -r func; do
+  func_name=&quot;${func%()}&quot;
+  echo &quot;## Function: $func_name&quot;
+
+  # 提取函数体中的参数使用
+  awk &quot;/^$func_name\(\)/,/^}/&quot; &quot;$SCRIPT_FILE&quot; | grep -E &#x27;^\s*local &#x27; | head -5
+
+  echo &quot;&quot;
+done</code></pre>
+<p>使用：</p>
+<pre><code>bash extract-bash-contract.sh hooks/lib/scene-actions.sh &gt; Contract_scene-actions.md</code></pre>
+<h3>JSON Schema 字段提取</h3>
+<pre><code>#!/usr/bin/env bash
+# extract-json-schema.sh - 提取 JSON Schema 字段
+
+SCHEMA_FILE=&quot;$1&quot;
+
+echo &quot;# JSON Schema: $SCHEMA_FILE&quot;
+echo &quot;&quot;
+
+# 提取 action_key 枚举
+echo &quot;## action_key enum:&quot;
+jq -r &#x27;.properties.actions.items.properties.action_key.enum[]&#x27; &quot;$SCHEMA_FILE&quot;
+
+echo &quot;&quot;
+
+# 提取 params 结构
+echo &quot;## params structure:&quot;
+jq &#x27;.properties.actions.items.properties.params&#x27; &quot;$SCHEMA_FILE&quot;</code></pre>
+<p>使用：</p>
+<pre><code>bash extract-json-schema.sh config/scenes/schema.json &gt; Contract_schema.md</code></pre>
+<h3>Python 函数签名提取</h3>
+<pre><code>#!/usr/bin/env python3
+# extract-python-contract.py - 提取 Python 函数签名
+
+import ast
+import sys
+
+def extract_contract(file_path):
+    with open(file_path, &#x27;r&#x27;) as f:
+        tree = ast.parse(f.read())
+
+    print(f&quot;# Python Contract: {file_path}\n&quot;)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            # 函数名
+            print(f&quot;## Function: {node.name}&quot;)
+
+            # 参数
+            args = [arg.arg for arg in node.args.args]
+            print(f&quot;Parameters: {&#x27;, &#x27;.join(args)}&quot;)
+
+            # 返回类型（如果有类型注解）
+            if node.returns:
+                print(f&quot;Returns: {ast.unparse(node.returns)}&quot;)
+
+            # Docstring
+            docstring = ast.get_docstring(node)
+            if docstring:
+                print(f&quot;Description: {docstring.split(chr(10))[0]}&quot;)
+
+            print()
+
+if __name__ == &#x27;__main__&#x27;:
+    extract_contract(sys.argv[1])</code></pre>
+<p>使用：</p>
+<pre><code>python3 extract-python-contract.py hooks/lib/safe_file_ops.py &gt; Contract_safe_file_ops.md</code></pre>
+<p>---</p>
+<h2>信息提取脚本</h2>
+<h3>提取已实现 action 列表</h3>
+<pre><code>#!/usr/bin/env bash
+# extract-implemented-actions.sh
+
+SCRIPT_FILE=&quot;hooks/lib/scene-actions.sh&quot;
+
+echo &quot;# Implemented Actions&quot;
+echo &quot;&quot;
+
+grep -E &#x27;^\s+&quot;[a-z_]+&quot;&#x27; &quot;$SCRIPT_FILE&quot; | \
+  sed &#x27;s/[[:space:]]*&quot;\([^&quot;]*\)&quot;.*/\1/&#x27; | \
+  sort -u | \
+  while read -r action; do
+    echo &quot;- $action&quot;
+  done</code></pre>
+<h3>提取测试覆盖范围</h3>
+<pre><code>#!/usr/bin/env bash
+# extract-test-coverage.sh
+
+TEST_FILE=&quot;$1&quot;
+
+echo &quot;# Test Coverage: $TEST_FILE&quot;
+echo &quot;&quot;
+
+grep -E &quot;^echo \&quot;Test [0-9]+:&quot; &quot;$TEST_FILE&quot; | \
+  sed &#x27;s/echo &quot;Test \([0-9]*\): \(.*\)&quot;/\1. \2/&#x27; | \
+  while read -r test; do
+    echo &quot;- $test&quot;
+  done</code></pre>
+<p>---</p>
+<h2>快速参考</h2>
+<h3>完整工作流命令</h3>
+<pre><code># 1. Layer 1: 提取信息 + 设计方案
+bash extract-bash-contract.sh hooks/lib/scene-actions.sh &gt; Contract.md
+# ... 编写实施计划 ...
+
+# 2. Layer 1: Codex 评审方案
+export CODEX_HOME=~/.codex
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Review implementation plan: docs/plans/T2_Phase1_实施报告_v1.0.md&quot;
+
+# 3. Layer 2: 实施 + 增量验证
+# ... 实现功能 ...
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Verify fix for MEDIUM #1...&quot;
+
+# 4. Layer 2.5: 自检
+bash hooks/lib/phase-self-check.sh phase1 docs/plans/T2_Phase1_实施报告_v1.5.md
+
+# 5. Layer 3: Codex 完整验收
+SELF_CHECK_REPORT=$(bash hooks/lib/phase-self-check.sh phase1 docs/plans/T2_Phase1_实施报告_v1.5.md 2&gt;&amp;1)
+codex exec --skip-git-repo-check --sandbox read-only --full-auto \
+  &quot;Complete verification. Self-check: $SELF_CHECK_REPORT&quot;</code></pre>
+<p>---</p>
+<p><em>配套文件</em>：</p>
+<ul>
+<li>框架：记忆库/语义记忆/Claude-Codex三层协作框架_v2.2.md</li>
+<li>案例：记忆库/语义记忆/Claude-Codex实战案例.md</li>
+</ul>
+<p><em>最后更新：2026-03-03</em></p>
+<p>---</p>
+<h2>Claude-Codex协作工具箱</h2>
+<h1>Claude-Codex协作工具箱</h1>
+<h3>复杂多任务并行推进：任务分组 + 四步流程（计划→评审→实施→验证）</h3>
+<h2>多任务并行推进标准模式</h2>
+<p>当面对多个相互独立的子任务时，采用以下组织方式：</p>
+<ol>
+<li><strong>任务分组</strong>：按依赖关系分组，每个任务独立追踪状态</li>
+<li><strong>每个任务四步流程</strong>：</li>
+</ol>
+<p>   - 制定实施计划（spec）</p>
+<p>   - 提交评审（评审计划）</p>
+<p>   - 按评审通过的方案实施</p>
+<p>   - 再次评审（评审实现）</p>
+<ol>
+<li><strong>并行策略</strong>：同组内独立任务可并行，跨组依赖时串行</li>
+<li><strong>提交节奏</strong>：所有任务完成后统一合并提交，不逐个提交</li>
+</ol>
+<p>触发条件：任务数 ≥ 3 且各任务相互独立时采用此模式。</p>
+<p>---</p>
+<h2>Codex CLI 0.117.0 关键行为：认证命令、config 默认值、--quiet 不存在</h2>
+<h3>Codex CLI 0.117.0 关键知识点（Rust 版本）</h3>
+<p><strong>认证</strong></p>
+<ul>
+<li>正确命令：<code>codex login</code> / <code>codex login status</code>（<strong>不是</strong> <code>codex auth</code>）</li>
+<li>Plus/Pro 会员使用 ChatGPT OAuth，无需 OPENAI_API_KEY</li>
+<li>已通过 OAuth 登录后，只要删除第三方 config 覆盖即可还原</li>
+</ul>
+<p><strong>配置文件</strong></p>
+<ul>
+<li>删除 <code>~/.codex/config.toml</code> 即可完全还原为默认值（model_provider = openai）</li>
+<li><code>requires_openai_auth = true</code> 时 Codex 会<strong>忽略</strong> env_key，强制走 OAuth</li>
+<li><code>-c</code> flag 支持运行时覆盖 config.toml 中的值（dotted TOML path 语法）</li>
+</ul>
+<p><strong>已知不存在的 flag</strong></p>
+<ul>
+<li><code>--quiet</code> 不是合法参数（与 Node.js 旧版不同）</li>
+</ul>
+  </main>
+</body>
+</html>

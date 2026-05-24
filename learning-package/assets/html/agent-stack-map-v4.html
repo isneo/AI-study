@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent 技术栈全景图 v4 · 五层稳定版</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --ink: #14212c;
+      --muted: #627181;
+      --line: #d8e0e7;
+      --blue: #1d5fd1;
+      --green: #117a5d;
+      --amber: #a45c00;
+      --violet: #6047bb;
+      --red: #b3261e;
+      --cyan: #08758f;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ef;
+      --soft-amber: #fff2df;
+      --soft-violet: #eeeafe;
+      --soft-red: #fdeceb;
+      --soft-cyan: #e5f6fa;
+      --shadow: 0 18px 52px rgba(20, 33, 44, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input { font: inherit; }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 28px 34px 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 860;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.14;
+      font-weight: 880;
+    }
+
+    .intro {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.62;
+      max-width: 1160px;
+    }
+
+    .date {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: right;
+      min-width: 190px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 14px 34px;
+      background: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 780;
+      color: var(--ink);
+    }
+
+    .tab.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+
+    main {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 370px;
+      gap: 18px;
+    }
+
+    .view { display: none; }
+    .view.active { display: grid; gap: 16px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 860;
+    }
+
+    .panel-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .cap-row {
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .project-row {
+      display: grid;
+      grid-template-columns: 180px 1fr 1.25fr 1.25fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .cell {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fcfdfe;
+      min-height: 112px;
+    }
+
+    .cell.domain {
+      background: var(--soft-cyan);
+      border-color: #b8e5ee;
+    }
+
+    .cell h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      line-height: 1.3;
+      font-weight: 860;
+    }
+
+    .cell p {
+      margin: 0;
+      color: #2b3945;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .chip {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 4px 7px;
+      border-radius: 8px;
+      background: #edf1f5;
+      color: #44525f;
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .chip.blue { background: var(--soft-blue); color: var(--blue); }
+    .chip.green { background: var(--soft-green); color: var(--green); }
+    .chip.amber { background: var(--soft-amber); color: var(--amber); }
+    .chip.violet { background: var(--soft-violet); color: var(--violet); }
+    .chip.red { background: var(--soft-red); color: var(--red); }
+    .chip.cyan { background: var(--soft-cyan); color: var(--cyan); }
+
+    .arch {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fcfdfe;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 190px 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .layer.runtime-layer {
+      background: #fbfdfc;
+      border-color: #bfe4d4;
+    }
+
+    .layer-name strong {
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .layer-name span {
+      color: var(--muted);
+      font-size: 12px;
+      display: block;
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+
+    .planes {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fcfdfe;
+      padding: 13px;
+    }
+
+    .plane h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .plane p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .inline-planes {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .inline-plane {
+      border: 1px solid #cde9dc;
+      border-radius: 8px;
+      background: #f4fbf7;
+      padding: 10px;
+    }
+
+    .inline-plane strong {
+      display: block;
+      font-size: 12px;
+      color: var(--green);
+      margin-bottom: 5px;
+    }
+
+    .inline-plane span {
+      display: block;
+      color: #34453d;
+      font-size: 11.5px;
+      line-height: 1.42;
+    }
+
+    .catalog-toolbar {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search {
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 0 12px;
+      min-width: 280px;
+      background: #fff;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fcfdfe;
+      padding: 13px;
+      display: grid;
+      gap: 8px;
+      min-height: 190px;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.28;
+      font-weight: 860;
+    }
+
+    .label {
+      padding: 4px 7px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .label.framework { background: var(--soft-blue); color: var(--blue); }
+    .label.runtime { background: var(--soft-green); color: var(--green); }
+    .label.product { background: var(--soft-violet); color: var(--violet); }
+    .label.platform { background: var(--soft-amber); color: var(--amber); }
+    .label.concept { background: var(--soft-cyan); color: var(--cyan); }
+
+    .card p {
+      margin: 0;
+      color: #2a3742;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+    }
+
+    .side-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .side-panel h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 860;
+    }
+
+    .side-panel p,
+    .side-panel li {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .side-panel p { margin: 0; }
+
+    .quote {
+      padding: 9px 0 9px 12px;
+      border-left: 4px solid var(--blue);
+      background: #f8fbff;
+      color: #253340;
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 7px;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    @media (max-width: 1400px) {
+      main { grid-template-columns: 1fr; }
+      .sidebar { position: static; max-height: none; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .planes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 1080px) {
+      .cap-row,
+      .project-row,
+      .layer { grid-template-columns: 1fr; }
+      .inline-planes { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      header { grid-template-columns: 1fr; padding: 22px; }
+      .date { text-align: left; }
+      .tabs { padding: 12px 22px; }
+      main { padding: 14px; }
+      .cards,
+      .planes { grid-template-columns: 1fr; }
+      h1 { font-size: 27px; }
+      .search { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="eyebrow">Agent Stack Map v4 · Five-layer Stable Model</div>
+      <h1>Agent 技术栈全景图：五层稳定版</h1>
+      <p class="intro">v4 收敛为五层：产品层、Runtime/Harness 层、App Framework 层、Capability Components 层、Model/Data/Tool Infrastructure 层。原 L4/L5 合并成 Runtime/Harness，并在层内拆 Orchestration、Execution、Memory/State、Governance/Observability 四个平面；原 L1/L2 合并，去掉通用云基础设施噪音。</p>
+    </div>
+    <div class="date">核对日期：2026-05-23<br>定位：Java 后端转 AI Agent 工程</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-view="architecture">五层架构</button>
+    <button class="tab" data-view="capabilities">能力域矩阵</button>
+    <button class="tab" data-view="catalog">产品归属表</button>
+    <button class="tab" data-view="platforms">企业 Agent 平台</button>
+    <button class="tab" data-view="project">你的项目映射</button>
+  </nav>
+
+  <main>
+    <section>
+      <div class="view active" id="architecture"></div>
+      <div class="view" id="capabilities"></div>
+      <div class="view" id="catalog"></div>
+      <div class="view" id="platforms"></div>
+      <div class="view" id="project"></div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="side-panel">
+        <h2>v4 分层原则</h2>
+        <div class="quote">主图只保留 Agent 特异能力。K8s、Redis、IAM、CI/CD 这类通用后端基础设施不单独成层，只在生产化讨论中作为旁注。</div>
+      </div>
+
+      <div class="side-panel">
+        <h2>核心判断</h2>
+        <ul>
+          <li>LangGraph、DeerFlow、OpenHands、Pi 都属于 L4 Runtime/Harness 大层，但侧重点不同。</li>
+          <li>Spring AI、LangChain、LlamaIndex 属于 L3 App Framework / SDK。</li>
+          <li>Coze、Dify、Claude Code、Codex 属于 L5 产品/平台层。</li>
+          <li>MCP、VectorIndex、Guardrails、Eval 属于 L2 Agent 能力组件。</li>
+        </ul>
+      </div>
+
+      <div class="side-panel">
+        <h2>面试总答法</h2>
+        <p>“我会把 Agent 技术栈拆成五层：底层是模型、数据和工具基础；再上面是 MCP、向量检索、评测、Guardrails 这些 Agent 能力组件；再上面是 Spring AI、LangChain、LlamaIndex 这样的开发框架；核心是 Agent Runtime/Harness，里面分编排平面和执行平面；最上面是 Coze、Dify、Claude Code、Codex 或企业业务 Agent 这种产品层。”</p>
+      </div>
+
+      <div class="side-panel">
+        <h2>核心来源</h2>
+        <ul>
+          <li><a href="https://docs.langchain.com/oss/python/langgraph" target="_blank">LangGraph docs</a></li>
+          <li><a href="https://docs.langchain.com/oss/python/langchain/overview" target="_blank">LangChain docs</a></li>
+          <li><a href="https://docs.spring.io/spring-ai/reference/" target="_blank">Spring AI reference</a></li>
+          <li><a href="https://github.com/bytedance/deer-flow" target="_blank">DeerFlow GitHub</a></li>
+          <li><a href="https://github.com/earendil-works/pi" target="_blank">Pi GitHub</a></li>
+          <li><a href="https://www.coze.cn/overview" target="_blank">Coze</a></li>
+          <li><a href="https://docs.dify.ai/en/use-dify/getting-started/key-concepts" target="_blank">Dify docs</a></li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const layers = [
+      {
+        name: "L5 Business / Agent Product",
+        role: "用户/企业直接使用什么",
+        desc: "业务应用、Agent 产品、Agent Builder、低代码平台、办公空间。它们内部可能包含 Runtime、框架、组件和模型，但用户消费的是产品能力。",
+        examples: ["AI-trans 业务 Agent", "Coze / 扣子", "Coze Space", "Dify", "Claude Code", "Codex", "Agentforce"],
+        boundary: "产品层不等于底层框架；它通常产品化封装 L4-L1。"
+      },
+      {
+        name: "L4 Agent Runtime / Harness",
+        role: "Agent 如何持续执行",
+        desc: "运行循环、图编排、状态、checkpoint、工具执行环境、沙箱、文件/浏览器/命令行、记忆、权限、Trace、HITL。v4 把原 Orchestration 与 Harness 合并到这一层。",
+        examples: ["LangGraph", "DeerFlow", "OpenHands", "Pi", "Letta", "CrewAI", "AutoGen / AG2", "你的 Runtime"],
+        boundary: "核心是运行时语义和执行环境；内部再拆多个 plane。"
+      },
+      {
+        name: "L3 Agent App Framework / SDK",
+        role: "开发者如何接 AI 能力",
+        desc: "ChatModel、Prompt、RAG、Tool Calling、VectorStore、Agent SDK、数据连接器等开发抽象。",
+        examples: ["Spring AI", "LangChain", "LlamaIndex", "Semantic Kernel", "Haystack", "OpenAI Agents SDK", "Pydantic AI"],
+        boundary: "框架提供抽象和适配，不自动等于企业治理 runtime。"
+      },
+      {
+        name: "L2 Agent Capability Components",
+        role: "Agent 专属可替换能力",
+        desc: "MCP、Tool Calling、VectorIndex、Rerank、Guardrails、Eval、Observability、Memory Store、Prompt Registry 等。",
+        examples: ["MCP", "VectorIndex", "Langfuse", "LangSmith", "Arize Phoenix", "NeMo Guardrails", "Guardrails AI"],
+        boundary: "组件可被 L3 封装，也可被 L4 直接调用。"
+      },
+      {
+        name: "L1 Model / Data / Tool Infrastructure",
+        role: "Agent 依赖的外部世界",
+        desc: "模型 API、Embedding、向量库、业务 API、知识库、数据库、代码仓库、浏览器、文档库、执行沙箱底座。",
+        examples: ["OpenAI", "Anthropic", "Gemini", "DeepSeek", "pgvector", "Milvus", "CRM/工单/订单 API", "GitHub"],
+        boundary: "只保留 Agent 强相关基础；通用云原生基础设施不单独展开。"
+      }
+    ];
+
+    const runtimePlanes = [
+      ["Orchestration Plane", "负责下一步怎么走：workflow、graph、agent loop、router、多 Agent、checkpoint、HITL 状态转移。代表：LangGraph、CrewAI、AutoGen、自研 AgentLoop。"],
+      ["Execution Plane", "负责 Agent 能在哪做什么：shell、browser、file system、workspace、sandbox、skills、tool execution。代表：DeerFlow、OpenHands、Pi。"],
+      ["Memory / State Plane", "负责任务状态、长期记忆、经验召回、上下文压缩、checkpoint。代表：Letta、LangGraph State、Hermes Agent、你的 Memory。"],
+      ["Governance / Observability Plane", "负责权限、审批、Trace、Replay、Eval、Audit、成本和风险动作控制。代表：LangSmith、Langfuse、自研 ToolPolicy/HITL。"]
+    ];
+
+    const capabilityDomains = [
+      ["Task / Goal", "定义任务、输入输出和成功标准。", ["OpenAI Agents SDK", "LangChain Agent", "Spring Controller"], ["AgentRun", "Run lifecycle"], ["Coze Bot", "Dify App", "Claude Code task"], "AgentRun.taskType"],
+      ["State / Runtime", "保存状态、停止原因、错误、checkpoint、恢复点。", ["LangGraph State", "Temporal", "Semantic Kernel Process"], ["Letta", "DeerFlow", "OpenHands"], ["Codex task", "Devin workspace"], "AgentRun.status / stopReason"],
+      ["Orchestration", "决定下一步：固定 workflow、graph、loop、多 Agent。", ["LangGraph", "CrewAI", "AutoGen / AG2"], ["DeerFlow", "OpenHands", "自研 AgentLoop"], ["Coze Workflow", "Dify Workflow"], "FIXED_WORKFLOW / AGENT_LOOP"],
+      ["Context Engineering", "控制模型看到什么上下文和多少上下文。", ["LangChain prompt", "LlamaIndex context", "Spring AI Prompt"], ["Context policy", "Window manager"], ["Claude Code repo context", "Codex workspace context"], "ContextBuilder / ContextPolicy"],
+      ["Retrieval / Knowledge", "把正式知识和文档检索进上下文并给出引用。", ["LlamaIndex", "LangChain Retriever", "Spring AI VectorStore", "Haystack"], ["Retriever", "VectorIndex", "Reranker"], ["Perplexity", "Genspark", "Coze Knowledge"], "Retriever / VectorIndex / KnowledgeCandidate"],
+      ["Memory", "保存偏好、经验、历史和策略，支持审核、过期、召回。", ["Letta", "LangGraph State", "LlamaIndex Memory"], ["Hermes Agent", "OpenClaw", "DeerFlow"], ["Coding workspace memory", "Personal assistants"], "Memory Candidate -> ACTIVE"],
+      ["Tool / Action", "让 Agent 查询或操作外部系统。", ["Spring AI Tool Calling", "LangChain Tools", "MCP SDK"], ["Pi", "DeerFlow", "OpenHands"], ["Claude Code", "Codex", "Coze Plugins"], "McpToolClient / ToolDefinition"],
+      ["Governance / Safety", "权限、风险动作、人工审批、拒绝、降级和审计。", ["NeMo Guardrails", "Guardrails AI", "自研 Policy"], ["Sandbox permission", "Approval queue", "Audit log"], ["Copilot Studio", "Agentforce"], "ToolPolicy + HITL"],
+      ["Observability / Eval", "Trace、Replay、Regression、Outcome、成本、延迟。", ["LangSmith", "Langfuse", "Arize Phoenix", "AgentOps"], ["Trace recorder", "Eval replay"], ["Enterprise AI observability"], "TraceSpan / EvalReplay / EvalResult"],
+      ["Deployment / Ops", "上线、灰度、回滚、版本绑定、成本控制、告警。", ["Dify deployment", "Coze publish", "Feature flags"], ["Prompt versioning", "Config binding"], ["Copilot Studio", "Agentforce", "Bedrock Agents"], "PromptVersion / IterationRecord"]
+    ];
+
+    const products = [
+      ["LangGraph", "runtime", "L4", "Orchestration Plane", "状态图编排框架", "Primary at Runtime/Harness 的编排平面；适合长流程、有状态、checkpoint、HITL。"],
+      ["LangChain", "framework", "L3", "部分 agent orchestration", "LLM 应用开发框架", "Primary at App Framework；提供 agent、tool、retriever 等生态入口。"],
+      ["Spring AI", "framework", "L3", "L2 adapters", "Java/Spring AI 应用框架", "Primary at App Framework；适合作为 ChatModel / VectorStore / Tool Calling 适配层。"],
+      ["LlamaIndex", "framework", "L3", "L2 retrieval", "数据/RAG 框架", "Primary at Retrieval/Data；强在索引、检索、数据连接。"],
+      ["CrewAI", "runtime", "L4", "Orchestration Plane", "多 Agent 协作框架", "Primary at Runtime/Harness 的编排平面。"],
+      ["AutoGen / AG2", "runtime", "L4", "Orchestration Plane", "多 Agent 对话框架", "Primary at multi-agent conversation/orchestration。"],
+      ["Letta", "runtime", "L4", "Memory / State Plane", "Memory-first Agent Runtime", "Primary at Runtime/Harness 的 memory/state 平面。"],
+      ["DeerFlow", "runtime", "L4", "Execution + Orchestration Plane", "SuperAgent Harness", "Primary at Runtime/Harness；实现 sandbox、memory、tools、skills、subagents。"],
+      ["Pi", "runtime", "L4", "Execution Plane + coding toolkit", "Agent Harness / Coding Agent Toolkit", "Primary at Runtime/Harness；TypeScript monorepo，含 coding agent CLI、runtime、LLM API、UI 库。"],
+      ["OpenHands", "runtime", "L4", "Execution Plane + coding workspace", "软件工程 Agent 平台", "Primary at Runtime/Harness；能操作代码、命令、浏览器。"],
+      ["Claude Code", "product", "L5", "内置 L4 Runtime/Harness", "商业 Coding Agent", "Productized；用户直接使用，不是普通 SDK。"],
+      ["OpenAI Codex", "product", "L5", "内置 L4 Runtime/Harness", "商业 Coding Agent", "Productized；面向代码生成、修复、审查、任务执行。"],
+      ["Coze / 扣子", "platform", "L5", "内置 L4/L3/L2", "Agent Builder / AI App Platform", "Productized platform；用于创建 bot、workflow、插件、知识库并发布。"],
+      ["Dify", "platform", "L5", "内置 L4/L3/L2", "开源 LLM App / Agent Workflow Platform", "Productized platform；低代码构建 Chatbot、Workflow、Agent、RAG。"],
+      ["MCP", "concept", "L2", "被 L3/L4/L5 使用", "工具/上下文协议", "Protocol；不是 Agent 框架，也不是治理系统。"],
+      ["pgvector / Milvus", "concept", "L1", "被 L2 VectorIndex 封装", "向量检索基础设施", "Infrastructure；RAG/Memory 的底层存储和检索能力。"]
+    ];
+
+    const platforms = [
+      ["Coze / 扣子", "L5 Agent Builder / AI App Platform", "Bot、Workflow、插件、知识库、发布；内置 L4/L3/L2 能力，面向创建 Agent。"],
+      ["Coze Space / 扣子空间", "L5 通用办公 Agent 工作空间", "更偏用户直接使用的 Agent 产品，拆解任务并交付文档、PPT、网页等。"],
+      ["Dify", "L5 开源 LLM App / Agent Workflow Platform", "低代码构建 Chatbot、Workflow、Agent、RAG、观测。"],
+      ["Microsoft Copilot Studio", "L5 企业 Agent Builder", "面向企业创建、连接、治理 conversational AI / agent。"],
+      ["Salesforce Agentforce", "L5 企业 Agent Platform", "面向 CRM、销售、客服、营销等业务域的 agentic AI 平台。"],
+      ["ServiceNow AI Agents", "L5 企业流程 Agent", "ITSM、HR、运营工作流里的企业 Agent。"],
+      ["Google Gemini Enterprise / Agentspace", "L5 企业 AI 工作平台", "企业搜索、知识、Agent 创建与协作。"],
+      ["AWS Bedrock Agents", "L5/L3 云厂商 Agent 构建服务", "模型、知识库、Action Group、工具和云资源集成。"],
+      ["IBM watsonx Orchestrate", "L5 企业自动化 Agent 平台", "面向企业流程自动化和数字员工。"],
+      ["Zapier Agents / n8n / Flowise", "L5 自动化 / 低代码 Agent Workflow", "连接工具、触发器、工作流和 LLM 能力。"]
+    ];
+
+    const projectMap = [
+      ["L5 Product", "本地调试台 + Business Agent Platform Lab", "用户/面试官直接体验的业务 Agent 原型", "展示业务价值和完整闭环。"],
+      ["L4 Runtime / Harness", "AgentRun / AgentLoopExecutionEngine / ToolPolicy / Trace / HITL", "Agent 如何持续执行、受控行动、被审计", "这是项目核心亮点：Java 轻量 Agent Runtime/Harness。"],
+      ["L3 App Framework", "当前自研 LlmClient / Retriever / McpClient；未来 Spring AI Adapter", "接模型、RAG、工具和 Prompt", "Spring AI 应作为适配层，不重构核心 Runtime。"],
+      ["L2 Components", "VectorIndex / MCP JSON-RPC / Eval / TraceEval / PromptVersion", "Agent 专属可替换能力组件", "换向量库或 MCP transport 不影响主链路。"],
+      ["L1 Infrastructure", "OpenAI-compatible API / Markdown KB / SQLite / 业务 Mock API", "模型、数据和工具基础", "本地演示不强依赖外部服务，生产可替换。"]
+    ];
+
+    const views = {
+      architecture: document.getElementById("architecture"),
+      capabilities: document.getElementById("capabilities"),
+      catalog: document.getElementById("catalog"),
+      platforms: document.getElementById("platforms"),
+      project: document.getElementById("project")
+    };
+
+    function chips(items, color = "blue") {
+      return `<div class="chips">${items.map(item => `<span class="chip ${color}">${item}</span>`).join("")}</div>`;
+    }
+
+    function label(type) {
+      return {
+        framework: "框架",
+        runtime: "Runtime",
+        product: "产品",
+        platform: "平台",
+        concept: "概念"
+      }[type] || type;
+    }
+
+    function renderArchitecture() {
+      views.architecture.innerHTML = `
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">五层架构</h2>
+              <p class="panel-subtitle">按 Agent 特异能力分层：越上层越接近产品/业务，越下层越接近模型、数据和工具基础。</p>
+            </div>
+            <span class="hint">稳定主图</span>
+          </div>
+      <div class="arch">
+            ${layers.map(layer => `
+              <div class="layer ${layer.name.includes("Runtime") ? "runtime-layer" : ""}">
+                <div class="layer-name"><strong>${layer.name}</strong><span>${layer.role}</span></div>
+                <div>
+                  <p style="margin:0;color:#2a3742;font-size:12.5px;line-height:1.5">${layer.desc}</p>
+                  ${layer.name.includes("Runtime") ? `
+                    <div class="inline-planes">
+                      ${runtimePlanes.map(plane => `
+                        <div class="inline-plane"><strong>${plane[0]}</strong><span>${plane[1].split("。")[0]}。</span></div>
+                      `).join("")}
+                    </div>
+                  ` : chips(layer.examples, "amber")}
+                </div>
+                <div><p style="margin:0;color:#2a3742;font-size:12.5px;line-height:1.5"><strong>边界：</strong>${layer.boundary}</p></div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">L4 Runtime / Harness 内部四个平面</h2>
+              <p class="panel-subtitle">把原 L4/L5 合并后，层内再拆 plane，既保留专业差异，又避免上下层依赖歧义。</p>
+            </div>
+          </div>
+          <div class="planes">
+            ${runtimePlanes.map(plane => `
+              <div class="plane"><h3>${plane[0]}</h3><p>${plane[1]}</p></div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCapabilities() {
+      views.capabilities.innerHTML = `
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">能力域矩阵</h2>
+              <p class="panel-subtitle">按 Agent 系统从任务到上线的工程链路排序。列不再混淆层级：Framework、Runtime、Product、你的项目分开看。</p>
+            </div>
+          </div>
+          <div class="grid">
+            ${capabilityDomains.map(row => `
+              <div class="cap-row">
+                <div class="cell domain"><h3>${row[0]}</h3><p>${row[1]}</p></div>
+                <div class="cell"><h3>Framework / SDK</h3>${chips(row[2], "blue")}</div>
+                <div class="cell"><h3>Runtime / Harness</h3>${chips(row[3], "green")}</div>
+                <div class="cell"><h3>Product / Platform</h3>${chips(row[4], "violet")}</div>
+                <div class="cell"><h3>你的项目</h3><p>${row[5]}</p></div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCatalog(filter = "") {
+      const query = filter.trim().toLowerCase();
+      const items = products.filter(item => !query || item.join(" ").toLowerCase().includes(query));
+      views.catalog.innerHTML = `
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">产品归属表</h2>
+              <p class="panel-subtitle">主层级 + 次级能力。跨层项目不强行单点归类，但必须说明主定位。</p>
+            </div>
+          </div>
+          <div class="catalog-toolbar">
+            <input class="search" id="catalogSearch" placeholder="搜索：LangGraph / DeerFlow / Pi / Coze / Spring AI">
+            <span class="hint">${items.length} 项</span>
+          </div>
+          <div class="cards">
+            ${items.map(item => `
+              <div class="card">
+                <div class="card-top"><h3>${item[0]}</h3><span class="label ${item[1]}">${label(item[1])}</span></div>
+                <p><strong>主层级：</strong>${item[2]}</p>
+                <p><strong>次级能力：</strong>${item[3]}</p>
+                <p><strong>定位：</strong>${item[4]}</p>
+                <p>${item[5]}</p>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+      const input = document.getElementById("catalogSearch");
+      input.value = filter;
+      input.addEventListener("input", event => renderCatalog(event.target.value));
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+
+    function renderPlatforms() {
+      views.platforms.innerHTML = `
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">企业 Agent 平台</h2>
+              <p class="panel-subtitle">这类统一放 L5 产品/平台层：用户消费的是平台能力，不是底层 SDK。</p>
+            </div>
+          </div>
+          <div class="cards">
+            ${platforms.map(item => `
+              <div class="card">
+                <div class="card-top"><h3>${item[0]}</h3><span class="label platform">平台</span></div>
+                <p><strong>${item[1]}</strong></p>
+                <p>${item[2]}</p>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProject() {
+      views.project.innerHTML = `
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">你的项目映射</h2>
+              <p class="panel-subtitle">AI-trans 当前实现对应五层架构。核心定位：Java 轻量 Agent Runtime / Harness。</p>
+            </div>
+          </div>
+          <div class="grid">
+            ${projectMap.map(row => `
+              <div class="project-row">
+                <div class="cell domain"><h3>${row[0]}</h3></div>
+                <div class="cell"><h3>项目实现</h3><p>${row[1]}</p></div>
+                <div class="cell"><h3>解决的问题</h3><p>${row[2]}</p></div>
+                <div class="cell"><h3>面试表达</h3><p>${row[3]}</p></div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function switchView(name) {
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === name));
+      Object.entries(views).forEach(([key, el]) => el.classList.toggle("active", key === name));
+      if (name === "architecture") renderArchitecture();
+      if (name === "capabilities") renderCapabilities();
+      if (name === "catalog") renderCatalog();
+      if (name === "platforms") renderPlatforms();
+      if (name === "project") renderProject();
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => switchView(tab.dataset.view));
+    });
+
+    renderArchitecture();
+  </script>
+</body>
+</html>

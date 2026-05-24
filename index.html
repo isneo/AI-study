@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学习资料包</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --text: #222422;
+      --muted: #666b65;
+      --line: #deded7;
+      --accent: #225f54;
+      --accent-2: #8b5e34;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    header {
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+    p { margin: 0 0 12px; color: var(--muted); }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 10px;
+    }
+    .card {
+      display: block;
+      min-height: 138px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      text-decoration: none;
+      color: var(--text);
+    }
+    .card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.35;
+      color: var(--accent);
+    }
+    .card span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .links a {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      text-decoration: none;
+    }
+    .note {
+      margin-top: 28px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent-2);
+      background: #fbf8f2;
+      color: var(--muted);
+    }
+    @media (max-width: 880px) {
+      main { padding: 32px 16px 56px; }
+      .grid, .links { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>学习资料包</h1>
+      <p>覆盖 2026-03 至 2026-05 的 AI Native、Agent、Claude/Codex 协作和风控应用讨论；已按公开版要求匿名化处理。</p>
+    </header>
+
+    <h2>先读这些</h2>
+    <section class="grid" aria-label="核心入口">
+      <a class="card" href="learning-package/01-discussions/history-synthesis.html">
+        <strong>历史综合整理</strong>
+        <span>按阶段和主题串起全部历史讨论，不再只限最近两天。</span>
+      </a>
+      <a class="card" href="learning-package/resource-catalog.html">
+        <strong>资料目录</strong>
+        <span>HTML、Markdown、PDF 的统一入口，按主题归类。</span>
+      </a>
+      <a class="card" href="learning-package/resource-status.html">
+        <strong>资源获取状态</strong>
+        <span>说明图片为什么暂时拿不到，以及哪些文件被排除。</span>
+      </a>
+    </section>
+
+    <h2>重点 HTML</h2>
+    <section class="grid" aria-label="重点 HTML 资料">
+      <a class="card" href="learning-package/assets/html/AI-Native知识系统架构设计_对话复盘.html">
+        <strong>AI Native 知识系统</strong>
+        <span>从协作和知识沉淀角度看 AI Native 工作方式。</span>
+      </a>
+      <a class="card" href="learning-package/assets/html/agent-3-layer-architecture.html">
+        <strong>Agent 三层架构</strong>
+        <span>Agent 信息、运行、保证三层结构和组件矩阵。</span>
+      </a>
+      <a class="card" href="learning-package/assets/html/agent-ecosystem-map.html">
+        <strong>Agent 生态图谱</strong>
+        <span>框架、SDK、runtime、harness 的分层视角。</span>
+      </a>
+      <a class="card" href="learning-package/assets/html/agent-harness-讲解.html">
+        <strong>Agent Harness 讲解</strong>
+        <span>完整 agent harness 的结构化讲解。</span>
+      </a>
+      <a class="card" href="learning-package/assets/html/ai-native-risk-control-v1-minimal.html">
+        <strong>AI Native 风控</strong>
+        <span>风控场景的最小落地方案。</span>
+      </a>
+      <a class="card" href="learning-package/assets/html/AI_Native_面试训练手册_V2.html">
+        <strong>面试训练手册</strong>
+        <span>把项目经验组织成可追问、可复盘的表达。</span>
+      </a>
+    </section>
+
+    <h2>近期代办</h2>
+    <section class="grid" aria-label="近期代办">
+      <a class="card" href="learning-package/01-discussions/near-term-todos.html">
+        <strong>近期代办清单</strong>
+        <span>把 Memory、选型矩阵、风控项目叙事、系统演进复盘和资料补齐拆成可执行事项。</span>
+      </a>
+    </section>
+
+    <h2>全部资料</h2>
+    <section class="links" aria-label="资料分类入口">
+      <a href="learning-package/assets/html/">HTML 资料目录</a>
+      <a href="learning-package/assets/markdown/">Markdown 资料目录</a>
+      <a href="learning-package/assets/pdf/">PDF 资料目录</a>
+      <a href="learning-package/README.html">资料包说明</a>
+    </section>
+
+    <p class="note">图片没有纳入不是遗漏，而是当前只读导出只能拿到不可读缓存；视频按需求不处理。公开版本不包含完整聊天记录、成员姓名、群名、本地路径、私人聊天、简历、密钥和无关文件。</p>
+  </main>
+</body>
+</html>

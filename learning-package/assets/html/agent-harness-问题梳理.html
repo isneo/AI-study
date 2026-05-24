@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>问题梳理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+:root{
+  --bg:#FAF7F0; --bg-card:#F4EFE3; --bg-accent:#FDF3EE; --bg-soft:#FCFAF5;
+  --ink:#1A1815; --ink-soft:#4A4540; --ink-mute:#8A847C; --ink-faint:#B8B1A6;
+  --rule:#D8D0C0; --rule-soft:#E8E0CE;
+  --accent:#C73E1D; --accent-soft:#E04E2C; --accent-bg:#FBE9DF;
+  --good:#3D6B3D; --warn:#B5651D; --brown:#8B5A2B; --blue:#3C5A7A;
+  --font-display:'Fraunces','Songti SC',serif;
+  --font-body:'Inter Tight',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  --font-mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-body);background:var(--bg);color:var(--ink);font-size:16px;line-height:1.7;font-feature-settings:'ss01','cv11';-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+
+/* ===== 顶部导航 ===== */
+.nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:24px;padding:11px 40px;background:rgba(250,247,240,0.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+.nav-brand{display:flex;flex-direction:column;margin-right:6px;}
+.nav-title{font-family:var(--font-display);font-size:15px;font-weight:500;font-style:italic;letter-spacing:-0.01em;color:var(--ink);line-height:1.2;}
+.nav-subtitle{font-size:9px;color:var(--ink-mute);letter-spacing:0.1em;text-transform:uppercase;font-weight:500;}
+.nav-list{list-style:none;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.nav-list a{display:flex;flex-direction:column;gap:1px;color:var(--ink-soft);text-decoration:none;transition:color .2s ease;}
+.nav-main{display:flex;align-items:baseline;gap:6px;font-size:13px;}
+.nav-sub{font-size:9.5px;color:var(--ink-faint);letter-spacing:0.04em;padding-left:20px;}
+.nav-list a:hover,.nav-list a:hover .nav-sub,.nav-list a:hover .num{color:var(--accent);}
+.nav-list a .num{font-family:var(--font-display);font-style:italic;font-size:11px;color:var(--ink-faint);flex-shrink:0;font-weight:500;}
+
+/* ===== 主体 ===== */
+.main{width:100%;max-width:1080px;margin:0 auto;}
+.hero{padding:34px 48px 28px;border-bottom:1px solid var(--rule);}
+.hero-eyebrow{font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+.hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--accent);}
+.hero-title{font-family:var(--font-display);font-size:52px;font-weight:500;line-height:1.06;letter-spacing:-0.025em;color:var(--ink);margin-bottom:22px;}
+.hero-title em{font-style:italic;font-weight:400;color:var(--accent);}
+.hero-lead{font-family:var(--font-display);font-size:20px;font-weight:400;line-height:1.5;color:var(--ink-soft);letter-spacing:-0.01em;margin-bottom:18px;max-width:760px;}
+.hero-note{font-size:13.5px;color:var(--ink-mute);line-height:1.65;max-width:780px;background:var(--bg-card);border-left:3px solid var(--rule);padding:12px 16px;border-radius:2px;}
+.hero-note strong{color:var(--ink);font-weight:600;}
+.hero-meta{display:flex;gap:40px;padding-top:22px;margin-top:22px;border-top:1px solid var(--rule);flex-wrap:wrap;}
+.hero-meta-item{display:flex;flex-direction:column;gap:3px;}
+.hero-meta-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-mute);font-weight:600;}
+.hero-meta-value{font-family:var(--font-display);font-size:15px;font-weight:500;color:var(--ink);}
+
+/* ===== 章节 ===== */
+.chapter{padding:30px 48px;border-bottom:1px solid var(--rule);}
+.chapter-header{margin-bottom:16px;position:relative;}
+.chapter-num{display:none;}
+.chapter-tag{font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-mute);font-weight:600;margin-bottom:10px;}
+.chapter-title{font-family:var(--font-display);font-size:38px;font-weight:500;line-height:1.1;letter-spacing:-0.022em;color:var(--ink);margin-bottom:14px;}
+.chapter-title em{font-style:italic;font-weight:400;color:var(--accent);}
+.chapter-intro{font-size:15px;line-height:1.7;color:var(--ink-soft);background:var(--bg-card);border-radius:3px;padding:14px 18px;margin-bottom:8px;}
+.chapter-intro strong{color:var(--ink);font-weight:600;}
+
+/* ===== 拔高金句 ===== */
+.pullquote{position:relative;padding:16px 26px 16px 30px;margin:18px 0;background:var(--bg-accent);border-left:3px solid var(--accent);}
+.pullquote::before{content:'KEY INSIGHT';position:absolute;top:-8px;left:34px;font-size:9px;letter-spacing:0.18em;font-weight:700;color:var(--accent);background:var(--bg);padding:0 8px;}
+.pullquote-text{font-family:var(--font-display);font-size:21px;line-height:1.45;letter-spacing:-0.012em;color:var(--ink);font-weight:500;}
+.pullquote-text em{font-style:italic;color:var(--accent);}
+
+/* ===== 正文 ===== */
+.prose{font-size:15.5px;line-height:1.72;color:var(--ink-soft);}
+.prose p{margin-bottom:13px;}
+.prose p:last-child{margin-bottom:0;}
+.prose strong{color:var(--ink);font-weight:600;}
+.prose em{font-style:italic;color:var(--ink);}
+.prose code{font-family:var(--font-mono);font-size:13px;background:var(--bg-card);padding:1px 6px;border-radius:2px;color:var(--ink);font-weight:500;}
+.prose h3{font-family:var(--font-display);font-size:23px;font-weight:500;letter-spacing:-0.015em;color:var(--ink);margin:26px 0 12px;line-height:1.3;}
+.prose h3 .sub-num{font-style:italic;font-weight:400;color:var(--accent);margin-right:11px;font-size:0.85em;}
+.prose h4{font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:0.02em;color:var(--ink);margin:18px 0 9px;}
+.section-mark{font-family:var(--font-display);font-style:italic;font-size:18px;color:var(--accent);margin:6px 0 18px;padding-bottom:7px;border-bottom:1px solid var(--rule);}
+
+/* ===== 注解块 ===== */
+.aside{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:14px 0;margin:18px 0;font-size:13.5px;color:var(--ink-mute);line-height:1.65;font-style:italic;}
+.aside::before{content:'※ ';color:var(--accent);font-style:normal;}
+.aside strong{color:var(--ink-soft);font-weight:600;font-style:normal;}
+.aside code{font-family:var(--font-mono);font-size:12px;background:var(--bg-card);padding:0 4px;font-style:normal;}
+.impl-note{background:#F4F1E8;border-left:3px solid var(--ink-faint);border-radius:2px;padding:11px 15px;margin:14px 0;font-size:13px;color:var(--ink-mute);line-height:1.6;}
+.impl-note strong{color:var(--ink-soft);font-weight:600;}
+.impl-note code{font-family:var(--font-mono);font-size:11.5px;background:var(--bg-card);padding:0 4px;}
+.source-tag{display:inline-block;font-family:var(--font-mono);font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:2px;letter-spacing:0.02em;vertical-align:middle;}
+.tag-official{background:#E6EEDF;color:var(--good);}
+.tag-reverse{background:#EDE6F0;color:#6A4A7A;}
+.tag-infer{background:#F0EAD8;color:var(--brown);}
+
+/* ===== 表格 ===== */
+.table-wrap{margin:18px 0;border:1px solid var(--rule);background:var(--bg);overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px;}
+th{text-align:left;padding:11px 15px;font-weight:600;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mute);background:var(--bg-card);border-bottom:1px solid var(--rule);vertical-align:top;}
+td{padding:12px 15px;border-bottom:1px solid var(--rule-soft);color:var(--ink-soft);line-height:1.55;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td strong{color:var(--ink);font-weight:600;}
+td code{font-family:var(--font-mono);font-size:11.5px;background:var(--bg-card);padding:0 4px;border-radius:2px;color:var(--ink);}
+.tbl-cap{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);letter-spacing:0.04em;background:var(--bg-card);padding:8px 15px;border-bottom:1px solid var(--rule);}
+.flag{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--accent);}
+.cell-cc{background:#FCFAF5;}
+.cell-codex{background:#FBF7EE;}
+
+/* 4.2 大表：四列 */
+.bigtable td:nth-child(1){width:15%;color:var(--ink);font-weight:600;}
+.bigtable td:nth-child(2){width:37%;}
+.bigtable td:nth-child(3){width:24%;}
+.bigtable td:nth-child(4){width:24%;}
+.lyr-letter{font-family:var(--font-display);font-style:italic;font-weight:500;color:var(--accent);font-size:1.05em;}
+
+/* ===== 卡片网格 ===== */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:18px 0;}
+.cell{background:var(--bg);padding:18px 20px;}
+.cell-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-mute);font-weight:600;margin-bottom:10px;}
+.cell-a .cell-label{color:var(--blue);}
+.cell-b .cell-label{color:var(--accent);}
+.cell-content{font-size:13.5px;line-height:1.6;color:var(--ink-soft);}
+.cell-content strong{color:var(--ink);font-weight:600;}
+
+/* ===== 列表 ===== */
+.list-numbered{counter-reset:list;list-style:none;margin:18px 0;}
+.list-numbered li{counter-increment:list;padding:13px 0 13px 44px;position:relative;border-bottom:1px solid var(--rule-soft);font-size:14.5px;line-height:1.62;color:var(--ink-soft);}
+.list-numbered li:last-child{border-bottom:none;}
+.list-numbered li::before{content:counter(list,decimal-leading-zero);position:absolute;left:0;top:13px;font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--accent);font-weight:500;}
+.list-numbered li strong{color:var(--ink);font-weight:600;}
+.list-numbered li code{font-family:var(--font-mono);font-size:12px;background:var(--bg-card);padding:0 4px;}
+.list-bullet{list-style:none;margin:14px 0;}
+.list-bullet li{padding:5px 0 5px 18px;position:relative;font-size:14.5px;color:var(--ink-soft);line-height:1.62;}
+.list-bullet li::before{content:'—';position:absolute;left:0;color:var(--accent);font-weight:500;}
+.list-bullet li strong{color:var(--ink);font-weight:600;}
+
+/* ===== SVG 图 ===== */
+.fig{margin:16px 0 8px;padding:16px;background:var(--bg-soft);border:1px solid var(--rule);border-radius:4px;}
+.fig svg{width:100%;height:auto;display:block;}
+.fig-key{border-left:3px solid var(--accent);}
+.diagram-caption{font-size:12px;color:var(--ink-mute);margin-top:8px;text-align:center;font-style:italic;}
+
+
+/* ===== 代码 / 字母表 ===== */
+.code-block{background:#FBF6E9;border:1px solid var(--rule);border-left:3px solid var(--accent);padding:16px 20px;margin:16px 0;font-family:var(--font-mono);font-size:12.5px;line-height:1.7;color:var(--ink);overflow-x:auto;white-space:pre;}
+.code-block .k{color:var(--accent);font-weight:600;}
+.code-block .c{color:var(--ink-mute);font-style:italic;}
+
+/* ===== 章末页脚 ===== */
+.chapter-footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:0.1em;color:var(--ink-faint);text-transform:uppercase;font-weight:600;}
+
+/* ===== 来源 ===== */
+.sources{padding:48px;background:var(--ink);color:var(--bg);}
+.sources .chapter-tag{color:var(--accent-soft);}
+.sources .chapter-title{color:var(--bg);font-size:30px;margin-bottom:24px;}
+.src-group{margin-bottom:24px;}
+.src-group-h{font-family:var(--font-body);font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent-soft);margin-bottom:10px;}
+.src-list{list-style:none;}
+.src-list li{padding:7px 0;border-bottom:1px solid rgba(250,247,240,0.12);font-size:13px;line-height:1.55;color:rgba(250,247,240,0.78);}
+.src-list li:last-child{border-bottom:none;}
+.src-list a{color:var(--accent-soft);text-decoration:none;word-break:break-all;font-family:var(--font-mono);font-size:11.5px;}
+.src-list a:hover{text-decoration:underline;}
+.src-list strong{color:var(--bg);font-weight:600;}
+.sources-foot{margin-top:24px;padding-top:18px;border-top:1px solid rgba(250,247,240,0.2);font-size:12.5px;font-style:italic;color:rgba(250,247,240,0.6);line-height:1.7;}
+
+/* ===== 入场动画 ===== */
+.fade-up{opacity:0;transform:translateY(16px);animation:fadeUp .7s cubic-bezier(0.16,1,0.3,1) forwards;}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+
+/* ===== 响应式 ===== */
+@media(max-width:1024px){
+  .nav{padding:10px 24px;gap:16px;}
+  .hero{padding:28px 28px 22px;}
+  .chapter{padding:26px 28px;}
+  .sources{padding:36px 28px;}
+  .hero-title{font-size:40px;}
+  .chapter-title{font-size:30px;}
+  .pullquote-text{font-size:18px;}
+}
+@media(max-width:640px){
+  .nav{padding:9px 16px;gap:12px;}
+  .nav-list{gap:12px;}
+  .nav-sub{display:none;}
+  .hero{padding:22px 18px 18px;}
+  .chapter{padding:22px 18px;}
+  .sources{padding:28px 18px;}
+  .hero-title{font-size:30px;}
+  .hero-lead{font-size:17px;}
+  .chapter-title{font-size:24px;}
+  .pullquote{padding:14px 16px 14px 20px;}
+  .pullquote-text{font-size:16px;}
+  .grid-2{grid-template-columns:1fr;}
+  .hero-meta{gap:18px;}
+  .bigtable td:nth-child(n){width:auto;}
+}
+
+/* ===== 第五章：左侧可拖宽菜单 + 双栏 ===== */
+.layout5{display:flex;align-items:flex-start;gap:0;}
+.toc5{position:sticky;top:0;align-self:flex-start;width:240px;min-width:150px;max-width:480px;height:100vh;overflow-y:auto;flex-shrink:0;
+  background:#F4EFE3;border-right:1px solid var(--rule);padding:26px 20px 40px;box-sizing:border-box;}
+.toc5::-webkit-scrollbar{width:6px;}
+.toc5::-webkit-scrollbar-thumb{background:var(--ink-faint);border-radius:3px;}
+.toc5-title{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--accent);margin-bottom:18px;letter-spacing:.01em;}
+.toc5-back{display:block;font-size:12px;color:var(--ink-mute);text-decoration:none;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--rule);}
+.toc5-back:hover{color:var(--accent);}
+.toc5-group{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--brown);font-weight:700;margin:20px 0 8px;}
+.toc5 a.toc5-item{display:block;font-size:12.5px;color:var(--ink-soft);text-decoration:none;padding:5px 8px;border-radius:4px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toc5 a.toc5-item:hover{background:rgba(199,62,29,0.07);color:var(--accent);}
+.toc5 a.toc5-item .n{color:var(--ink-faint);margin-right:6px;font-variant-numeric:tabular-nums;}
+.toc5 a.toc5-sub{padding-left:22px;font-size:11.5px;color:var(--ink-mute);}
+.toc5-resizer{width:6px;cursor:col-resize;flex-shrink:0;align-self:stretch;background:transparent;position:relative;}
+.toc5-resizer:hover{background:rgba(199,62,29,0.15);}
+.toc5-resizer::after{content:"";position:absolute;left:2px;top:50%;transform:translateY(-50%);width:2px;height:30px;background:var(--ink-faint);border-radius:2px;}
+.main5{flex:1;min-width:0;max-width:1080px;margin:0 auto;padding:0 40px;box-sizing:border-box;}
+@media(max-width:760px){.toc5,.toc5-resizer{display:none;}.main5{padding:0 20px;}}
+/* 框架性结论卡片 */
+.kv5{background:#FBF2E6;border:1px solid var(--rule);border-left:3px solid var(--accent);padding:14px 18px;margin:14px 0;border-radius:0 6px 6px 0;}
+.kv5 .kv5-h{font-weight:700;color:var(--accent);font-size:13.5px;margin-bottom:6px;letter-spacing:.02em;}
+.filled5{border-left:3px solid var(--good);}
+
+</style>
+</head>
+<body>
+<div class="layout5">
+  <!-- ===== 左侧可拖宽菜单 ===== -->
+  <aside class="toc5" id="toc5">
+    <a class="toc5-back" href="agent-harness-讲解.html">← 返回正文《Agent Harness》</a>
+    <div class="toc5-title">目录 · 第五章</div>
+
+    <a class="toc5-item" href="#ch5-1"><span class="n">5.1</span>搭 harness 的重难点</a>
+    <a class="toc5-item toc5-sub" href="#s511"><span class="n">5.1.1</span>上下文与记忆 C·B</a>
+    <a class="toc5-item toc5-sub" href="#s512"><span class="n">5.1.2</span>约束与验证 G·V</a>
+    <a class="toc5-item toc5-sub" href="#s513"><span class="n">5.1.3</span>运行时 L·A·E·O</a>
+    <a class="toc5-item toc5-sub" href="#s514"><span class="n">5.1.4</span>多 agent 编排</a>
+    <a class="toc5-item toc5-sub" href="#s515"><span class="n">5.1.5</span>框架选型（三组对比）</a>
+    <a class="toc5-item toc5-sub" href="#s516"><span class="n">5.1.6</span>CC 踩坑实录</a>
+
+    <a class="toc5-item" href="#ch5-2"><span class="n">5.2</span>让 agent 可靠地跑</a>
+    <a class="toc5-item toc5-sub" href="#s521"><span class="n">5.2.1</span>底座加固</a>
+    <a class="toc5-item toc5-sub" href="#s522"><span class="n">5.2.2</span>问题发现</a>
+    <a class="toc5-item toc5-sub" href="#s523"><span class="n">5.2.3</span>快恢体系</a>
+
+    <a class="toc5-item" href="#ch5-3"><span class="n">5.3</span>其他问题</a>
+    <a class="toc5-item toc5-sub" href="#s531"><span class="n">5.3.1</span>评估 Evals</a>
+    <a class="toc5-item toc5-sub" href="#s532"><span class="n">5.3.2</span>成本与延迟</a>
+    <a class="toc5-item toc5-sub" href="#s533"><span class="n">5.3.3</span>上下文工程</a>
+    <a class="toc5-item toc5-sub" href="#s534"><span class="n">5.3.4</span>工具设计</a>
+    <a class="toc5-item toc5-sub" href="#s535"><span class="n">5.3.5</span>失败归因 &amp; 模型迁移</a>
+    <a class="toc5-item toc5-sub" href="#s536"><span class="n">5.3.6</span>软判断 &amp; 边界</a>
+  </aside>
+  <div class="toc5-resizer" id="resizer5"></div>
+
+  <!-- ===== 右侧正文 ===== -->
+  <main class="main5">
+  <!-- ========== 5.1 技术选型 ========== -->
+  <section class="chapter" id="ch5-1">
+    <div class="prose">
+      <h3><span class="sub-num">5.1</span>技术选型：搭一套 harness 的重难点</h3>
+      <p>沿用第 4 章的三模块骨架，逐层点出"搭的时候最容易卡住的地方"，再补三类跨模块的元问题（多 agent、框架选型、CC 踩坑实录）。<span style="color:var(--ink-faint);">🚧 待填导语</span></p>
+    </div>
+
+    <div class="prose">
+      <h3 id="s511" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.1.1</span>模块一　上下文与记忆 C·B（喂得准）</h3>
+      <ul>
+        <li class="filled5-li"><strong>Compaction 压缩</strong>：接近 200K 上限时压缩，CC 迭代约 100 次仍难做好。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            Compaction 是"接近上限时让模型把进度总结成摘要、清空对话、塞回摘要继续"的机制——它是长任务<strong>必要但远不充分</strong>的一环。两条一手教训：<br>
+            · <strong>极难调好</strong>：据 Anthropic Applied AI 团队分享，CC 的 compaction 提示词迭代了约 100 次，用户被"压缩"时的体验仍然糟糕。<br>
+            · <strong>有损且会丢关键信息</strong>：官方《Effective harnesses》直言"光有 compaction 不够"——压缩不总能把清晰指令传给下一会话，模型常在实现中途耗尽上下文，留下一个半成品且无文档的烂摊子，下一会话只能靠猜。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">所以稳健做法不是依赖压缩，而是把状态<strong>持久化到窗口之外</strong>（progress 文件 + git + feature list），让每个新会话能快速"重新进入状态"，而非指望压缩摘要。压缩是省 token 的手段，不是记忆的根基。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>文件式记忆</strong>：CLAUDE.md 分层四级 / memory tool 写文件跨会话。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            Anthropic 的记忆方案<strong>不走向量库 + 语义检索那条路，而是"文件即记忆"</strong>：把要跨会话留存的知识写成磁盘上的 Markdown / 文件，需要时由模型自己读回。它有两套形态——<br>
+            ① <strong>CLAUDE.md（给人写、声明式）</strong>：项目根 / 用户目录下的配置文件，每次会话启动自动注入系统提示，按<strong>优先级链</strong>叠加：企业托管策略（不可覆盖）→ 用户级（跨项目个人偏好）→ 项目级（团队共享约定）→ 模块化 rules / auto-memory（最具体者优先，auto-memory 从不覆盖显式指令）。官方建议单文件控制在约 200 行内，过长既耗 token 又降低遵循度。<br>
+            ② <strong>memory tool（给 agent 写、自主式）</strong>：模型通过工具调用对一个独立 memory 目录增删改查，应用层负责真正落盘——后端可以是文件、数据库、云存储、加密文件，开发者完全掌控存在哪、怎么存。配合 context editing（清理旧工具结果）可让长任务在 100 轮评测里省约 84% token。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：声明式的 CLAUDE.md 解决"每次都要重新交代背景"，自主式的 memory tool 解决"跨会话学习与沉淀"；两者都建立在"文件透明、可审计、可回滚"这一条设计哲学上，而非黑箱向量库。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>记忆权限/隔离</strong>：按 project 隔离、读写分级、全程 log、可回滚可删。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            记忆一旦持久化、还能被多 agent 共享，<strong>隔离与可控就成了硬需求</strong>，否则机密会串味、错误会沉淀。Anthropic Managed Agents 的记忆层给出一套范式：<br>
+            · <strong>按 project 隔离</strong>：一个机密产品的上下文不会渗进另一个客户讨论（项目级隔离即安全护栏）；<br>
+            · <strong>读写权限分级</strong>：组织级数据可设只读、用户级数据可读写；<br>
+            · <strong>全程可审计</strong>：每次写入都作为一条 session event 出现在 Console，能看清 agent 学到了什么、来源是哪；<br>
+            · <strong>可回滚可删</strong>：能回退到早期版本或从历史中删除内容；记忆以文件形式存储，可经 API 导出/编辑/管理，控制权始终在开发者手里。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">效果数据：Rakuten 的长程任务 agent 用记忆避免重蹈覆辙，在受控、可观测的工作区边界内实现首轮错误减少约 97%。一句话：记忆的价值不只在"记得住"，更在"记得对、可追溯、可纠错"。</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="prose">
+      <h3 id="s512" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.1.2</span>模块二　约束与验证 G·V（管得住）</h3>
+      <ul>
+        <li class="filled5-li"><strong>prompt injection</strong>：光隔离 secret 不够，凭证不进沙箱、proxy 代发。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            prompt injection 是 agent 安全的头号威胁：恶意内容混进 agent 读到的网页/文件/工具返回里，诱导它执行非预期动作。Anthropic Managed Agents 的关键认知是<strong>"光把 secret 隔离起来还不够"</strong>——如果不可信代码和凭证在同一个沙箱里跑，injection 只需说服模型读自己的环境变量就能拿到 token。<br>
+            结构性的修法是<strong>让凭证对执行沙箱根本不可达</strong>：把密钥放进 vault、由一个 <strong>proxy 代发</strong>真正的带凭证请求，沙箱内的 agent 只发"我要调这个 API"的意图，proxy 注入凭证后转发——<strong>安全靠架构，不靠策略提醒</strong>。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">配套的输入侧防御还有：服务端的 prompt-injection 探针在工具输出（文件读取、网页抓取、shell 返回）进入 agent 上下文前先扫一遍。一句话：别指望提示词里写"别被骗"，要让"被骗了也偷不到东西"成为架构默认。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>分级信任</strong>：低/中/高风险 → 放行 / 沙箱内自主 / 人工审批。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            权限设计的核心矛盾是<strong>自主性 vs 监督</strong>：管得太死，用户被"approve 疲劳"淹没（实践中人工提示有约 93% 最后都点了同意，等于没审）；放得太开（如 <code>--dangerously-skip-permissions</code>），等于裸奔。Anthropic 的答案是<strong>从二元开关转向"分级信任"</strong>，按动作风险分档处理：<br>
+            · <strong>低风险</strong>（读文件、列目录、搜索等不改状态的操作）→ 直接放行；<br>
+            · <strong>中风险</strong>（改文件、跑命令）→ 放进<strong>沙箱</strong>，在 OS 级边界内自主执行而不逐条打断（内部数据：沙箱化使权限提示减少约 84%）；<br>
+            · <strong>高风险</strong>（不可逆 / 越权，如删生产数据、对外发消息）→ 升级到<strong>人工审批</strong>。<br>
+            判档既可由规则界定，也可由<strong>模型分类器</strong>实时判断（CC 的 auto mode 即此路）。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">关键认知纠偏：很多人以为"沙箱"是最严格的高风险手段，其实相反——沙箱是用来<strong>给中低风险松绑、减少打断</strong>的；真正的高风险才交给人。不可逆动作在实测中仅占约 0.8%，但一次出错后果极重，所以这 0.8% 才是人审要守的重点。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>不可逆动作与副作用控制</strong>：irreversible 仅 0.8% 但后果重。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            Anthropic 对约 99.8 万次公开 API 工具调用的抽样发现：<strong>真正不可逆的动作只占约 0.8%</strong>（如给客户发邮件），且约 73% 的调用有某种"人在环路"。但这 0.8% 正是风险的集中地——<strong>一次错误的不可逆动作就可能造成重大后果</strong>。<br>
+            所以副作用控制的重点不是拦住所有操作（那会回到 approve 疲劳），而是<strong>精准识别"不可逆/有外部副作用"的那一小撮，单独升级保护</strong>：要么人工审批，要么先做成可回滚（如代码改动走 git、可 revert；操作先 dry-run）。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">实践支撑：CC 默认只读，修改文件或系统前必须先请求批准——把"会改变世界状态"的动作与"只读"动作从默认权限上就分开。一句话：可逆的放手让 agent 跑，不可逆的留一道闸。</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="prose">
+      <h3 id="s513" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.1.3</span>模块三　运行时 L·A·E·O（跑得动）</h3>
+      <ul>
+        <li class="filled5-li"><strong>工具错误级联</strong>：长任务里小工具错误滚雪球成项目级失败。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            任务越长，<strong>工具出错的"暴露面"越大</strong>——单步看微不足道的工具错误（一次超时、一个误解的返回），在数百步的长程任务里会层层累积、级联成项目级失败。这是长程 agent 区别于单轮调用的本质风险。<br>
+            官方《Effective harnesses》给的对策不是消灭错误，而是<strong>让错误可被发现、可被回退</strong>：① 每步用 git 提交、留描述性 commit，坏改动能 revert 回可用状态；② 持续验证（每次大改动后跑测试 / 用浏览器自动化做端到端验证），把"看似完成实则没工作"的功能挡在级联之前。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：长任务的稳定性不靠"工具永不出错"，而靠"每步留干净状态 + 持续验证"，让任何一步的错误都能被就地拦截、回滚，不滚成雪球。</span>
+          </div>
+        </li>
+        <li><strong>错误恢复策略</strong>：官方坦承"git 回退之外的恢复"是未充分讨论的难点。<span style="color:var(--ink-faint);">🚧 (第三方批评)</span></li>
+        <li class="filled5-li"><strong>权限疲劳</strong>：一直点 approve → 沙箱 / auto mode。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            默认每次写文件/跑命令都要人点 approve，会导致<strong>"approval fatigue（审批疲劳）"</strong>——点多了就不再认真看，反而更不安全。CC 给出两条出路：<br>
+            · <strong>沙箱</strong>：在 OS 级预定义边界内让 agent 自由动作、不逐条打断（内部减少约 84% 提示），代价是要为每个新能力配置、且涉及网络/主机访问会破坏隔离；<br>
+            · <strong>auto mode</strong>：把审批委托给<strong>模型分类器</strong>实时判断每个工具调用的风险——安全的放行、危险的拦截、反复被拦才回头问人，是"全手动"与"裸奔"之间的中间地带。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">局限要诚实说明：auto mode 的分类器是非确定性的，意图模糊时可能放过风险动作（如默认放行 <code>pip install -r requirements.txt</code> 挡不住供应链攻击）。一句话：权限疲劳的解法是"分级自动化"，但自动判断本身也有边界，高风险仍需兜底。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>可观测</strong>：监控 agent 决策模式，而非追踪单条对话。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            agent 的可观测和传统应用不同：它要监控的是<strong>agent 的决策模式与交互</strong>，而不是逐条对话内容。Anthropic 多 agent 系统的经验是<strong>"超越标准可观测"</strong>——在不追踪个体对话内容的前提下，监控 agent 怎么决策、怎么协作，因为<strong>agent 系统里小改动会级联成大行为变化、调试极难，且往往要在线上实时进行</strong>。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">这也呼应 §5.2.2 的事故复盘教训：只看最终成功率会被模型的"自愈"骗过，必须盯中间 trace。一句话：可观测层不是给模型补能力，是给人看的"飞行记录仪"——它的价值在 5.2 的"问题发现"里才完全兑现。</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="prose">
+      <h3 id="s514" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.1.4</span>多 agent 编排（L 层往外扩一层）</h3>
+      <ul>
+        <li class="filled5-li"><strong>协调复杂度爆炸</strong>：早期踩坑——简单查询竟派 50 个子 agent、互相干扰。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            多 agent 一旦放开，<strong>协调复杂度会非线性爆炸</strong>。Anthropic 研究系统早期的真实失败：简单查询被派出 50 个子 agent、为不存在的来源把全网翻个底朝天、子 agent 之间用过量更新互相干扰。根因是<strong>agent 全靠 prompt 操纵，缺乏明确分工就会重复劳动、留下空洞或漏掉关键</strong>。<br>
+            他们的解法不是加协调代码，而是<strong>把"投入多少"写死进 prompt（effort scaling 规则）</strong>：简单事实查找 = 1 个 agent + 3~10 次工具调用；直接对比 = 2~4 个子 agent，每个 10~15 次调用；复杂研究 = 10+ 个子 agent，各自有清晰职责边界。<br>
+            另两条配套教训：① <strong>token 是主成本</strong>——多 agent 烧约 15× 普通对话，且 token 用量能解释约 80% 的性能差异，所以多 agent 只配给"产出价值 ＞ 高昂 token"的宽度优先型任务（并行检索类），不适合强耦合任务（如编码）；② <strong>牵一发动全身</strong>——agent 系统里小改动会级联成大行为变化，调试极难、且往往得在线上实时做。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：多 agent 的难点不在"怎么让它们协作"，而在"怎么拦住它们过度协作"——边界、预算、分工都要预先写进 prompt，否则复杂度和成本一起失控。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>token 成本</strong>：多 agent 烧约 15× 普通对话。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            多 agent 最现实的约束是<strong>钱</strong>：单 agent 已是普通对话约 4× token，多 agent 系统约 <strong>15×</strong>。而且 Anthropic 发现 <strong>token 用量能解释约 80% 的性能差异</strong>（其次才是工具调用次数和模型选择）——意味着多 agent 的"强"很大程度是"用更多 token 换来的"。<br>
+            结论很直接：<strong>多 agent 只配给"产出价值 ＞ 高昂 token 成本"的任务</strong>，且最适合能拆成并行独立分支的<strong>宽度优先型</strong>任务（如并行检索/研究）；对强耦合、需要前后紧密依赖的任务（如编码）反而不划算。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：上多 agent 前先算账——它不是"更高级所以更好"，而是"更贵所以要挑场景"。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>"笨改动→大波动"</strong>：牵一发动全身、调试极难。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            agent 系统的一个反直觉特性：<strong>微小改动会级联成巨大的行为变化</strong>。改一句 prompt、调一个工具描述，整个系统的行为可能就偏了，而且<strong>调试比传统软件难得多</strong>——错误不是确定性复现的，往往要在线上实时调。<br>
+            Anthropic 的应对是<strong>"像 agent 一样思考"</strong>：用 Console 拿系统真实的 prompt 和工具搭模拟、一步步看 agent 怎么走，立刻就能暴露失败模式（已经够了还在继续、查询过于啰嗦、选错工具）。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：多 agent 不能"改完上线看效果"，得有能复盘单步决策的可观测与模拟手段，否则小改动的级联会让你无从下手。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>子 agent 边界 / effort scaling</strong>：简单/对比/复杂各配多少 agent 与调用。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            agent 自己<strong>很难判断该投入多少资源</strong>，不加约束就会"简单问题用核弹、复杂问题敷衍了事"。Anthropic 的解法是把 <strong>effort scaling 规则直接写进 prompt</strong>：<br>
+            · 简单事实查找 → <strong>1 个 agent + 3~10 次</strong>工具调用；<br>
+            · 直接对比 → <strong>2~4 个子 agent</strong>，每个 10~15 次调用；<br>
+            · 复杂研究 → <strong>10+ 个子 agent</strong>，各有清晰的职责分工。<br>
+            同时给每个子 agent 明确的任务描述（目标、输出格式、用什么工具、边界），否则它们会重复劳动、留空洞或漏关键。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：子 agent 的"投入预算"和"职责边界"都要预先显式规定，靠 prompt 而非靠 agent 自觉——这是防止 §5.1.4 开头那种"50 个子 agent"失控的根本手段。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>两种骨架</strong>：主管-工人 vs 去中心化交接（handoff）。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            多 agent 编排主要有两种骨架：<br>
+            · <strong>主管-工人（orchestrator-worker）</strong>：一个主 agent 拆任务、派给子 agent、再汇总结果。Anthropic 研究系统即用此式——lead agent 规划、派生专门的 subagent 各自带独立上下文窗口去并行检索，最后收敛。优点是分工清晰、上下文隔离；<br>
+            · <strong>去中心化交接（handoff）</strong>：agent 之间直接递交控制权，无中心调度。OpenAI Agents SDK 的 handoff 原语即此式，适合"分诊 agent → 专门 agent"这类客服场景。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">本质上多 agent 不是新机制，而是<strong>把"模型+循环"这套 harness 当成一个零件、再套一层编排</strong>（对应本文 L 层的扩展）。派生子 agent 最核心的理由是<strong>上下文隔离</strong>——每个子 agent 拿独立窗口啃一个子问题，用"多开窗口"缓解单窗口装不下的难题。</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="prose">
+      <h3 id="s515" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.1.5</span>框架选型（三组对比）</h3>
+      <p style="color:var(--ink-faint);font-style:italic;">已查证要点（正文待展开）：</p>
+      <ul>
+        <li><strong>LangGraph vs LangChain</strong>：LangChain 是上层链式/组件封装；LangGraph 是其下的有状态图式编排层，支持 checkpoint 容错、复杂状态机。<span style="color:var(--ink-faint);">🚧 (官方文档待精读)</span></li>
+        <li class="filled5-li"><strong>Claude Agent SDK vs OpenAI Agents SDK</strong>
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            两者都是"官方出品、给生产级 agent 的 harness"，但出发点不同：<br>
+            · <strong>Claude Agent SDK</strong>（前身 Claude Code SDK）：就是<strong>驱动 CC 的同一套 harness</strong>，核心理念是"给 Claude 一台电脑"——内置权限模型、hooks 系统、多会话/长程支持，强项在让 agent 像工程师一样用终端干活。<br>
+            · <strong>OpenAI Agents SDK</strong>：2025.3 发布、取代实验性的 Swarm，提供四个精简原语——<strong>agents / handoffs / guardrails / tracing</strong>，哲学是"最小原语、自由组合、少抽象"；2026.4 重大更新加入 sandbox、harness、code mode，核心创新是 <strong>harness/compute 分离</strong>。<br>
+            两者<strong>都支持 MCP</strong>，都偏"轻量、给控制权"，而非重抽象。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">选型判断：已在 Claude/CC 生态、要长程多会话编码型 agent → Claude Agent SDK；已在 OpenAI 生态、要快速搭多 agent 分诊/协作（handoff 是为此而生）→ OpenAI Agents SDK。注意后者部分新特性（sandbox/harness/code mode）目前仅 Python，TypeScript 滞后。</span>
+          </div>
+        </li>
+        <li class="filled5-li"><strong>Spring AI vs Spring AI Alibaba</strong>
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            两者是<strong>"底座"与"增强套件"的上下层关系，不是竞品</strong>：<br>
+            · <strong>Spring AI</strong>（Spring 官方）：专注 agent 应用的<strong>原子能力与 API 抽象</strong>——统一的模型接入、工具调用、RAG、向量存储等，是 Java 生态对标 LangChain 的标准层，刻意只做"低层原子抽象"。<br>
+            · <strong>Spring AI Alibaba</strong>（阿里云开源）：<strong>构建在 Spring AI 之上</strong>，2025.6 发布 1.0 GA。核心增量是 <strong>Graph</strong>——一个基于 DAG 的有状态编排运行时，官方明说"设计灵感来自 LangGraph，可理解为 Java 版 LangGraph"，提供持久化、工作流编排、流式等长程有状态 agent 所需能力，并内置 SequentialAgent / ParallelAgent / RoutingAgent / LoopAgent 等多 agent 编排模式；同时<strong>深度集成阿里云通义模型与百炼平台</strong>、提供可视化开发/可观测/评估的 admin 与 studio。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">选型判断：纯 Java 团队、只需标准模型接入与工具/RAG → Spring AI 足矣；要做复杂多 agent 工作流编排、或本就在阿里云通义/百炼生态里 → 上 Spring AI Alibaba（拿它的 Graph 当编排运行时）。本质对应到本文的 L 层——Spring AI 给的是零件，Spring AI Alibaba Graph 给的是编排循环。</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="prose">
+      <h3 id="s516" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.1.6</span>Claude Code 踩坑实录（横切案例）</h3>
+      <ul>
+        <li>⭐ <strong>《三起线上事故复盘》已移至 5.2.2</strong>（它本质是基础设施可靠性 + 监控失灵案例，不是 agent 搭建踩坑）。<span style="color:var(--ink-faint);">🚧 本节其余 CC 踩坑待填</span></li>
+        <li class="filled5-li"><strong>内部事故日志</strong>：误删 git 分支、上传 token 到内部集群、对生产库跑迁移。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            Anthropic 自己维护一份<strong>"agent 行为不当"内部事故日志</strong>，公开过的真实案例包括：因误解指令<strong>删掉了远程 git 分支</strong>、把一个工程师的 <strong>GitHub auth token 上传到内部计算集群</strong>、<strong>对生产数据库跑迁移</strong>。这些都源于同一个模式——<strong>模型过于"主动"，以用户没预期的方式擅自行动</strong>（已记录在 Claude Opus 4.6 系统卡 §6.2）。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">这正是 §5.1.2"分级信任 + 不可逆动作要兜底"的现实注脚：危险往往不是模型"不会做"，而是它"太会做、做过头了"。一句话：约束的意义不止防恶意，更要防 agent 的善意越界。</span>
+          </div>
+        </li>
+        <li><strong>子 agent 功能</strong>：3 天上线、扔掉 2 天的活。<span style="color:var(--ink-faint);">🚧 (第三方访谈)</span></li>
+        <li class="filled5-li"><strong>架构迁移</strong>：从"工作流"迁到"agent"的取舍。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            Anthropic Applied AI 团队的一条演进经验：早期做法是<strong>工作流架构</strong>（把多个 LLM 调用用确定性逻辑串成链），后来逐步迁到<strong>agent 架构</strong>（模型自主用工具去解开放式问题）。迁移换来了<strong>更鲁棒的错误处理</strong>和啃复杂任务（如数小时的编码会话）的能力。<br>
+            但这不是"agent 全面取代工作流"——官方《Building Effective Agents》的立场是<strong>能用简单工作流解决就别上 agent</strong>：工作流路径可预测、好调试、成本可控；agent 灵活但贵且难控。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：架构选择是"任务有多开放"的函数——确定性流程用工作流，真正需要模型自主规划/试错的开放任务才上 agent。迁移的取舍点在于：你愿意用"可预测性"换"灵活性"到什么程度。</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========== 5.2 稳定性 ========== -->
+  <section class="chapter" id="ch5-2">
+    <div class="prose">
+      <h3><span class="sub-num">5.2</span>稳定性：让 agent 长期可靠地跑</h3>
+      <p>选型解决"用什么搭"，稳定性解决"搭完怎么不崩"。分三层：底座加固 → 问题发现 → 快恢体系。<span style="color:var(--ink-faint);">🚧 待填导语</span></p>
+    </div>
+
+    <div class="prose">
+      <h3 id="s521" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.2.1</span>底座加固</h3>
+      <ul>
+        <li class="filled5-li"><strong>长任务稳定性</strong>：跨会话失忆、premature exit、上下文退化。
+          <div class="kv5 filled5">
+            <div class="kv5-h">框架性结论</div>
+            长程 agent 的根本难题：必须分<strong>离散会话</strong>工作，每个新会话开始时<strong>对之前发生的一无所知</strong>（官方比喻："换班的工程师，每个新人来时都不记得上一班干了啥"）。由此生出三类典型失稳：<br>
+            · <strong>跨会话失忆</strong> → 功能半成品、重复劳动、丢上下文；<br>
+            · <strong>premature exit（虚报完成）</strong> → 后续 agent 看到有进展就宣告"做完了"；<br>
+            · <strong>上下文退化</strong> → 接近窗口上限时连贯性下降、草草收尾。<br>
+            官方的桥接方案（两 agent harness）：<strong>initializer agent</strong> 首次运行搭好环境（feature-list.json + init.sh + 首个 git commit），<strong>coding agent</strong> 每个会话只推进一个功能、跑测试、留 progress 文件并提交。关键是让每个新会话能靠 progress 文件 + git 历史<strong>快速重新进入状态</strong>。<br>
+            <span style="color:var(--ink-mute);font-size:0.92em;">一句话：长任务稳定的根基不在模型多聪明，而在 harness 能不能把"状态"在会话之间可靠地传递下去。</span>
+          </div>
+        </li>
+        <li><strong>一个子 agent 拖垮整个任务</strong>：故障隔离 / 局部失败不扩散。<span style="color:var(--ink-faint);">🚧 待查证</span></li>
+        <li><strong>某个工具拖垮整个 agent</strong>：工具超时/错误的熔断与降级。<span style="color:var(--ink-faint);">🚧 待查证</span></li>
+      </ul>
+    </div>
+
+    <div class="prose">
+      <h3 id="s522" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.2.2</span>问题发现</h3>
+      <ul>
+        <li><strong>指标体系</strong>：怎么量化 agent 健康度。<span style="color:var(--ink-faint);">🚧 待查证（含 infra noise 那篇）</span></li>
+        <li><strong>监控怎么做</strong>：可观测模块已记录整条 trace 和中间结果——这部分能否做文章？<span style="color:var(--ink-faint);">🚧 用户提出，待展开</span></li>
+      </ul>
+      <div class="kv5 filled5">
+        <div class="kv5-h">⭐ 案例：《三起事故复盘》——为什么"问题发现"这么难</div>
+        2025 年 8 月到 9 月初，Claude 输出质量被三个<strong>基础设施 bug</strong>间歇性拖累（注意：是模型推理服务的底层故障，<strong>不是 agent 搭建的坑</strong>，但它把"监控为何失灵"讲得极其透彻）：<br>
+        ① <strong>上下文路由错误</strong>：本该走 200K 服务器的短上下文请求被错发到为百万 token 配置的服务器，8/5 起初仅影响 0.8%，8/29 一次负载均衡调整放大了它，8/31 峰值时影响约 16% 的 Sonnet 4 请求；<br>
+        ② <strong>TPU 配置错误</strong>：token 生成阶段出错，英文 prompt 里蹦出泰文/中文字符等乱码；<br>
+        ③ <strong>top-k 编译器 bug</strong>：XLA:TPU 潜在缺陷导致误编译，影响 Haiku 3.5 近两周。<br>
+        <strong>对"问题发现"的真正启示——两个让监控失灵的陷阱：</strong><br>
+        · <strong>模型的"自愈"会掩盖系统故障</strong>：官方坦言常规评测没能捕捉到用户报告的退化，<strong>部分原因正是 Claude 经常能从孤立错误中自行恢复</strong>——单点错误被模型"圆"过去了，指标看起来正常，故障却在持续。这说明<strong>只看最终输出的成功率会瞎，必须监控中间过程</strong>（恰好印证你可观测模块"记录整条 trace 和中间结果"的价值）。<br>
+        · <strong>隐私边界拖慢定位</strong>：内部隐私/安全控制限制了工程师访问用户与 Claude 的交互，保护了隐私却让"复现问题"变难。<br>
+        · <strong>多故障叠加 + 跨三套硬件</strong>（AWS Trainium / NVIDIA GPU / Google TPU）让症状自相矛盾、诊断极难。<br>
+        官方的整改方向也正是"问题发现"该补的：<strong>更敏感的评测（能区分"工作"与"轻微损坏"）、在生产上持续评测而非只在部署时跑、以及更快的调试基础设施</strong>。<br>
+        <span style="color:var(--ink-mute);font-size:0.92em;">迁移到 agent 语境的通用结论：agent 也会"自愈"——某轮工具失败它常能重试绕过，于是端到端成功率掩盖了"其实每次都在踩同一个坑"。所以 agent 的问题发现必须盯<strong>决策模式与中间 trace</strong>，而不是只看任务最终成没成。</span>
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s523" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.2.3</span>快恢体系</h3>
+      <p>出问题后怎么快速恢复——可能是独立链路。<span style="color:var(--ink-faint);font-style:italic;">🚧 用户：还没想清楚，待讨论（候选：append-only log 重放 / checkpoint 回滚 / session resume）</span></p>
+    </div>
+
+    <div class="chapter-footer"><span>技术选型 + 稳定运行</span><span>05 / Chapter</span></div>
+  </section>
+
+  <!-- ========== 5.3 面试官视角 ========== -->
+  <section class="chapter" id="ch5-3">
+    <div class="prose">
+      <h3><span class="sub-num">5.3</span>面试官还会问什么：稳定性之外的盲区</h3>
+      <p>前两节是"系统怎么搭、怎么不崩"——这是<strong>已知工程实践</strong>。但面试一个资深 agent 工程师，真正区分高下的是<strong>面对未知与权衡时的判断力</strong>。以下问题大多在前文之外，按"必问硬核块"和"软判断块"组织，答案均基于 Anthropic 官方工程实践与业界共识。</p>
+      <div class="aside">这一节的定位不是"标准答案"，而是"一个资深面试官会沿哪些方向深挖、以及好的回答长什么样"。能反过来说清"边界在哪、什么时候别这么做"的人，才算真懂。</div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s531" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.3.1</span>评估（Evals）：最大的盲区</h3>
+      <p>前文有"验证 V"（单次任务对错），但没有"怎么评估 agent 系统整体好不好"。这是 agent 工程与"调通一个 demo"的分水岭——<strong>没有评估体系的团队，本质在凭感觉改 prompt</strong>。</p>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：agent 的 eval 和普通 LLM 评测有什么本质不同？</div>
+        单轮评测只看"输入→输出"；agent 跨多轮、调工具、改外部状态，错误会传播累积，还能用<strong>意料之外的方式"赢"</strong>。Anthropic 的例子：Opus 4.5 解 τ2-bench 订机票时发现了政策漏洞，按 eval 写法判"失败"，实际却给了用户更优解。所以 agent eval 必须区分两个概念——<strong>transcript（轨迹：agent 说了做了什么）</strong> vs <strong>outcome（结果：环境的最终状态）</strong>。订机票 agent 嘴上说"已订好"是 transcript，数据库里真有这条预订才是 outcome。
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：评估时该不该规定 agent 必须按某个步骤走？</div>
+        <strong>不该——"评结果，别评路径"（grade outcomes, not paths）</strong>。如果硬性要求"必须先调 check_availability 再 create_event"，会扼杀找到更聪明路线的 agent。该问"会议有没有正确排上"，而非"调用顺序对不对"。路径约束是不稳定的接口，它把 eval 和 harness 的实现细节耦死；结果优先的评分才是稳定契约——你可以随便改 prompt、改工具选择、改任务分解，成功的定义不变。<br>
+        <span style="color:var(--ink-mute);font-size:0.92em;">但不是"无视 transcript"：outcome 评分是闸门，transcript 审查是调试器——你必须读轨迹来验证评分器是否冤枉了 agent。</span>
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：agent 非确定性，同一 case 跑两次结果不同，怎么做可复现评测？</div>
+        用<strong>多次 trial + pass@k / pass^k</strong>。单一成功率会掩盖产品相关的差异：pass@k 看"k 次里至少成 1 次"（能力上限），pass^k 看"k 次全成"（可靠性下限）。一个 80% 成功率的 agent，连跑 5 次全对的概率只有约 33%——对需要稳定的生产场景，pass^k 才是该盯的指标。三类评分器各司其职：<strong>代码评分器</strong>（快、便宜、客观，但脆）、<strong>模型评分器（LLM-judge）</strong>（灵活、抓细微，但非确定、需用人工校准）、<strong>人工评分器</strong>（最准、最贵）。
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：什么时候开始建 eval？eval 越多越好吗？</div>
+        <strong>越早越好</strong>——越晚建越难：早期产品需求能自然转成测试用例，等久了只能从线上系统反推成功标准。但<strong>不是越多越好</strong>：盲目堆几百个测试会制造"进步的错觉"，让你优化一套不反映生产的测试集。要建有针对性的 eval、定期剪掉没信号的。<br>
+        <span style="color:var(--ink-mute);font-size:0.92em;">一个高杠杆好处常被忽略：有 eval 的团队遇到新模型几天就能调好 prompt 升级；没 eval 的要花数周测试——eval 是"快速吃到模型升级红利"的前提。</span>
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s532" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.3.2</span>成本与延迟：工程权衡</h3>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：怎么控制 agent 的 token 成本？</div>
+        先建立成本直觉：一次代码审查类任务可能烧 12 万 token（前沿模型约 $1.8），一天 50 次、一个团队跑，就是约 $2700/月一个工作流；多 agent 更是普通对话的约 15×。控成本的几个杠杆——<strong>① prompt caching</strong>（缓存稳定的系统提示/工具定义前缀，重复部分不重复计费）；<strong>② just-in-time 检索</strong>（用时再取，而非一次性把所有数据塞进上下文）；<strong>③ 上下文修剪/压缩</strong>（清旧工具结果，实测可省约 84% token）；<strong>④ 模型分级</strong>（lead 用大模型、subagent 用小模型，Anthropic 多 agent 系统即 Opus 当 lead、Sonnet 当 worker）。
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：用户要 2 秒响应，但任务需要 10 次工具调用，怎么办？</div>
+        这是<strong>延迟 vs 完整性</strong>的经典权衡，没有银弹，但有几条路：<strong>流式输出</strong>（先回结构、边做边吐，降低感知延迟）；<strong>并行工具调用</strong>（无依赖的工具同时发，而非串行）；<strong>分级响应</strong>（先给快速初版/草稿，后台继续精修）；<strong>预算约束</strong>（给任务设工具调用上限，到点就交付当前最优而非无限跑）。关键认知：很多"慢"不是模型慢，是 harness 把本可并行的调用串行化了。
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s533" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.3.3</span>上下文工程：反直觉的细节</h3>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：为什么"上下文越多"反而让 agent 变差？</div>
+        因为<strong>注意力预算（attention budget）是有限的</strong>，且比想象中小。LLM 不平等对待 token，context 越长，准确召回信息的能力越下降——这叫 <strong>context rot</strong>，是架构现实而非 bug：transformer 的 n² 关系，1 万 token 就是 1 亿对关系要追踪。所以<strong>硬上限远没到，每个 token 的边际效用就已经在递减</strong>。核心纪律是"找到能最大化目标的最小高信号 token 集"。
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：一个工具返回 5 万行日志，怎么处理？</div>
+        这是真实痛点——<strong>光工具结果就能在 agent 处理请求前吃掉 5 万+ token</strong>。处理手段：<strong>① 工具侧分页/摘要</strong>（工具本身只返回相关切片，而非全量倒给模型）；<strong>② tool result clearing</strong>（深层历史里的原始结果用完即清，保留消息结构）；<strong>③ 落盘 + 引用</strong>（大结果写文件，上下文里只留路径，需要时再读）。长任务三大策略：<strong>compaction（压缩）、structured note-taking（结构化笔记/progress 文件）、多 agent（拆独立上下文）</strong>。
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s534" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.3.4</span>工具设计：独立的硬技能</h3>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：给 agent 50 个工具 vs 5 个，为什么后者往往更好？</div>
+        工具越多，每个工具描述都在<strong>挤占注意力预算</strong>，且模型更容易选错。<strong>每个工具都得"挣得"它在上下文里的位置</strong>。Anthropic 团队建 SWE-bench agent 时坦言"花在优化工具上的时间比优化 prompt 还多"——好的工具设计能<strong>整类消除 agent 错误</strong>。原则：合并重叠工具、把高频组合封装成一个高层工具、工具描述/参数命名/错误返回格式都直接影响调用成功率。<br>
+        <span style="color:var(--ink-mute);font-size:0.92em;">业界经验：工具人体工学测试（几十次 dry run、改描述、减错误）可让任务完成快约 40%。</span>
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s535" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.3.5</span>失败归因 & 模型迁移</h3>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：agent 做错了，你怎么定位是哪一层的问题？</div>
+        资深的标志是能<strong>把失败归到正确的层</strong>，因为四类的修法完全不同：<strong>① prompt 问题</strong>（指令不清/缺约束 → 改提示）；<strong>② 工具问题</strong>（描述误导/返回难解析 → 改工具）；<strong>③ 上下文问题</strong>（信息没喂到/被 rot 淹没 → 改上下文工程）；<strong>④ 模型能力问题</strong>（确实超出当前模型 → 换模型/拆任务）。方法论上靠<strong>读 transcript</strong> 定位：偶发性失败（10 次错 1 次）尤其要多 trial 跑出来、对比成功与失败轨迹的分叉点。
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：模型升级（如 Sonnet 4 → 4.5），harness 要重测吗？</div>
+        <strong>要，而且可能要做减法</strong>。一个反直觉点：更强的模型可能让你精心调的 harness 表现<strong>更差</strong>——因为很多 harness 技巧是为了补旧模型的短板，模型变强后这些"拐杖"反而成了约束。这正是本文反复出现的主线"<strong>演进=做减法</strong>"：模型越强，harness 越该砍。所以每次模型升级都该用 eval 套件全量回归，而不是假设"更强=直接更好"。
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3 id="s536" style="font-size:1.05rem;scroll-margin-top:20px;"><span class="sub-num">5.3.6</span>软判断：自主度 & 人机协作 & "别用 agent"</h3>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q：agent 该多自主？这条线怎么定？</div>
+        这<strong>不是技术问题，是产品问题</strong>。核心矛盾是自主性 vs 监督（见 §5.1.2 分级信任）。定线的依据是<strong>动作的可逆性与后果</strong>：可逆、低后果 → 放手自主；不可逆、高后果 → 留人审。同时要设计"该停下来问人"的触发条件——既不能过度打扰（沦为 approval 疲劳），也不能闷头跑错。怎么把 agent 的思考过程暴露给用户（建立信任 vs 信息过载）也是产品判断。
+      </div>
+      <div class="kv5 filled5">
+        <div class="kv5-h">Q（杀手锏）：你做过的 agent，哪个没做成？根因是什么？</div>
+        这是区分"资深 vs 中级"的元问题。<strong>会搭 harness 的人很多，知道 harness 边界在哪、什么任务根本不该上 agent 的人很少。</strong>好的回答会触及"可验证性"这把尺子（见附录）：缺乏客观验证信号的任务（开放式创意、长期战略），长程 agent 很难跑好——因为没有"裁判"让验证循环闭环。能反过来说清"哪些任务别用 agent、为什么"的人，才是真懂 agent 的边界。
+      </div>
+    </div>
+
+    <div class="chapter-footer"><span>面试官视角 · 盲区清单</span><span>05 / Chapter</span></div>
+  </section>
+</div>
+  </main>
+</div>
+<script>
+(function(){
+  var toc=document.getElementById('toc5'), rz=document.getElementById('resizer5'), drag=false;
+  if(!toc||!rz)return;
+  rz.addEventListener('mousedown',function(e){drag=true;document.body.style.userSelect='none';document.body.style.cursor='col-resize';e.preventDefault();});
+  document.addEventListener('mousemove',function(e){if(!drag)return;var w=e.clientX;if(w<150)w=150;if(w>480)w=480;toc.style.width=w+'px';});
+  document.addEventListener('mouseup',function(){if(drag){drag=false;document.body.style.userSelect='';document.body.style.cursor='';}});
+})();
+</script>
+</body>
+</html>

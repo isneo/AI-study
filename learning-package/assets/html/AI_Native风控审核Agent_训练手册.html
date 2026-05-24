@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Native 风控审核 Agent｜面试训练手册</title>
+  <style>
+    :root {
+      --bg: #f5f2ea;
+      --paper: #fffdf7;
+      --ink: #1f2523;
+      --muted: #6e746f;
+      --line: #d9d2c2;
+      --line-strong: #b9ad96;
+      --green: #246b57;
+      --green-soft: #e4efe9;
+      --blue: #275f89;
+      --blue-soft: #e5eef5;
+      --red: #9f3f34;
+      --red-soft: #f4e4df;
+      --amber: #a96d1d;
+      --amber-soft: #f6ead6;
+      --slate: #39434b;
+      --shadow: 0 18px 45px rgba(31, 37, 35, .10);
+      --radius: 8px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(31,37,35,.035) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(180deg, rgba(31,37,35,.028) 1px, transparent 1px) 0 0 / 24px 24px,
+        var(--bg);
+      font-family: var(--sans);
+      line-height: 1.55;
+      overflow-x: hidden;
+    }
+
+    button, input { font: inherit; }
+    button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease;
+    }
+    button:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+    button:focus-visible, details:focus-within { outline: 3px solid rgba(36,107,87,.22); outline-offset: 2px; }
+
+    .page { width: min(1480px, calc(100vw - 32px)); margin: 0 auto; padding: 24px 0 56px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 14px 0 16px;
+      background: linear-gradient(180deg, var(--bg) 72%, rgba(245,242,234,0));
+    }
+    .brandline { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+    .brandline h1 { margin: 0; font-size: 22px; line-height: 1.2; letter-spacing: 0; overflow-wrap: anywhere; }
+    .brandline span { color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .actions button { padding: 8px 10px; font-size: 13px; }
+    .actions .primary { background: var(--green); color: #fff; border-color: var(--green); }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(300px, .8fr);
+      gap: 18px;
+      align-items: stretch;
+      margin: 8px 0 18px;
+    }
+    .thesis, .scorecard {
+      border: 1px solid var(--line);
+      background: rgba(255,253,247,.82);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+    .thesis { padding: 22px; }
+    .kicker { color: var(--green); font-weight: 800; font-size: 13px; margin-bottom: 8px; }
+    .thesis h2 {
+      margin: 0 0 10px;
+      max-width: 980px;
+      font-size: clamp(30px, 3vw, 48px);
+      line-height: 1.08;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    .thesis p { margin: 0; max-width: 920px; color: #444b47; font-size: 17px; }
+    .scorecard { padding: 18px; display: grid; align-content: center; gap: 12px; }
+    .scoreline { display: grid; grid-template-columns: 80px 1fr 54px; align-items: center; gap: 9px; font-size: 13px; }
+    .bar { height: 9px; border: 1px solid var(--line); background: #f3efe5; border-radius: 999px; overflow: hidden; }
+    .bar span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
+    .scoreline:nth-child(2) .bar span { background: var(--blue); }
+    .scoreline:nth-child(3) .bar span { background: var(--amber); }
+    .scoreline:nth-child(4) .bar span { background: var(--red); }
+
+    .navstrip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0 14px;
+      scrollbar-width: thin;
+    }
+    .navstrip button {
+      min-width: max-content;
+      padding: 10px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      background: rgba(255,253,247,.74);
+    }
+    .navstrip button.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(440px, 1.05fr) minmax(360px, .86fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .left-pane, .right-pane, .qa-zone {
+      border: 1px solid var(--line);
+      background: rgba(255,253,247,.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .left-pane { padding: 16px; }
+    .right-pane {
+      position: sticky;
+      top: 74px;
+      padding: 16px;
+      max-height: calc(100vh - 92px);
+      overflow: auto;
+    }
+    .pane-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .pane-head h2, .qa-zone h2 { margin: 0; font-size: 20px; letter-spacing: 0; }
+    .smallcap { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+    .poster-wrap {
+      display: grid;
+      grid-template-columns: minmax(260px, .72fr) minmax(280px, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+    .poster-card {
+      margin: 0;
+      min-height: 520px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #efe8da;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .poster-card img {
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      max-height: 680px;
+      object-fit: contain;
+      display: block;
+    }
+    .visual-canvas {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffaf0;
+      padding: 16px;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .visual-title { display: grid; gap: 4px; }
+    .visual-title h3 { margin: 0; font-size: 24px; line-height: 1.15; letter-spacing: 0; }
+    .visual-title p { margin: 0; color: var(--muted); font-size: 14px; }
+    .flow { display: grid; gap: 10px; }
+    .flow-node {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 11px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: var(--radius);
+    }
+    .flow-node b { display: block; line-height: 1.25; }
+    .flow-node span { color: var(--muted); font-size: 13px; }
+    .num {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .matrix .cell {
+      min-height: 86px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+      align-content: start;
+    }
+    .cell strong { font-size: 14px; line-height: 1.25; }
+    .cell span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .cell.accent { background: var(--green-soft); border-color: #bad6ca; }
+    .cell.blue { background: var(--blue-soft); border-color: #bdd0df; }
+    .cell.red { background: var(--red-soft); border-color: #dfc0b9; }
+    .cell.amber { background: var(--amber-soft); border-color: #e3c898; }
+    .timeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: auto; }
+    .t-card {
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--green);
+      background: var(--paper);
+      border-radius: var(--radius);
+      padding: 10px;
+      min-height: 96px;
+    }
+    .t-card:nth-child(2) { border-top-color: var(--blue); }
+    .t-card:nth-child(3) { border-top-color: var(--amber); }
+    .t-card:nth-child(4) { border-top-color: var(--red); }
+    .t-card:nth-child(5) { border-top-color: var(--slate); }
+    .t-card b { display: block; font-size: 13px; margin-bottom: 4px; }
+    .t-card span { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tabs button { padding: 8px 10px; font-size: 13px; font-weight: 800; flex: 1; }
+    .tabs button.active { background: var(--green); color: #fff; border-color: var(--green); }
+    .talk-card {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .talk-card h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    .talk-card p { margin: 0; color: #333b36; }
+    .talk-card pre {
+      white-space: pre-wrap;
+      margin: 0;
+      font-family: var(--sans);
+      color: #333b36;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      background: #f7f2e8;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #3d4641;
+      font-weight: 700;
+    }
+    .note-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .note-list li {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffaf0;
+      color: #3d4641;
+      font-size: 14px;
+    }
+    .note-list li::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 999px; background: var(--green); }
+    .note-list.mis li { background: var(--red-soft); border-color: #e2c2bd; }
+    .note-list.mis li::before { background: var(--red); }
+
+    .qa-zone { margin-top: 18px; padding: 18px; }
+    .qa-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .qa-tools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .qa-tools button { padding: 8px 10px; font-size: 13px; font-weight: 700; }
+    .qa-tools button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .qa-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    details {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    details[open] { border-color: var(--line-strong); }
+    summary {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 12px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary span { color: var(--muted); font-size: 12px; font-weight: 800; }
+    details p { margin: 0; padding: 0 12px 14px; color: #3b433f; }
+    .copy-toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 30;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(36,107,87,.25);
+      background: #19352d;
+      color: #fff;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      font-size: 13px;
+    }
+    .copy-toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1160px) {
+      .intro, .workbench, .poster-wrap { grid-template-columns: 1fr; }
+      .right-pane { position: static; max-height: none; }
+      .poster-card { min-height: auto; max-height: 520px; }
+      .poster-card img { object-fit: contain; }
+    }
+    @media (max-width: 760px) {
+      .page { width: min(100vw - 20px, 1480px); padding-bottom: 32px; }
+      .page, .topbar, .intro, .thesis, .scorecard, .workbench, .left-pane, .right-pane, .poster-wrap, .visual-canvas, .talk-card, .bar { min-width: 0; }
+      .topbar, .qa-head { grid-template-columns: 1fr; }
+      .brandline { display: grid; gap: 4px; }
+      .brandline h1 { font-size: 18px; word-break: break-all; }
+      .brandline span { white-space: normal; }
+      .actions, .qa-tools { justify-content: flex-start; }
+      .thesis { padding: 16px; }
+      .thesis h2 { font-size: 32px; word-break: break-all; }
+      .thesis p { overflow-wrap: anywhere; word-break: break-word; }
+      .workbench { gap: 12px; }
+      .left-pane, .right-pane, .qa-zone { padding: 12px; }
+      .poster-card { display: block; min-height: 0; max-height: none; }
+      .poster-card img { width: 100%; height: auto; max-height: none; }
+      .matrix { grid-template-columns: 1fr; }
+      .timeline, .qa-grid { grid-template-columns: 1fr; }
+      .scoreline { grid-template-columns: 70px minmax(0, 1fr); }
+      .scoreline strong { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brandline">
+        <h1>AI Native 风控审核 Agent｜面试训练手册</h1>
+        <span>以终为始叙事框架 · 口播训练 · 高频追问</span>
+      </div>
+      <div class="actions">
+        <button id="copyTalk" class="primary">复制当前口播</button>
+        <button id="copyPrompt">复制训练 Prompt</button>
+        <button id="copyJson">导出 JSON</button>
+      </div>
+    </header>
+
+    <section class="intro" aria-label="项目定位">
+      <div class="thesis">
+        <div class="kicker">Begin With The End In Mind</div>
+        <h2>先讲未来审核体系，再讲今天做了什么。</h2>
+        <p>这份手册把项目从“审核提效工具”升维为“风控审核业务域的 AI Native Agent 化”：用目标态定高度，用领域架构定边界，用单次执行和受控进化证明系统能跑、能控、能持续变强。</p>
+      </div>
+      <div class="scorecard" aria-label="叙事稳定度速查">
+        <div class="scoreline"><span>定位</span><div class="bar"><span style="width: 96%"></span></div><strong>清晰</strong></div>
+        <div class="scoreline"><span>架构</span><div class="bar"><span style="width: 90%"></span></div><strong>完整</strong></div>
+        <div class="scoreline"><span>治理</span><div class="bar"><span style="width: 92%"></span></div><strong>稳健</strong></div>
+        <div class="scoreline"><span>风险</span><div class="bar"><span style="width: 78%"></span></div><strong>需守边界</strong></div>
+      </div>
+    </section>
+
+    <nav class="navstrip" id="stageNav" aria-label="叙事章节"></nav>
+
+    <main class="workbench">
+      <section class="left-pane" aria-label="叙事图表">
+        <div class="pane-head">
+          <div>
+            <div class="smallcap">Left Board</div>
+            <h2 id="visualHeading">叙事图谱</h2>
+          </div>
+          <span class="chip" id="stageTag">阶段</span>
+        </div>
+        <div class="poster-wrap">
+          <figure class="poster-card">
+            <img id="posterImage" alt="当前章节海报" />
+          </figure>
+          <div class="visual-canvas">
+            <div class="visual-title">
+              <h3 id="visualTitle"></h3>
+              <p id="visualSub"></p>
+            </div>
+            <div class="flow" id="flowList"></div>
+            <div class="matrix" id="matrixList"></div>
+            <div class="timeline" id="timelineList"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="right-pane" aria-label="口播与提示">
+        <div class="pane-head">
+          <div>
+            <div class="smallcap">Right Script</div>
+            <h2 id="scriptHeading">口播陈述</h2>
+          </div>
+        </div>
+        <div class="tabs">
+          <button data-mode="short" class="active">30 秒</button>
+          <button data-mode="medium">2 分钟</button>
+          <button data-mode="long">5 分钟骨架</button>
+        </div>
+        <article class="talk-card">
+          <h3>上口播陈述</h3>
+          <pre id="talkText"></pre>
+        </article>
+        <article class="talk-card">
+          <h3>核心亮点</h3>
+          <div class="chip-row" id="highlightList"></div>
+        </article>
+        <article class="talk-card">
+          <h3>容易踩的误区</h3>
+          <ul class="note-list mis" id="mistakeList"></ul>
+        </article>
+        <article class="talk-card">
+          <h3>面试官听到的信号</h3>
+          <ul class="note-list" id="signalList"></ul>
+        </article>
+      </aside>
+    </main>
+
+    <section class="qa-zone" id="qa" aria-label="问答参考">
+      <div class="qa-head">
+        <div>
+          <div class="smallcap">Bottom Q&A</div>
+          <h2>问答参考</h2>
+        </div>
+        <div class="qa-tools" id="qaFilters"></div>
+      </div>
+      <div class="qa-grid" id="qaGrid"></div>
+    </section>
+  </div>
+
+  <div class="copy-toast" id="toast">已复制</div>
+
+  <script>
+    const posterBase = "02_海报素材/生成海报_v2/";
+
+    const stages = [
+      {
+        id: "end",
+        nav: "1 终局开场",
+        tag: "项目定位",
+        poster: posterBase + "poster_00_项目定位与五层总地图.png",
+        title: "从目标态倒推今天的能力建设",
+        sub: "开场先把项目放到风控审核业务域，而不是单个工具或页面。",
+        flow: [
+          ["终局", "Agent 驱动、知识约束、工具协同、证据可解释、反馈可进化"],
+          ["对象", "不是一个审核助手，而是整个风控审核业务域"],
+          ["路径", "五条主线 × 三大支柱 × 单次审核与长期进化闭环"]
+        ],
+        matrix: [
+          ["V1 只讲项目", "业务痛点、系统方案、提效结果", "blue"],
+          ["V2 讲体系", "未来审核体系如何运行", "accent"],
+          ["组合方式", "V2 定高度，V1 补证据", "amber"]
+        ],
+        timeline: [
+          ["定位", "风控审核业务域 AI Native Agent 化"],
+          ["矛盾", "知识、流程、工具、权限、反馈割裂"],
+          ["架构", "五条主线与三大支柱"],
+          ["闭环", "一次审核与长期进化"],
+          ["价值", "提效、提质、进化"]
+        ],
+        talk: {
+          short: "我这个项目做的是风控审核业务域的 AI Native Agent 化。它不是单点审核助手，也不是某个策略知识库，而是从未来风控审核体系的目标态出发，把审核中的知识、流程、工具、权限、证据和反馈机制，重构为 Agent 可理解、可调用、可约束、可解释、可评估、可进化的 AI 原生风控审核体系。",
+          medium: "我这个项目做的是互联网风控审核领域的 AI Native Agent 化。它不是某个单一策略模块的 AI 化，也不是简单做一个审核助手，而是从整个风控审核业务域的未来形态出发，思考如何把风险发现、审核研判、案件流转、知识沉淀和反馈进化这条链路 Agent 化。短期看是审核提效和证据链生成，中期看是审核口径统一和质量提升，长期看是让风控审核从人工经验驱动走向 Agent 驱动、知识约束和受控反馈进化。",
+          long: "0:00-0:40 项目定位：这是风控审核业务域的 AI Native Agent 化，不是单点审核助手。\n0:40-1:30 核心矛盾：传统体系的问题是知识、流程、工具、权限和反馈割裂。\n1:30-2:40 领域架构：用五条主线改造业务域，用三大支柱支撑底层能力。\n2:40-4:00 运行闭环：一次案件里，Agent 组装上下文、调用工具、受 Harness 约束、输出证据链；长期看，反馈推动体系更新。\n4:00-5:00 价值证明：短期提效、中期提质、长期进化。"
+        },
+        highlights: ["先讲终局", "业务域级改造", "Agent 可执行可约束", "V2 主线，V1 支撑"],
+        mistakes: ["开场说成“做了一个审核问答助手”。", "先堆 RAG、Tool、Prompt，导致项目高度变窄。", "没有交代这是高风险业务域，需要治理边界。"],
+        signals: ["你理解 AI Native 不是接模型，而是重构业务运行方式。", "你能把项目从功能实现上升到领域架构。"]
+      },
+      {
+        id: "conflict",
+        nav: "2 核心矛盾",
+        tag: "Why Now",
+        poster: posterBase + "poster_01_核心矛盾与目标态.png",
+        title: "问题不是慢，而是割裂",
+        sub: "把痛点从效率问题升维为体系问题，才自然导向 AI Native 重构。",
+        flow: [
+          ["知识割裂", "规则、SOP、案例、专家经验散落在不同载体"],
+          ["工具割裂", "日志、图谱、用户画像、处置记录分散在不同系统"],
+          ["反馈割裂", "质检、申诉、新风险样本没有稳定进入体系迭代"]
+        ],
+        matrix: [
+          ["普通 RAG", "解决问得到知识、生成得出文本", "blue"],
+          ["审核 Agent", "需要组装上下文、查证证据、受控执行", "accent"],
+          ["风控体系", "需要人工复核、灰度验证、可回滚进化", "red"]
+        ],
+        timeline: [
+          ["规则", "规则系统"],
+          ["SOP", "文档"],
+          ["案例", "工单"],
+          ["经验", "人脑"],
+          ["反馈", "质检与申诉链路"]
+        ],
+        talk: {
+          short: "传统风控审核的问题不是单纯审核慢，而是知识、流程、工具、权限和反馈机制割裂。人可以靠经验把这些信息临时串起来，但 Agent 如果只是接进来做问答，很难形成稳定、可控、可复用的领域能力。",
+          medium: "传统风控审核的问题不只是审核慢，而是整个体系比较割裂：规则在规则系统里，SOP 在文档里，历史案例在工单里，专家经验在人脑里，用户行为数据在不同工具里，质检和申诉反馈又在另一套链路里。人可以靠经验把这些信息串起来，但 AI 如果只是接进来做问答，很难形成稳定的领域能力。所以目标不是做一个审核 Copilot，而是构建 AI 原生风控审核体系。",
+          long: "0:40-1:30 核心矛盾：\n第一，知识割裂，规则、SOP、案例、质检标准、申诉规则分散。\n第二，证据割裂，用户行为、日志、设备关系、历史处罚和相似案例不在一个审核上下文里。\n第三，治理割裂，权限、流程、动作边界与人工复核条件没有成为 Agent 的运行约束。\n第四，反馈割裂，复核、质检、申诉和新风险样本没有稳定反哺知识、工具、流程和评估体系。"
+        },
+        highlights: ["问题升维", "割裂是根因", "普通 Copilot 不够", "高风险场景需要治理"],
+        mistakes: ["只说“审核慢”，会被听成普通提效项目。", "把 RAG 当成完整方案，忽略证据、权限和反馈。", "把人的经验串联能力误认为模型天然具备。"],
+        signals: ["你能识别业务系统性问题，而不是只盯单点效率。", "你知道 Agent 要稳定运行，必须先把领域资产结构化。"]
+      },
+      {
+        id: "target",
+        nav: "3 目标态",
+        tag: "Target State",
+        poster: posterBase + "poster_01_核心矛盾与目标态.png",
+        title: "六个目标态特征",
+        sub: "用目标态约束方案边界：Agent 要能做事，也要能被解释、复核和持续治理。",
+        flow: [
+          ["Agent 驱动", "由 Agent 组织一次审核任务，而不是只回答问题"],
+          ["知识约束", "规则、SOP、案例、质检标准成为领域边界"],
+          ["证据可解释", "结论绑定证据来源、规则依据、置信度和待确认项"]
+        ],
+        matrix: [
+          ["工具协同", "日志、图谱、画像、规则引擎受控调用", "blue"],
+          ["人工可复核", "高风险、低置信、规则冲突转人工", "red"],
+          ["反馈可进化", "复核、质检、申诉进入受控更新", "accent"]
+        ],
+        timeline: [
+          ["驱动", "组织任务"],
+          ["约束", "限定判断"],
+          ["协同", "调用工具"],
+          ["解释", "输出证据"],
+          ["进化", "受控更新"]
+        ],
+        talk: {
+          short: "AI 原生风控审核体系的目标态，是让 Agent 能组织审核任务，在领域知识和 Harness 边界约束下调用工具、查证证据、形成判断，并通过人工复核、质检、申诉和新风险样本持续更新体系。",
+          medium: "目标态可以概括成六个特征：Agent 驱动、知识约束、工具协同、证据可解释、人工可复核、反馈可进化。Agent 不只是回答审核员的问题，而是组织一次审核任务；规则、SOP、案例和质检标准成为判断边界；工具调用提供可查证证据；输出结果包含证据链、规则依据、置信度和待确认项；高风险和低置信场景必须进入人工复核；反馈要经过归因、审核、灰度和回滚机制再进入体系。",
+          long: "1:00-1:40 目标态：\nAgent 驱动：由 Agent 组织审核任务。\n知识约束：规则、SOP、案例、质检标准、申诉规则成为领域边界。\n工具协同：用户画像、日志、图谱、规则引擎和内容理解工具被受控调用。\n证据可解释：每个结论绑定证据来源、规则依据、置信度和待确认项。\n人工可复核：高风险、低置信、规则冲突、高影响动作必须转人工。\n反馈可进化：复核、质检、申诉和新风险样本反哺知识、流程、工具、Harness 和评估体系。"
+        },
+        highlights: ["六要素目标态", "可执行与可治理并重", "输出证据链而不是一句判断", "反馈要受控"],
+        mistakes: ["把目标态说成“模型替代审核员”。", "暗示 Agent 可以自动处罚用户或自动改规则。", "只讲准确率，不讲证据链和复核边界。"],
+        signals: ["你有高风险场景的产品边界感。", "你能把模型能力翻译成业务可用的系统能力。"]
+      },
+      {
+        id: "architecture",
+        nav: "4 领域架构",
+        tag: "5 × 3",
+        poster: posterBase + "poster_02_领域架构母图_五条主线x三大支柱.png",
+        title: "五条主线 × 三大支柱",
+        sub: "五条主线是业务地图，三大支柱是复用底座，避免每条链路各造一套能力。",
+        flow: [
+          ["五条主线", "风险发现、审核研判、案件流转、知识治理、受控进化"],
+          ["三大支柱", "审核域知识治理、案件上下文与证据工具、Harness 约束与治理"],
+          ["运行闭环", "知识资产 → 上下文 → Agent → Harness → 证据链 → 反馈 → 更新"]
+        ],
+        matrix: [
+          ["风险发现与识别", "从被动规则命中到发现新风险模式", "accent"],
+          ["审核研判与决策", "证据驱动、规则对齐、置信度分层", "blue"],
+          ["案件流转与处置", "按风险、置信度和权限动态编排", "amber"],
+          ["知识沉淀与治理", "规则、案例、SOP、申诉反馈结构化", "accent"],
+          ["受控反馈与进化", "候选生成、人工审核、灰度验证、回滚", "red"],
+          ["共享支柱", "知识、证据工具、Harness 贯穿所有主线", "blue"]
+        ],
+        timeline: [
+          ["发现", "风险线索"],
+          ["判断", "证据充分性"],
+          ["处置", "分流复核"],
+          ["沉淀", "经验结构化"],
+          ["进化", "受控更新"]
+        ],
+        talk: {
+          short: "如果用一张图讲项目架构，我会画“五条主线 × 三大支柱”。五条主线覆盖风险事件从发现、判断、处置，到经验沉淀和能力反哺的完整生命周期；三大支柱提供审核域知识、案件证据工具和 Harness 治理底座。",
+          medium: "领域层面我把它拆成五条主线：风险发现与识别、审核研判与决策、案件流转与处置编排、知识沉淀与治理、受控反馈与体系进化。能力层面底下是三大支柱：审核域知识治理、案件上下文与证据工具、Harness 约束与治理。五条主线回答业务域如何被 Agent 化改造，三大支柱回答所有主线共享哪些能力，避免把项目讲成彼此独立的几个 Agent。",
+          long: "1:30-2:40 领域架构：\n五条主线是业务地图：风险发现与识别、审核研判与决策、案件流转与处置编排、知识沉淀与治理、受控反馈与体系进化。\n三大支柱是能力底座：审核域知识治理解决规则、SOP、案例和反馈如何被 Agent 消费和迭代；案件上下文与证据工具解决一次审核看什么、查什么、引用什么；Harness 约束与治理解决 Agent 能做什么、不能做什么、什么时候必须转人工。\n运行闭环说明这套架构具体怎么跑。"
+        },
+        highlights: ["业务地图", "能力底座", "不是五个独立 Agent", "统一 Orchestrator 更稳"],
+        mistakes: ["把五条主线讲成五个互不相干的 Agent。", "只画技术架构，不解释业务生命周期。", "忘了三大支柱是共享能力，不是某个模块的附属品。"],
+        signals: ["你有领域建模能力。", "你能解释业务拆分与系统复用之间的关系。"]
+      },
+      {
+        id: "single",
+        nav: "5 单次审核",
+        tag: "Agent Run",
+        poster: posterBase + "poster_03_运行闭环_单次审核x长期进化.png",
+        title: "一次审核如何被 Agent 执行",
+        sub: "单次审核是体系能力的落地路径：知识、上下文、工具、Harness 和结构化输出要串起来。",
+        flow: [
+          ["知识资产", "审核规则、SOP、历史案例、质检标准、申诉规则"],
+          ["案件上下文", "行为、日志、设备/IP、历史处罚、相似案例、工具结果"],
+          ["Agent 研判", "工具调用、证据聚合、规则对齐、置信度分层"],
+          ["Harness", "限定工具、数据、动作、转人工条件和留痕要求"],
+          ["审核建议", "风险类型、证据链、规则依据、建议动作、待确认项"]
+        ],
+        matrix: [
+          ["输入", "知识资产 + 案件级上下文", "blue"],
+          ["过程", "Agent 调工具、聚证据、对齐规则", "accent"],
+          ["控制", "Harness 权限、流程、动作边界", "red"],
+          ["输出", "证据链、审核建议、置信度、转人工原因", "amber"],
+          ["信号", "采纳、误判、漏判、申诉推翻", "blue"],
+          ["接口", "进入长期进化闭环", "accent"]
+        ],
+        timeline: [
+          ["知识", "知道什么"],
+          ["上下文", "这次看什么"],
+          ["Agent", "怎么判断"],
+          ["Harness", "边界在哪"],
+          ["输出", "交付什么"]
+        ],
+        talk: {
+          short: "落到一次审核里，系统会先组装案件级上下文，然后 Agent 在 Harness 约束下调用工具和审核知识，完成风险研判，输出风险类型、证据链、规则依据、建议动作、置信度和待人工确认项。",
+          medium: "落到一次具体审核里，系统会先调用审核域知识资产，包括规则、策略、SOP、历史案例、质检标准和申诉规则；然后组装案件级上下文，包括用户历史行为、当前触发规则、操作日志、设备关系、历史处罚和相似案例。Agent 在这个上下文里调用工具、聚合证据、对齐规则，形成风险研判。最终输出的不是一句判断，而是风险类型、风险等级、核心证据、证据来源、规则依据、建议动作、置信度和待人工确认项。",
+          long: "2:40-3:25 单次审核：\n审核域知识资产：Agent 知道规则、SOP、案例、质检标准和申诉规则。\n案件级上下文：Agent 这次看用户行为、触发规则、日志、交易、设备关系、历史处罚和相似案例。\nAgent 化审核链路：完成风险点提取、工具调用、证据聚合、规则对齐、风险研判和建议生成。\nHarness：限定工具、数据、策略、动作边界和转人工条件。\n证据链与建议：输出风险类型、等级、证据来源、规则依据、建议动作、置信度、待确认项和转人工原因。"
+        },
+        highlights: ["one-off 案件上下文", "证据驱动", "Harness 贯穿执行", "结构化审核建议"],
+        mistakes: ["把风控上下文说成多轮聊天历史。", "让模型凭感觉给结论，没有证据来源。", "忽略低置信、高风险、规则冲突必须转人工。"],
+        signals: ["你知道 AgentRun 的输入、过程、控制和输出。", "你能讲清楚风控场景为什么必须证据链化。"]
+      },
+      {
+        id: "evolution",
+        nav: "6 受控进化",
+        tag: "Feedback",
+        poster: posterBase + "poster_03_运行闭环_单次审核x长期进化.png",
+        title: "反馈不是直接改规则，而是受控进化",
+        sub: "人机协同的关键，是把复核、质检、申诉和新风险样本变成可归因、可评审、可回滚的更新。",
+        flow: [
+          ["反馈信号", "人工复核、质检、申诉、策略复盘、新风险样本"],
+          ["问题归因", "知识、上下文、工具、Harness、流程、评估缺口"],
+          ["候选更新", "候选知识、候选策略、工具能力、边界和评估集"],
+          ["治理发布", "人工审核、灰度验证、效果监控、版本回滚"]
+        ],
+        matrix: [
+          ["知识缺口", "规则、案例、SOP、处置标准不足", "amber"],
+          ["上下文缺口", "缺少关键行为、日志或图谱证据", "blue"],
+          ["工具缺口", "工具无法提供关键证据或调用失败", "blue"],
+          ["Harness 缺口", "自动化与转人工边界不清", "red"],
+          ["流程缺口", "流转、人机协同或处置编排不合理", "amber"],
+          ["评估缺口", "评估集未覆盖边界风险", "accent"]
+        ],
+        timeline: [
+          ["采集", "反馈信号"],
+          ["归因", "问题位置"],
+          ["生成", "候选更新"],
+          ["验证", "灰度监控"],
+          ["发布", "可回滚"]
+        ],
+        talk: {
+          short: "长期看，每一次审核也是对体系的验证。人工复核、质检、申诉和新风险样本会进入反馈闭环，但不是直接让 Agent 自动改规则，而是经过归因、人工审核、灰度验证、效果监控和可回滚发布。",
+          medium: "长期看，每一次审核也是对体系的验证。人工复核、质检、申诉和新风险样本会形成反馈信号，这些信号不会直接写回知识体系，而是先做归因：到底是知识缺口、上下文缺口、工具缺口、Harness 边界缺口，还是评估集没有覆盖。归因之后再进入候选更新、人工审核、灰度验证、效果监控和可回滚发布，推动知识、流程、工具、Harness 和评估体系持续更新。",
+          long: "3:25-4:00 长期进化：\n反馈来源包括人工复核、质检、申诉、策略复盘、新风险样本、误判漏判案例、工具失败和规则冲突记录。\n反馈不是简单对错标签，而是原判断、人工修正、修正理由、缺失证据、规则冲突、转人工缺口和处置轻重。\n每个反馈要归因到知识、上下文、工具、Harness、流程或评估缺口。\nAgent 可以生成候选更新，但高影响规则和处置边界必须人工审核，上线前需要灰度验证和效果监控，所有版本必须可追溯、可回滚。"
+        },
+        highlights: ["反馈归因", "候选更新", "人工审核", "灰度验证", "可回滚发布"],
+        mistakes: ["说 Agent 自动把反馈写入正式知识体系。", "把进化讲成全自动自进化。", "只收集对错标签，不做体系归因。"],
+        signals: ["你理解高风险业务越靠近自治越要保守。", "你能把反馈闭环讲成工程治理链路，而不是口号。"]
+      },
+      {
+        id: "value",
+        nav: "7 技术价值",
+        tag: "Proof",
+        poster: posterBase + "poster_04_技术支撑与价值证明.png",
+        title: "技术模块服务主叙事，价值按三层证明",
+        sub: "RAG、Tool、Workflow、Harness、Eval 都不是主角，主角是风控审核体系的 AI 原生化。",
+        flow: [
+          ["技术对应", "RAG 支撑知识治理，Tool 支撑证据工具，Workflow 支撑审核链路"],
+          ["治理对应", "Harness 支撑权限、流程、动作与人工复核边界"],
+          ["评估对应", "Eval 和可观测性支撑证据、规则引用、反馈更新可信迭代"],
+          ["价值对应", "短期提效、中期提质、长期进化"]
+        ],
+        matrix: [
+          ["短期提效", "审核耗时、查证步骤、证据链生成耗时", "accent"],
+          ["中期提质", "证据链完整率、规则引用准确率、复核质量", "blue"],
+          ["长期进化", "反馈归因、知识更新、评估集覆盖、回滚记录", "amber"]
+        ],
+        timeline: [
+          ["RAG", "知识治理"],
+          ["Tool", "证据查证"],
+          ["Workflow", "流程编排"],
+          ["Harness", "边界治理"],
+          ["Eval", "可信迭代"]
+        ],
+        talk: {
+          short: "这套体系背后需要 RAG、Tool Calling、Workflow、Prompt、Harness、Eval 和可观测性支撑，但这些技术不是主角。主角是风控审核业务域从人工经验驱动，走向 Agent 驱动、知识约束、工具协同、证据可解释和受控反馈进化。",
+          medium: "技术模块要服务主叙事。RAG 是审核域知识治理的一种实现方式，Tool Calling 是案件上下文与证据工具的实现方式，Workflow 是 Agent 化审核链路和案件流转的执行框架，Harness 是审核域权限边界、流程边界、动作边界和人工复核边界，Eval 和可观测性保证判断、证据、规则引用和反馈更新能够被追踪和验证。价值上，短期是审核提效和证据链生成，中期是审核口径统一和质量提升，长期是新风险样本更快进入体系迭代。",
+          long: "4:00-5:00 技术与价值：\n技术不要先堆名词，要回答它支撑哪一环。\nRAG 支撑审核域知识治理；Tool Calling 支撑案件上下文与证据工具；Workflow 支撑 Agent 化审核链路；Prompt 控制任务表达、角色约束、证据要求和输出结构；Harness 管权限、流程、动作和人工复核边界；Eval 和可观测性让判断、证据、规则引用和反馈更新可追溯。\n价值分三层：短期提效，中期提质，长期进化。没有真实数据时不要编具体数字，用指标方向表达。"
+        },
+        highlights: ["技术不是主角", "三层价值证明", "指标方向不编数", "个人贡献按三层讲"],
+        mistakes: ["一上来讲技术栈，面试官听不到业务主线。", "没有真实数据却说具体提升百分比。", "只看模型回答质量，不看业务、质量和体系指标。"],
+        signals: ["你能把技术细节放回业务闭环。", "你知道价值证明要分效率、质量、体系三类。"]
+      }
+    ];
+
+    const qaItems = [
+      ["方向类", "为什么这个项目叫 AI Native？", "因为它不是简单把大模型接入审核页面，而是把风控审核业务域中的知识、流程、工具、权限、证据和反馈机制，围绕 Agent 重新设计。AI Native 体现在知识可被 Agent 消费，案件上下文可被 Agent 组装，工具可被受控调用，权限和动作边界通过 Harness 约束，输出结果可解释，人工复核、质检和申诉反馈能反哺体系迭代。"],
+      ["方向类", "和普通 RAG / Copilot 有什么区别？", "普通 RAG 或 Copilot 更像问答和辅助查询；这个项目关注完整风控审核业务域的 Agent 化。RAG 只是审核域知识治理的一种实现方式，真正核心是 Agent 如何在案件上下文、证据工具和 Harness 约束下完成风险研判，并通过人工复核、质检、申诉和新风险样本推动体系进化。"],
+      ["方向类", "为什么不是单点审核助手？", "因为项目改造对象不是一个页面或一个问答入口，而是整个审核业务链路。它覆盖风险发现与识别、审核研判与决策、案件流转与处置编排、知识沉淀与治理、受控反馈与体系进化五条主线。"],
+      ["架构类", "五条主线为什么这么拆？", "因为风控审核不是单次模型判断，而是一条完整业务链路。五条主线覆盖风险事件从发现、判断、处置，到经验沉淀和能力反哺的完整生命周期。"],
+      ["架构类", "三大支柱分别解决什么问题？", "审核域知识治理解决规则、SOP、案例、质检标准和申诉规则如何被 Agent 消费和迭代；案件上下文与证据工具解决一次 one-off 审核任务里 Agent 看什么、查什么、引用什么；Harness 约束与治理解决 Agent 在什么权限、流程、动作和人工复核边界内运行。"],
+      ["架构类", "执行闭环和领域架构母图是什么关系？", "领域架构母图回答业务域怎么拆、能力怎么复用；执行闭环回答系统具体怎么跑。五条主线 × 三大支柱是领域架构，知识资产 → 上下文 → Agent → Harness → 证据链 → 人工反馈 → 体系更新是运行路径。"],
+      ["技术类", "Agent 会不会幻觉，怎么控制？", "风控审核不能让模型凭感觉判断，所以事实必须来自工具、规则、日志、案例或知识资产。模型主要负责信息整合、证据组织和解释生成。输出中要区分已验证事实、模型推断和待人工确认项，高风险、低置信、规则冲突或高影响处置必须进入人工复核。"],
+      ["技术类", "Harness 到底是什么？", "在这个项目里，Harness 不是独立安全沙箱，而是审核域对 Agent 的权限边界、流程边界、动作边界和人工复核边界。它定义 Agent 可以调用什么工具、读取什么数据、输出什么结论、哪些动作只能建议、哪些案件必须转人工。"],
+      ["技术类", "为什么风控上下文不是对话历史？", "风控审核通常是 one-off 的案件处理任务。Agent 处理的是一个具体案件，不是多轮闲聊。因此重点不是长期对话记忆，而是案件级上下文组装，包括用户历史行为、当前触发规则、操作日志、设备关系、历史处罚、相似案例、内容上下文和工具查证结果。"],
+      ["技术类", "规则引擎和 Agent 的关系是什么？", "规则引擎适合明确、稳定、可结构化的强规则；Agent 适合多源信息整合、语义理解、案例类比、证据解释和复杂边界判断。二者不是替代关系，强规则走规则引擎，复杂判断由 Agent 辅助，模糊、高风险或低置信场景进入人工复核。"],
+      ["压力类", "受控反馈与体系进化会不会污染知识体系？", "不会让反馈直接写入正式知识体系。反馈要先经过归因、候选生成、冲突检测、适用范围判断、人工审核、灰度验证、效果监控和版本回滚机制。Agent 可以生成候选知识或候选策略，但不能无约束发布。"],
+      ["压力类", "如果模型判断和规则冲突怎么办？", "强规则优先，模型不能覆盖强规则。Agent 可以指出冲突、补充证据、解释原因或建议人工复核，但不能绕过规则直接执行高影响动作。规则冲突本身也会作为反馈信号进入知识治理和 Harness 边界更新。"],
+      ["压力类", "如何评估 Agent 的效果？", "不能只看模型回答质量，而要看业务指标、质量指标和体系指标。业务看审核耗时、查证步骤、证据链生成耗时和低风险分流比例；质量看人工采纳率、证据链完整率、规则引用准确率、误判率、漏判率和申诉修正率；体系看反馈归因、知识更新、评估集覆盖、工具调用成功率和 Harness 边界更新记录。"],
+      ["压力类", "你个人贡献可以怎么讲？", "按三层讲：第一，方向和架构，参与或负责风控审核业务域 AI Native Agent 化的目标态和领域架构设计；第二，关键链路，参与或负责审核域知识治理、案件上下文、证据工具、Agent 审核链路、Harness 约束或证据链输出；第三，闭环和验证，推动复核、质检、申诉和新风险样本进入反馈归因与体系更新，并用指标验证提效、提质和进化价值。"]
+    ];
+
+    let activeStage = 0;
+    let activeMode = "short";
+    let activeFilter = "全部";
+
+    const $ = (id) => document.getElementById(id);
+    const nav = $("stageNav");
+    const qaFilters = $("qaFilters");
+
+    function showToast(text = "已复制") {
+      const toast = $("toast");
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1400);
+    }
+
+    async function copyText(text, message) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(message);
+      } catch (error) {
+        const area = document.createElement("textarea");
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+        showToast(message);
+      }
+    }
+
+    function renderNav() {
+      nav.innerHTML = "";
+      stages.forEach((stage, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = stage.nav;
+        btn.className = index === activeStage ? "active" : "";
+        btn.addEventListener("click", () => {
+          activeStage = index;
+          render();
+        });
+        nav.appendChild(btn);
+      });
+    }
+
+    function renderStage() {
+      const stage = stages[activeStage];
+      $("visualHeading").textContent = stage.nav.replace(/^\d+\s/, "");
+      $("scriptHeading").textContent = stage.nav.replace(/^\d+\s/, "") + "口播";
+      $("stageTag").textContent = stage.tag;
+      $("posterImage").src = stage.poster;
+      $("visualTitle").textContent = stage.title;
+      $("visualSub").textContent = stage.sub;
+      $("talkText").textContent = stage.talk[activeMode];
+
+      $("flowList").innerHTML = stage.flow.map((item, i) => `
+        <div class="flow-node">
+          <div class="num">${i + 1}</div>
+          <div><b>${item[0]}</b><span>${item[1]}</span></div>
+        </div>
+      `).join("");
+
+      $("matrixList").innerHTML = stage.matrix.map(item => `
+        <div class="cell ${item[2] || ""}">
+          <strong>${item[0]}</strong>
+          <span>${item[1]}</span>
+        </div>
+      `).join("");
+
+      $("timelineList").innerHTML = stage.timeline.map(item => `
+        <div class="t-card"><b>${item[0]}</b><span>${item[1]}</span></div>
+      `).join("");
+
+      $("highlightList").innerHTML = stage.highlights.map(item => `<span class="chip">${item}</span>`).join("");
+      $("mistakeList").innerHTML = stage.mistakes.map(item => `<li>${item}</li>`).join("");
+      $("signalList").innerHTML = stage.signals.map(item => `<li>${item}</li>`).join("");
+
+      document.querySelectorAll(".tabs button").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === activeMode);
+      });
+      renderNav();
+    }
+
+    function renderQaFilters() {
+      const categories = ["全部", ...Array.from(new Set(qaItems.map(item => item[0])))];
+      qaFilters.innerHTML = categories.map(cat => `<button class="${cat === activeFilter ? "active" : ""}" data-filter="${cat}">${cat}</button>`).join("");
+      qaFilters.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeFilter = btn.dataset.filter;
+          renderQa();
+          renderQaFilters();
+        });
+      });
+    }
+
+    function renderQa() {
+      const list = activeFilter === "全部" ? qaItems : qaItems.filter(item => item[0] === activeFilter);
+      $("qaGrid").innerHTML = list.map((item, index) => `
+        <details ${index === 0 ? "open" : ""}>
+          <summary>${item[1]}<span>${item[0]}</span></summary>
+          <p>${item[2]}</p>
+        </details>
+      `).join("");
+    }
+
+    function trainingPrompt() {
+      const stage = stages[activeStage];
+      return [
+        "请扮演严苛但建设性的 AI Native 风控审核 Agent 项目面试官。",
+        "当前训练章节：" + stage.nav + " / " + stage.tag,
+        "我的目标口播：",
+        stage.talk[activeMode],
+        "",
+        "请你按以下方式训练我：",
+        "1. 先指出这段口播中最可能被追问的 3 个点。",
+        "2. 逐个追问，并要求我用“业务问题 → 系统设计 → 风险边界 → 指标证明”的结构回答。",
+        "3. 如果我把项目说成普通 RAG、审核助手、全自动处罚或自动改规则，请立刻纠偏。",
+        "4. 最后给出 30 秒压缩版和 2 分钟增强版建议。"
+      ].join("\n");
+    }
+
+    function exportJson() {
+      return JSON.stringify({
+        title: "AI Native 风控审核 Agent 面试训练手册",
+        activeStage: stages[activeStage].nav,
+        activeMode,
+        stage: stages[activeStage],
+        qa: qaItems.map(([category, question, answer]) => ({ category, question, answer }))
+      }, null, 2);
+    }
+
+    function render() {
+      renderStage();
+      renderQaFilters();
+      renderQa();
+    }
+
+    document.querySelectorAll(".tabs button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeMode = btn.dataset.mode;
+        renderStage();
+      });
+    });
+    $("copyTalk").addEventListener("click", () => copyText(stages[activeStage].talk[activeMode], "当前口播已复制"));
+    $("copyPrompt").addEventListener("click", () => copyText(trainingPrompt(), "训练 Prompt 已复制"));
+    $("copyJson").addEventListener("click", () => copyText(exportJson(), "训练 JSON 已复制"));
+
+    render();
+  </script>
+</body>
+</html>

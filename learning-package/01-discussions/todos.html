@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>待办清单</title>
+  <style>
+    body{margin:0;background:#f7f7f4;color:#222;font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+    main{max-width:1040px;margin:0 auto;padding:40px 22px 80px}
+    h1{font-size:32px;line-height:1.2;margin:0 0 22px}
+    h2{font-size:24px;margin:34px 0 14px;border-bottom:1px solid #deded7;padding-bottom:8px}
+    h3{font-size:19px;margin:26px 0 10px}
+    p,li{color:#343834}
+    a{color:#225f54;text-underline-offset:3px}
+    table{width:100%;border-collapse:collapse;margin:16px 0;background:#fff}
+    th,td{border:1px solid #deded7;padding:9px 10px;vertical-align:top;text-align:left}
+    th{background:#eef2ef}
+    code{background:#ecece7;border:1px solid #d9d9d2;border-radius:4px;padding:1px 5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+    pre{background:#222;color:#f3f3f3;border-radius:8px;padding:16px;overflow:auto}
+    pre code{background:transparent;border:0;color:inherit;padding:0}
+    .top{margin-bottom:24px}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="top"><a href="/AI-study/">返回首页</a></p>
+<h1>待办清单</h1>
+<h2>近期优先</h2>
+<table>
+<thead><tr><th>任务</th><th>解决什么问题</th><th>完成后的收益</th><th>具体内容</th></tr></thead>
+<tbody>
+<tr><td>Memory 专题研究</td><td>避免只讲泛泛的 Agent 记忆概念</td><td>能讲清楚风控场景下 memory 的价值、边界和验证方式</td><td>梳理长期记忆、短期上下文、业务事实、用户偏好、案例经验分别如何存取和更新</td></tr>
+<tr><td>Agent 循环结束条件</td><td>避免 Agent 无限循环或过早停止</td><td>形成可工程落地的 runtime 设计</td><td>定义任务完成、验证成功、重试上限、上下文上限、预算上限和人工兜底策略</td></tr>
+<tr><td>落地方案选型</td><td>区分直接集成、思路借鉴和自研</td><td>技术方案更稳，面试表达更有说服力</td><td>对 LangGraph、Spring AI、OpenAI/Anthropic SDK、Pi/DeerFlow 等做分层比较</td></tr>
+<tr><td>系统演进复盘</td><td>回答「为什么过去不是 agentic workflow」</td><td>形成差异化故事，解释为什么现在适合升级</td><td>梳理从传统 workflow 到 agentic workflow 的触发条件、收益和风险</td></tr>
+</tbody></table>
+<h2>后续补充</h2>
+<ul>
+<li>补齐图片和视频资料：当前只解析到不可读缓存，需从原始客户端另存或找到可读取路径。</li>
+<li>扩展历史范围：当前资料包只整理 2026-05-23 至 2026-05-24 的关键讨论，可继续按主题回溯更早资料。</li>
+<li>为 3 个 HTML 资料补充摘要：建议逐个打开后沉淀成短版讲义。</li>
+</ul>
+  </main>
+</body>
+</html>

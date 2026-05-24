@@ -1,0 +1,1935 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent 架构深度解析 · 业界框架横评 + 快手自研方案</title>
+<style>
+  :root {
+    --bg:#fbfcfd; --paper:#fff; --ink:#0f1820; --ink-2:#26333f;
+    --muted:#5e6b78; --muted-2:#8997a5; --line:#dde4ec;
+    --blue:#0c5d80; --blue-soft:#e6f1f6;
+    --green:#1f6f4f; --green-soft:#e6f3ec;
+    --red:#a3373a; --red-soft:#fbeceb;
+    --amber:#8a5d1f; --amber-soft:#fbf2dc;
+    --purple:#6b4596; --purple-soft:#efe9f7;
+    --code-bg:#0d141b; --code-ink:#c4d0dd;
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,Menlo,Monaco,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:20px}
+  body{margin:0;color:var(--ink);background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15px}
+  .shell{display:grid;grid-template-columns:268px minmax(0,1fr);gap:32px;max-width:1400px;margin:0 auto;padding:32px 32px 96px}
+  aside.toc{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow-y:auto;
+    padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font-size:13px}
+  aside.toc .toc-title{margin:0 0 10px;color:var(--blue);font-size:10.5px;font-weight:850;letter-spacing:0.12em}
+  aside.toc ol{list-style:none;margin:0;padding:0}
+  aside.toc > ol > li{margin:3px 0}
+  aside.toc a{display:block;padding:3px 6px;border-radius:4px;color:var(--ink-2);text-decoration:none}
+  aside.toc a:hover{background:var(--blue-soft);color:var(--blue)}
+  aside.toc .toc-num{display:inline-block;min-width:30px;color:var(--muted-2);font-variant-numeric:tabular-nums;font-weight:700}
+  aside.toc ol ol{margin:2px 0 4px 14px;font-size:12.5px}
+  aside.toc ol ol a{color:var(--muted);padding:2px 6px}
+  aside.toc .part-hd{margin-top:8px;color:var(--blue);font-size:11px;font-weight:850;letter-spacing:0.08em;padding:0 6px}
+  main{min-width:0}
+  .doc-meta{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .doc-meta .eyebrow{display:inline-block;margin-bottom:8px;color:var(--blue);font-size:11px;font-weight:850;letter-spacing:0.1em}
+  .doc-meta h1{margin:0 0 6px;font-size:30px;line-height:1.25;letter-spacing:-0.01em}
+  .doc-meta .subtitle{margin:0;color:var(--ink-2);font-size:15.5px;font-weight:500}
+  .doc-meta .meta-line{margin-top:8px;color:var(--muted);font-size:12.5px}
+  section{margin:48px 0 0;scroll-margin-top:20px}
+  section.lead{margin-top:0}
+  h2.sec{display:flex;align-items:baseline;gap:12px;margin:0 0 12px;padding-bottom:10px;border-bottom:2px solid var(--line);font-size:22px;line-height:1.3;letter-spacing:-0.005em}
+  h2.sec .n{color:var(--blue);font-variant-numeric:tabular-nums;font-weight:850;font-size:17px}
+  h3.sub{margin:28px 0 8px;font-size:16.5px}
+  h3.sub .n{color:var(--muted-2);font-variant-numeric:tabular-nums;font-weight:700;margin-right:6px}
+  h4{margin:18px 0 6px;font-size:14.5px;color:var(--ink-2)}
+  p{margin:8px 0}
+  strong{color:var(--ink)}
+  em{font-style:normal;color:var(--blue);font-weight:600}
+  code{padding:1px 5px;background:#f1f4f8;color:#1a242e;border-radius:3px;font-family:var(--mono);font-size:0.88em}
+  .tldr{margin:12px 0 16px;padding:11px 14px;border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:0 4px 4px 0;color:var(--ink-2);font-size:14px}
+  .tldr b{color:var(--blue);font-size:11px;letter-spacing:0.1em}
+  table.tab{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  table.tab th,table.tab td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  table.tab th{background:#eef3f8;color:var(--ink);font-weight:700;font-size:12.5px}
+  table.tab tr:last-child td{border-bottom:0}
+  table.tab.bordered td,table.tab.bordered th{border:1px solid var(--line)}
+  table.tab .em{color:var(--red);font-weight:700}
+  table.tab .ok{color:var(--green);font-weight:700}
+  table.tab .warn{color:var(--amber);font-weight:700}
+  .scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:6px;margin:14px 0}
+  .scrollx table{margin:0;min-width:1400px;font-size:12.5px}
+  .scrollx table th,.scrollx table td{padding:7px 9px;white-space:nowrap}
+  .scrollx table th:first-child,.scrollx table td:first-child{position:sticky;left:0;background:var(--paper);box-shadow:1px 0 0 var(--line);font-weight:700}
+  .scrollx table th:first-child{background:#eef3f8}
+  pre.code{margin:10px 0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);border-radius:6px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55}
+  pre.code .kw{color:#7fc4e8}
+  pre.code .str{color:#91d4a8}
+  pre.code .com{color:#7c8a9b;font-style:italic}
+  pre.code .typ{color:#e8c780}
+  pre.code .anno{color:#dd8a90}
+  .fw-card{margin:24px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper);box-shadow:0 2px 8px rgba(15,24,32,0.04)}
+  .fw-card .hd{display:flex;align-items:center;gap:14px;padding:14px 18px;color:white}
+  .fw-card.t1 .hd{background:linear-gradient(135deg,#0c5d80 0%,#0a4a68 100%)}
+  .fw-card.t2 .hd{background:linear-gradient(135deg,#1f6f4f 0%,#155538 100%)}
+  .fw-card.t3 .hd{background:linear-gradient(135deg,#8a5d1f 0%,#6a4317 100%)}
+  .fw-card.t4 .hd{background:linear-gradient(135deg,#6b4596 0%,#4d3070 100%)}
+  .fw-card .hd .num{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:rgba(255,255,255,0.22);border-radius:6px;font-size:14px;font-weight:850;font-variant-numeric:tabular-nums}
+  .fw-card .hd h3{margin:0;font-size:18px;flex:1;line-height:1.3}
+  .fw-card .hd .badges{display:flex;gap:6px;flex-wrap:wrap}
+  .fw-card .hd .badge{padding:2px 8px;background:rgba(255,255,255,0.22);border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:0.04em}
+  .fw-card .hd .score{padding:3px 10px;background:rgba(255,255,255,0.32);border-radius:99px;font-size:12px;font-weight:850;font-variant-numeric:tabular-nums}
+  .fw-card .bd{padding:14px 18px}
+  .fw-card .bd h4{margin:14px 0 6px;color:var(--blue);font-size:14px}
+  .fw-card .bd h4:first-child{margin-top:0}
+  .fw-card .bd p{font-size:13.5px;line-height:1.7}
+  .fw-card .bd ul{margin:4px 0 8px 22px;font-size:13.5px;color:var(--ink-2)}
+  .callout{margin:12px 0;padding:11px 14px;border-radius:0 4px 4px 0;font-size:13.5px}
+  .callout.choice{border-left:4px solid var(--green);background:var(--green-soft);color:var(--ink-2)}
+  .callout.choice b{color:var(--green);font-size:11px;letter-spacing:0.08em}
+  .callout.warn{border-left:4px solid var(--amber);background:var(--amber-soft);color:var(--ink-2)}
+  .callout.warn b{color:var(--amber);font-size:11px;letter-spacing:0.08em}
+  .callout.risk{border-left:4px solid var(--red);background:var(--red-soft);color:var(--ink-2)}
+  .callout.risk b{color:var(--red);font-size:11px;letter-spacing:0.08em}
+  .callout.info{border-left:4px solid var(--blue);background:var(--blue-soft);color:var(--ink-2)}
+  .callout.info b{color:var(--blue);font-size:11px;letter-spacing:0.08em}
+  details.expand{margin:10px 0;border-left:4px solid var(--muted-2);background:#f5f8fb;border-radius:0 4px 4px 0;overflow:hidden}
+  details.expand summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--ink-2);font-weight:700;font-size:13.5px;user-select:none}
+  details.expand summary::-webkit-details-marker{display:none}
+  details.expand summary::before{content:"▸";display:inline-block;margin-right:8px;color:var(--blue);font-size:10px;transition:transform 0.15s}
+  details.expand[open] summary::before{transform:rotate(90deg)}
+  details.expand .body{padding:0 14px 12px 32px;color:var(--ink-2);font-size:13.5px;line-height:1.7}
+  details.gloss{margin:10px 0;border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:0 4px 4px 0;overflow:hidden}
+  details.gloss summary{list-style:none;cursor:pointer;padding:9px 14px;color:var(--blue);font-weight:700;font-size:13.5px;user-select:none}
+  details.gloss summary::-webkit-details-marker{display:none}
+  details.gloss summary::before{content:"▸";display:inline-block;margin-right:8px;color:var(--blue);font-size:10px;transition:transform 0.15s}
+  details.gloss[open] summary::before{transform:rotate(90deg)}
+  details.gloss .body{padding:0 14px 8px 32px;color:var(--ink-2);font-size:13.5px;line-height:1.7}
+  details.qa{margin:10px 0;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  details.qa summary{list-style:none;cursor:pointer;padding:11px 16px;background:#f5f8fb;font-weight:700;color:var(--ink);font-size:14px}
+  details.qa summary::-webkit-details-marker{display:none}
+  details.qa summary::before{content:"▸";margin-right:8px;color:var(--blue);font-size:10px;display:inline-block;transition:transform 0.15s}
+  details.qa[open] summary::before{transform:rotate(90deg)}
+  details.qa .qa-body{padding:12px 16px;font-size:13.5px;line-height:1.7}
+  .ref-link{display:inline-block;margin:4px 4px 0 0;padding:3px 8px;background:var(--blue-soft);color:var(--blue);border-radius:4px;font-size:11.5px;text-decoration:none}
+  .ref-link:hover{background:var(--blue);color:white}
+  @media (max-width: 900px){
+    .shell{grid-template-columns:1fr;padding:18px}
+    aside.toc{position:static;max-height:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<aside class="toc">
+  <div class="toc-title">目录 · TOC</div>
+  <ol>
+    <li><a href="#p0"><span class="toc-num">0</span>开篇与导读</a></li>
+    <li class="part-hd">业界生态调研</li>
+    <li><a href="#p1"><span class="toc-num">1</span>Agent 生态全景</a></li>
+    <li><a href="#p2"><span class="toc-num">2</span>评估维度（12 个 axes）</a></li>
+    <li class="part-hd">Top 8 框架深度精读</li>
+    <li><a href="#fw-spring-ai"><span class="toc-num">3.1</span>Spring AI</a></li>
+    <li><a href="#fw-langchain4j"><span class="toc-num">3.2</span>LangChain4j + LangGraph4j</a></li>
+    <li><a href="#fw-embabel"><span class="toc-num">3.3</span>Embabel（JVM/GOAP）</a></li>
+    <li><a href="#fw-langgraph"><span class="toc-num">3.4</span>LangGraph（Python 参照物）</a></li>
+    <li><a href="#fw-temporal"><span class="toc-num">3.5</span>Temporal / Restate / Conductor</a></li>
+    <li><a href="#fw-mcp"><span class="toc-num">3.6</span>MCP (Model Context Protocol)</a></li>
+    <li><a href="#fw-adk"><span class="toc-num">3.7</span>Google ADK + A2A</a></li>
+    <li><a href="#fw-openai"><span class="toc-num">3.8</span>OpenAI Agents SDK</a></li>
+    <li class="part-hd">二线框架快速过</li>
+    <li><a href="#p4"><span class="toc-num">4</span>22+ 二线框架速览</a></li>
+    <li class="part-hd">横向对比 + 决策</li>
+    <li><a href="#p5"><span class="toc-num">5</span>统一维度横向对比表</a></li>
+    <li><a href="#p6"><span class="toc-num">6</span>引出自研必要性</a></li>
+    <li class="part-hd">快手自研方案</li>
+    <li><a href="#p7"><span class="toc-num">7</span>自研架构（基于推演）</a></li>
+    <li><a href="#p8"><span class="toc-num">8</span>每层用了哪些框架</a></li>
+    <li><a href="#p9"><span class="toc-num">9</span>数据飞轮 + 自进化</a></li>
+    <li class="part-hd">附录</li>
+    <li><a href="#app-a"><span class="toc-num">A</span>codex 调研推演实录</a></li>
+    <li><a href="#app-b"><span class="toc-num">B</span>术语速查</a></li>
+    <li><a href="#app-c"><span class="toc-num">C</span>资料来源</a></li>
+  </ol>
+</aside>
+
+<main>
+
+<div class="doc-meta">
+  <span class="eyebrow">Agent Architecture · 业界深度调研 + 快手自研方案</span>
+  <h1>Agent 架构深度解析</h1>
+  <p class="subtitle">从 25+ 主流 Agent 框架的源码 / 架构 / 抽象出发，横向对比 → 引出风控自研必要性 → 给出基于 The Gate + URG + Agent Society + 数据飞轮的完整方案。</p>
+  <div class="meta-line">面向：架构师 / 工程师 / 决策者（零基础也能读懂——所有术语都有 inline glossary）· 跟 codex 多轮深度推演 + WebFetch 校验 2026 最新生态</div>
+</div>
+
+
+<section id="p0" class="lead">
+  <h2 class="sec"><span class="n">0</span>开篇与导读</h2>
+  <div class="tldr">
+    <b>核心结论（开篇即给）</b><br>
+    <em>没有一个现成 Agent 框架能直接承载快手风控终态</em>。原因不是它们不成熟，而是它们普遍缺少快手需要的四件事：① 全 Java 工程一致性 ② 生产写动作统一 Gate ③ 风控级权限审计 ④ 跨域风险对象模型 URG。<br><br>
+    合理路线 = <strong>自研控制面（The Gate + URG + Agent Society + 数据飞轮）+ 借鉴成熟框架抽象 + Java 生态落地</strong>。本文档基于跟 codex 的 3 轮深度推演 + WebFetch 校验最新生态，逐个框架精读，给出借鉴清单与自研边界。
+  </div>
+
+  <h3 class="sub"><span class="n">0.1</span>本文档要解决的问题</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:30%">本文不回答</th><th>本文回答</th></tr></thead>
+    <tbody>
+      <tr><td>"哪个框架最好"（绝对推荐）</td><td>"哪些框架的哪些抽象对快手风控有借鉴价值"</td></tr>
+      <tr><td>每个框架完整教程</td><td>每个框架的核心抽象 + 代表代码 + 设计哲学 + 风控适用度</td></tr>
+      <tr><td>纯学术 / 实验框架综述</td><td>真正在生产 / 大厂跑 / 有可读开源代码的框架</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">0.2</span>阅读路径建议</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:24%">你是谁</th><th>推荐路径</th></tr></thead>
+    <tbody>
+      <tr><td><b>架构师 / 决策者</b></td><td>Part 1 生态全景 → Part 5 横向对比表 → Part 6 自研论证 → Part 7-9 自研方案</td></tr>
+      <tr><td><b>Java 后端工程师</b></td><td>Part 3.1 Spring AI → Part 3.2 LangChain4j + LangGraph4j → Part 3.3 Embabel → Part 7-9 自研方案</td></tr>
+      <tr><td><b>Python / AI 工程师</b></td><td>Part 3.4 LangGraph → Part 3.6 MCP → Part 3.8 OpenAI Agents SDK → Part 6 自研论证</td></tr>
+      <tr><td><b>0 基础读者</b></td><td>顺序读 Part 0-9 + 附录 B 术语速查（所有名词都有 inline glossary）</td></tr>
+      <tr><td><b>面试 / 评审准备</b></td><td>Part 5 对比表 + Part 6 自研论证 + 附录 A 推演实录</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">0.3</span>三条原则</h3>
+  <ol>
+    <li><b>每个名词第一次出现时都有 inline glossary</b>——可点开看解释</li>
+    <li><b>每个框架都有官方文档链接 + WebFetch 校验过的最新状态</b>（基于 2026 年 5 月）</li>
+    <li><b>不站队</b>——评估"对快手风控参考价值"，不是"哪个绝对好"</li>
+  </ol>
+</section>
+
+<section id="p1">
+  <h2 class="sec"><span class="n">1</span>Agent 生态全景（2026 年 5 月）</h2>
+  <div class="tldr"><b>TL;DR</b><br>调研覆盖 30+ 框架，分 9 个类别（Java 生态 / LangChain 生态 / 模型厂商 / 云厂商 / 企业 Agent / 多 Agent / 中国开源 / 工程化底座 / 评估观测）。Top 8 优先深入研究的：<em>Spring AI / LangChain4j + LangGraph4j / Embabel / LangGraph / Temporal / MCP / Google ADK+A2A / OpenAI Agents SDK</em>。</div>
+
+  <h3 class="sub"><span class="n">1.1</span>分类全景</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">类别</th><th>代表框架</th><th>定位</th></tr></thead>
+    <tbody>
+      <tr><td><b>Java 生态</b><br><span style="color:var(--green);font-size:11px;">★ 快手主战场</span></td><td>Spring AI · LangChain4j · LangGraph4j · Embabel · Semantic Kernel (Java)</td><td>Java 后端做 LLM 接入 / Agent 编排</td></tr>
+      <tr><td><b>LangChain 生态</b></td><td>LangChain · LangGraph · LangSmith · LangChain4j</td><td>事实标准（Python），显式状态图 Agent 的代表框架</td></tr>
+      <tr><td><b>模型厂商</b></td><td>OpenAI Agents SDK · Anthropic Claude Agent SDK · MCP · Google ADK + A2A</td><td>模型厂商自家"标准 Agent 套件"</td></tr>
+      <tr><td><b>云厂商</b></td><td>AWS Strands · Bedrock AgentCore · IBM BeeAI · Vertex AI Agent Builder</td><td>云上托管 Agent runtime</td></tr>
+      <tr><td><b>企业 Agent 产品</b></td><td>Salesforce Agentforce · ServiceNow AI Agents · Copilot Studio</td><td>嵌入企业 SaaS 的 agent 产品</td></tr>
+      <tr><td><b>Microsoft 系</b></td><td>Microsoft Agent Framework · AutoGen · Semantic Kernel</td><td>从研究到企业的统一框架</td></tr>
+      <tr><td><b>多 Agent 协作</b></td><td>CrewAI · MetaGPT · AgentScope</td><td>role-based / actor 协作</td></tr>
+      <tr><td><b>中国开源 / 产品</b></td><td>Dify · FastGPT · AgentScope（阿里）</td><td>低代码 AI 应用 / RAG / agent 平台</td></tr>
+      <tr><td><b>工程化底座</b></td><td>Temporal · Restate · Netflix Conductor · Inngest</td><td>durable workflow（不是 agent 但被 agent 系统用）</td></tr>
+      <tr><td><b>评估 / 观测</b></td><td>Langfuse · Arize Phoenix · Ragas · DeepEval · Promptfoo</td><td>trace / eval / gold set / 数据飞轮关键工具</td></tr>
+      <tr><td><b>轻量 / 学术</b></td><td>DSPy · smolagents · Pydantic-AI · Instructor · PocketFlow · Mastra · Vercel AI SDK · LlamaIndex · OpenHands · OpenClaw</td><td>轻量抽象 / 程序化 prompting / RAG / 全栈</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">1.2</span>2024-2026 关键里程碑</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:14%">时间</th><th>事件</th></tr></thead>
+    <tbody>
+      <tr><td>2023.10</td><td>LangChain 推出 LCEL (LangChain Expression Language)；CrewAI 上线</td></tr>
+      <tr><td>2024.03</td><td>LangGraph 正式发布（StateGraph + Checkpointer）</td></tr>
+      <tr><td>2024.11</td><td>Anthropic 发布 MCP (Model Context Protocol)，跨厂商 tool 协议事实标准开始形成</td></tr>
+      <tr><td>2024.10</td><td>OpenAI 发布 Swarm（实验性多 agent handoff）</td></tr>
+      <tr><td>2025.03.11</td><td>OpenAI Agents SDK GA（取代 Swarm，Handoff / Guardrail / Tracing 原生）</td></tr>
+      <tr><td>2025.04</td><td>Google 发布 ADK + A2A 协议；Embabel（Rod Johnson 创立）首次公开</td></tr>
+      <tr><td>2025.05.20</td><td>Spring AI 1.0 GA（ChatClient / Tool / Advisor / ChatMemory / VectorStore 体系定稿）；AWS 发布 Strands Agents</td></tr>
+      <tr><td>2025.11</td><td>Spring AI 1.1 GA（function calling / Advisor / Memory 完善）</td></tr>
+      <tr><td>2026.05</td><td>Spring AI 1.1.6 稳定版（本文档调研时点）</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="p2">
+  <h2 class="sec"><span class="n">2</span>评估维度（12 个 axes）</h2>
+  <div class="tldr"><b>TL;DR</b><br>用统一 12 个维度横向评估每个框架，避免"我感觉这个好"的主观判断。每个维度都对应快手风控的一个真实工程需求。</div>
+
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">维度</th><th>含义</th><th>对应快手需求</th></tr></thead>
+    <tbody>
+      <tr><td><b>① 编排范式</b></td><td>chain / graph / handoff / actor / function / GOAP / workflow</td><td>Case 调查 Agent 用 graph / 多 Agent 协作用 handoff</td></tr>
+      <tr><td><b>② 状态管理</b></td><td>无状态 / 短期内存 / 持久化 checkpoint</td><td>Agent 跑崩了能恢复（durable）</td></tr>
+      <tr><td><b>③ Tool 抽象</b></td><td>注解 / 字典 / 协议 / MCP</td><td>对接现有 Java 服务（Dubbo / gRPC）的便捷度</td></tr>
+      <tr><td><b>④ Memory</b></td><td>无 / 短期 / 长期 / 分级</td><td>跨 case 知识沉淀（Memory tier A/B/C/D）</td></tr>
+      <tr><td><b>⑤ Human-in-the-loop</b></td><td>原生支持 / 自建 / 无</td><td>Agent 提建议给人审，人决定</td></tr>
+      <tr><td><b>⑥ Trace / Eval</b></td><td>内置 / 外接 / 无</td><td>监管解释 / 事故复盘 / 数据飞轮</td></tr>
+      <tr><td><b>⑦ 治理 / 权限 / 红线</b></td><td>有 / 弱 / 无</td><td>The Gate + Policy-as-Code（生产动作必经）</td></tr>
+      <tr><td><b>⑧ 多 Agent 协作</b></td><td>原生 graph / handoff / actor / 协议 / 无</td><td>跨域 Agent 协作 + 冲突仲裁</td></tr>
+      <tr><td><b>⑨ 语言生态</b></td><td>Python / TS / Java / Kotlin / Go / 多</td><td>快手 Java 体系兼容度</td></tr>
+      <tr><td><b>⑩ 生产采用度</b></td><td>大厂生产 / GA / Beta / 实验 / 学术</td><td>真实生产案例 vs 漂亮 PPT</td></tr>
+      <tr><td><b>⑪ 风控适用度</b></td><td>1-10 分（对快手参考价值）</td><td>综合判断</td></tr>
+      <tr><td><b>⑫ 借鉴点</b></td><td>一句话总结</td><td>自研方案该从这里取什么</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <b>评分含义澄清</b><br>
+    <em>风控适用度不是"哪个框架最好"</em>，而是"对快手自研架构参考价值"。例如 LangGraph 9/10（思想参考），但 6/10（直接落地）——因为 Python 栈跟快手 Java 体系不匹配，但它的 StateGraph 思想几乎可以照搬到 Java。
+  </div>
+</section>
+
+<!-- ============ Top 8 框架深度精读 ============ -->
+
+<!-- 3.1 Spring AI -->
+<section id="fw-spring-ai">
+  <div class="fw-card t1">
+    <div class="hd">
+      <span class="num">3.1</span>
+      <h3>Spring AI · Java AI 应用标准适配层</h3>
+      <div class="badges">
+        <span class="badge">Java</span>
+        <span class="badge">GA 1.1.6</span>
+        <span class="badge">Spring 官方</span>
+        <span class="score">8/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p>Spring AI 是 Spring 官方出的 AI 应用集成层，目标是把大模型调用、Tool Calling、RAG、向量库、Chat Memory、Advisor 等能力放进 Spring Boot 工程习惯里。<em>它不是重型 Agent 框架，更像 Java AI 应用的"标准适配层"</em>。当前已经是 Java 企业应用里最值得优先看的底座之一。</p>
+      <p><b>当前状态</b>：1.1.6 GA（2026 年 5 月），1.0 在 2025 年 5 月 20 日 GA。生产采用度主要来自 Spring 生态用户。</p>
+      <div class="callout warn" style="margin:8px 0 12px;">
+        <b>1.1 重要变化提醒（影响落地）</b><br>
+        1.1 起 <code>ChatMemory Advisor</code> 不再隐式从请求上下文里取 conversationId，<em>必须在调用处显式传入 <code>conversationId</code></em>（例如通过 <code>ChatClient.prompt().advisors(a -> a.param(CONVERSATION_ID, sessionId))</code>）。否则会话记忆会落到默认 scope 上，多用户混用时出现串记忆。Memory v1 升 v1.1 的工程要做 grep + 改造。
+      </div>
+
+      <h4>核心抽象</h4>
+      <p>核心是 <code>ChatClient</code> · <code>ChatModel</code> · <code>Tool</code> · <code>Advisor</code> · <code>ChatMemory</code> · <code>VectorStore</code>。</p>
+      <ul>
+        <li><b>ChatClient</b>：流畅 API 调模型，类似 RestClient / WebClient 风格</li>
+        <li><b>ChatModel</b>：底层模型抽象，30+ 提供商（Anthropic / OpenAI / Qwen / vLLM / Bedrock / Vertex）</li>
+        <li><b>@Tool</b>：Java 方法暴露给模型，类似 Spring MVC 的 @RequestMapping</li>
+        <li><b>Advisor</b>：像 Spring 拦截器，可做 RAG / Memory / 审计 / 上下文增强</li>
+        <li><b>ChatMemory</b>：管对话历史（短期 + Conversation Memory）</li>
+        <li><b>VectorStore</b>：向量库抽象（Milvus / Pinecone / Qdrant / PGVector / Redis 等 20+）</li>
+      </ul>
+      <p>抽象偏薄——<em>它不替你设计复杂 Agent 状态机</em>。</p>
+
+      <h4>代表代码</h4>
+      <pre class="code"><span class="anno">@Service</span>
+<span class="kw">class</span> RiskTools {
+    <span class="anno">@Tool</span>(description = <span class="str">"查询用户最近30天风险档案"</span>)
+    <span class="kw">public</span> String queryUserArchive(String userId) {
+        <span class="com">// 实际调你现有 Java 服务（Dubbo / 内部 API）</span>
+        <span class="kw">return</span> archiveService.query(userId, <span class="str">"30d"</span>);
+    }
+}
+
+<span class="anno">@RestController</span>
+<span class="kw">class</span> AgentController {
+    <span class="kw">private final</span> ChatClient chatClient;
+
+    AgentController(ChatClient.Builder builder, RiskTools tools) {
+        <span class="kw">this</span>.chatClient = builder
+            .defaultTools(tools)        <span class="com">// 把 Java 工具注册给模型</span>
+            .build();
+    }
+
+    <span class="anno">@GetMapping</span>(<span class="str">"/agent"</span>)
+    String investigate(String userId) {
+        <span class="kw">return</span> chatClient.prompt()
+            .user(<span class="str">"判断用户 "</span> + userId + <span class="str">" 是否疑似营销号，并说明证据"</span>)
+            .call()                    <span class="com">// 触发模型，模型可选择调 tool</span>
+            .content();                <span class="com">// 返回最终文本</span>
+    }
+}</pre>
+
+      <h4>设计哲学</h4>
+      <p>Spring AI 解决的是<em>"Java 工程怎么稳定接模型、工具、RAG、记忆"</em>，不解决<em>"复杂 Agent 怎么编排、怎么仲裁、怎么长期治理"</em>。它的优势是贴近 Spring Boot、易接入现有 Java 服务；缺点是 Agent Society、The Gate、状态机、长流程要自己建。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可直接借鉴</b><br>
+        Tool 管理（@Tool 注解风格）· Advisor 拦截链（做 The Gate 部分检查很合适）· ChatMemory · VectorStore 接口 · 模型厂商抽象（自然支持多 provider 路由）
+      </div>
+      <div class="callout warn">
+        <b>不适合直接承担</b><br>
+        多 Agent 协作 · 强状态流转 · 跨域仲裁 · 生产写动作治理（这些 Spring AI 都不管）
+      </div>
+      <p><b>结论</b>：Spring AI 适合做<em>LLM Gateway SDK + Tool 接入层 + RAG/Memory 适配层</em>，不是终态 Agent 架构本身。</p>
+
+      <p><a class="ref-link" href="https://docs.spring.io/spring-ai/reference/" target="_blank">官方文档</a> <a class="ref-link" href="https://spring.io/blog/2025/11/12/spring-ai-1-1-GA-released" target="_blank">1.1 GA Blog</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.2 LangChain4j + LangGraph4j -->
+<section id="fw-langchain4j">
+  <div class="fw-card t1">
+    <div class="hd">
+      <span class="num">3.2</span>
+      <h3>LangChain4j + LangGraph4j · Java Agent 编排</h3>
+      <div class="badges">
+        <span class="badge">Java 17+</span>
+        <span class="badge">GA</span>
+        <span class="badge">+ Spring AI 集成</span>
+        <span class="score">8.5/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p><b>LangChain4j</b> 是 LangChain 思路在 Java 生态的实现，核心目标是让 Java 应用方便接入 LLM、Tools、Memory、RAG、AiService。</p>
+      <p><b>LangGraph4j</b> 补上"状态图 / 多步流程 / Agent 编排"的部分，借鉴 LangGraph 的 StateGraph 思路。最重要的是——<em>LangGraph4j 已经跟 Spring AI 原生集成</em>（提供 AgentExecutor.builder() API）。</p>
+      <p>二者组合对快手全 Java 路线非常关键。</p>
+
+      <h4>核心抽象</h4>
+      <p><b>LangChain4j</b>：<code>ChatLanguageModel</code> · <code>AiServices</code> · <code>@Tool</code> · <code>ChatMemory</code> · <code>EmbeddingStore</code> · <code>ContentRetriever</code>。</p>
+      <p><b>AiServices 很关键</b>：用 Java interface 把 LLM 包装成强类型服务——这跟 Spring Data 的 Repository 接口式定义同样优雅。</p>
+      <p><b>LangGraph4j</b>：<code>StateGraph</code> · <code>Node</code> · <code>Edge</code> · <code>AgentState</code> · <code>Checkpoint</code>。把 Agent 从"while 循环"推进到"显式状态机"。</p>
+
+      <h4>代表代码（LangChain4j AiService 风格）</h4>
+      <pre class="code"><span class="com">// 1. 定义 AI service（像写 Spring Repository）</span>
+<span class="kw">interface</span> RiskAssistant {
+    String analyze(String caseText);   <span class="com">// 像调普通 Java service 一样调 LLM</span>
+}
+
+<span class="com">// 2. 定义工具</span>
+<span class="kw">class</span> RiskTools {
+    <span class="anno">@Tool</span>(<span class="str">"查询相似历史 case"</span>)
+    String similarCases(String text) {
+        <span class="kw">return</span> <span class="str">"相似 case: case_123, case_456"</span>;
+    }
+}
+
+<span class="com">// 3. 装配 + 调用</span>
+ChatLanguageModel model = OpenAiChatModel.builder()
+    .apiKey(System.getenv(<span class="str">"OPENAI_API_KEY"</span>))
+    .modelName(<span class="str">"gpt-4o-mini"</span>)
+    .build();
+
+RiskAssistant assistant = AiServices.builder(RiskAssistant.<span class="kw">class</span>)
+    .chatLanguageModel(model)
+    .tools(<span class="kw">new</span> RiskTools())
+    .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+    .build();
+
+String result = assistant.analyze(<span class="str">"这个视频疑似营销号，请给证据链"</span>);</pre>
+
+      <h4>代表代码（LangGraph4j StateGraph 风格）</h4>
+      <pre class="code"><span class="com">// 1. 定义状态</span>
+<span class="kw">class</span> SimpleState <span class="kw">extends</span> AgentState {
+    <span class="kw">public static final</span> String MESSAGES_KEY = <span class="str">"messages"</span>;
+    <span class="kw">public static final</span> Map&lt;String, Channel&lt;?&gt;&gt; SCHEMA = Map.of(
+        MESSAGES_KEY, Channels.appender(ArrayList::<span class="kw">new</span>)
+    );
+    <span class="kw">public</span> SimpleState(Map&lt;String, Object&gt; initData) { <span class="kw">super</span>(initData); }
+}
+
+<span class="com">// 2. 定义节点</span>
+<span class="kw">class</span> GreeterNode <span class="kw">implements</span> NodeAction&lt;SimpleState&gt; {
+    <span class="kw">public</span> Map&lt;String, Object&gt; apply(SimpleState state) {
+        <span class="kw">return</span> Map.of(SimpleState.MESSAGES_KEY, <span class="str">"Hello!"</span>);
+    }
+}
+
+<span class="com">// 3. 构图 + 运行</span>
+<span class="kw">var</span> graph = <span class="kw">new</span> StateGraph&lt;&gt;(SimpleState.SCHEMA, SimpleState::<span class="kw">new</span>)
+    .addNode(<span class="str">"greeter"</span>, node_async(<span class="kw">new</span> GreeterNode()))
+    .addEdge(START, <span class="str">"greeter"</span>)
+    .addEdge(<span class="str">"greeter"</span>, END)
+    .compile();
+
+<span class="kw">for</span> (<span class="kw">var</span> item : graph.stream(Map.of(SimpleState.MESSAGES_KEY, <span class="str">""</span>))) {
+    System.out.println(item);
+}</pre>
+
+      <h4>跟 Spring AI 集成（关键）</h4>
+      <pre class="code"><span class="com">// LangGraph4j 自带 Spring AI 集成（spring-ai-agent 模块）</span>
+<span class="kw">var</span> agent = AgentExecutor.builder()
+    .chatModel(springAiChatModel)           <span class="com">// 直接用 Spring AI ChatModel</span>
+    .toolsFromObject(<span class="kw">new</span> RiskTools())     <span class="com">// 注册工具</span>
+    .build()
+    .compile();
+
+<span class="kw">for</span> (<span class="kw">var</span> item : agent.stream(Map.of(<span class="str">"messages"</span>, <span class="str">"分析这个 case"</span>))) {
+    System.out.println(item);
+}</pre>
+
+      <h4>设计哲学</h4>
+      <p>LangChain4j 追求<em>"Java 开发者自然使用 LLM"</em>，比 Spring AI 更 Agent 化；LangGraph4j 追求<em>"流程显式化 + 状态化"</em>。它们的核心价值是把 Agent 从 prompt 拼接拉回 Java 类型系统和状态机。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可直接借鉴</b><br>
+        AiService 强类型接口（让 Agent 输出是 EvidenceBundle / Recommendation DTO 而不是字符串）· @Tool 注解 · Memory / RAG 抽象 · StateGraph 编排范式 · 跟 Spring AI 的集成方式
+      </div>
+      <div class="callout warn">
+        <b>不适合直接照搬</b><br>
+        权限治理 · The Gate · 审计 · 跨域冲突协议 · 超大规模风控对象模型
+      </div>
+      <p><b>结论</b>：它最适合参考 <em>Agent Contract、Tool Contract、StateGraph DSL</em>，<em>生产控制面仍要自研</em>。</p>
+
+      <p><a class="ref-link" href="https://docs.langchain4j.dev/" target="_blank">LangChain4j 文档</a> <a class="ref-link" href="https://langgraph4j.github.io/langgraph4j/" target="_blank">LangGraph4j 文档</a> <a class="ref-link" href="https://github.com/langgraph4j/langgraph4j" target="_blank">GitHub</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.3 Embabel -->
+<section id="fw-embabel">
+  <div class="fw-card t2">
+    <div class="hd">
+      <span class="num">3.3</span>
+      <h3>Embabel · Rod Johnson 的 JVM Agent 框架（GOAP）</h3>
+      <div class="badges">
+        <span class="badge">Kotlin/Java</span>
+        <span class="badge">早期</span>
+        <span class="badge">Spring 创始人</span>
+        <span class="score">7.5/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p>Embabel 是 <em>Spring 创始人 Rod Johnson 创立的</em>、JVM/Spring 风格的 Agent 框架。定位比 Spring AI 高一层——<em>Spring AI 更像 Servlet API，Embabel 更像 Spring MVC</em>。</p>
+      <p>它试图把 Agent 拆成<b>目标、动作、条件、规划和执行</b>，更贴近企业 Java/Kotlin 工程。</p>
+      <p><b>关键特性</b>：借鉴游戏 AI 的 <em>GOAP（Goal-Oriented Action Planning）</em> 算法做规划——这是它跟所有其他 Agent 框架的核心差异。</p>
+      <p><b>当前状态</b>：生态还新（2025 年首次公开），生产采用度不如 Spring AI / LangChain4j，但设计哲学值得认真读。</p>
+
+      <h4>核心抽象</h4>
+      <p>核心是 <code>Agent</code> · <code>Action</code> · <code>Goal</code> · <code>Tool</code> · <code>Planning</code>。</p>
+      <p><em>关键区别</em>：不是让你手写固定链路，而是<b>定义"有哪些动作、动作需要什么输入、产出什么结果、能达成什么目标"</b>，再由框架围绕目标组织执行。</p>
+      <p>抽象比 Spring AI 重，比 LangChain4j 更偏 agent runtime。</p>
+
+      <h4>代表代码</h4>
+      <pre class="code"><span class="anno">@Agent</span>(description = <span class="str">"营销号风险调查 Agent"</span>)
+<span class="kw">class</span> MarketingRiskAgent {
+
+    <span class="anno">@Action</span>
+    <span class="kw">public</span> Evidence collectEvidence(CaseInput input) {
+        <span class="com">// 普通 Java 方法，描述一个可执行动作</span>
+        <span class="kw">return new</span> Evidence(<span class="str">"近30天高频发布营销内容，关联商家3个"</span>);
+    }
+
+    <span class="anno">@Action</span>
+    <span class="kw">public</span> Recommendation recommend(Evidence evidence) {
+        <span class="com">// 下游动作消费上游动作产物，框架自动做依赖编排</span>
+        <span class="kw">return new</span> Recommendation(<span class="str">"ESCALATE"</span>, <span class="str">"证据不足，建议人审复核"</span>);
+    }
+}</pre>
+      <p>这段代码表达 Embabel 的关键思想：<em>不是写"第 1 步、第 2 步"的脚本，而是声明动作和产物，让框架围绕目标组织动作</em>。框架基于 GOAP 算法自动决定调用顺序。</p>
+
+      <h4>设计哲学</h4>
+      <p>Embabel 想解决<em>"企业级 Agent 不该只是 prompt + while loop"</em>，而应该像 Spring 应用一样由动作、目标、依赖和工具组成。Rod Johnson 的论点："JVM 是大部分企业业务逻辑的地方，AI agent 应该贴近 JVM 而不是被 Python 抢走"。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可借鉴（思想，不是 API）</b><br>
+        Action-driven 设计 · Action Catalog 概念 · Spring 生态整合方式 · 动作依赖建模 · GOAP 规划思想（可借鉴用来做风控调查的动作选择）
+      </div>
+      <div class="callout warn">
+        <b>风险</b><br>
+        生态年轻 · API 稳定性 · 生产案例少 · 社区规模都要验证
+      </div>
+      <p><b>结论</b>：它适合<em>启发 Agent 内部动作模型</em>，但不建议直接作为主框架押注。借鉴 Action / Goal 思想去做自研的 Action Catalog 是关键。</p>
+
+      <p><a class="ref-link" href="https://github.com/embabel/embabel-agent" target="_blank">GitHub</a> <a class="ref-link" href="https://docs.embabel.com/embabel-agent/guide/0.1.3/" target="_blank">文档</a> <a class="ref-link" href="https://medium.com/@springrod/embabel-a-new-agent-platform-for-the-jvm-1c83402e0014" target="_blank">Rod Johnson 博客</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.4 LangGraph -->
+<section id="fw-langgraph">
+  <div class="fw-card t3">
+    <div class="hd">
+      <span class="num">3.4</span>
+      <h3>LangGraph · Python 状态机 Agent 的事实标准</h3>
+      <div class="badges">
+        <span class="badge">Python</span>
+        <span class="badge">GA</span>
+        <span class="badge">大量生产采用</span>
+        <span class="score">9 思想 / 6 落地</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p>LangGraph 是 LangChain 生态里专门做<em>有状态 Agent 编排</em>的框架，Python 为主。它把 Agent 建模成<b>图</b>：节点是步骤，边是流转，状态贯穿全程，Checkpointer 负责恢复，Interrupt 支持人类介入。</p>
+      <p><em>它是当前最值得研究的 state machine agent 框架</em>——LangGraph4j 是它的 Java 实现。</p>
+
+      <h4>核心抽象</h4>
+      <p>核心是 <code>StateGraph</code> · <code>State</code> · <code>Node</code> · <code>Edge</code> · <code>Conditional Edge</code> · <code>Checkpointer</code> · <code>Interrupt</code> · <code>Subgraph</code>。</p>
+      <ul>
+        <li><b>State</b>：共享上下文（用 TypedDict 定义 schema）</li>
+        <li><b>Node</b>：一步计算（函数）</li>
+        <li><b>Edge</b>：决定下一步</li>
+        <li><b>Conditional Edge</b>：基于 state 动态决定走哪个 node</li>
+        <li><b>Checkpointer</b>：保存状态（支持 Postgres / Redis / In-Memory），跨进程可恢复</li>
+        <li><b>Interrupt</b>：让流程停下来等人（human-in-loop 原生支持）</li>
+        <li><b>Subgraph</b>：图嵌套（复杂场景）</li>
+      </ul>
+      <p>它是<em>重编排框架</em>，不只是模型调用封装。</p>
+
+      <h4>代表代码</h4>
+      <pre class="code"><span class="kw">from</span> typing <span class="kw">import</span> TypedDict
+<span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> langgraph.checkpoint.memory <span class="kw">import</span> MemorySaver
+
+<span class="com"># 1. 定义状态 schema</span>
+<span class="kw">class</span> RiskState(TypedDict):
+    case: str
+    evidence: str
+    recommendation: str
+
+<span class="com"># 2. 定义节点函数</span>
+<span class="kw">def</span> load_context(state: RiskState):
+    <span class="kw">return</span> {<span class="str">"evidence"</span>: <span class="str">"近30天发布营销视频12条，历史处罚2次"</span>}
+
+<span class="kw">def</span> synthesize(state: RiskState):
+    <span class="kw">return</span> {<span class="str">"recommendation"</span>: <span class="kw">f</span><span class="str">"建议人审复核，证据：{state['evidence']}"</span>}
+
+<span class="com"># 3. 构图</span>
+graph = StateGraph(RiskState)
+graph.add_node(<span class="str">"load_context"</span>, load_context)
+graph.add_node(<span class="str">"synthesize"</span>, synthesize)
+graph.set_entry_point(<span class="str">"load_context"</span>)
+graph.add_edge(<span class="str">"load_context"</span>, <span class="str">"synthesize"</span>)
+graph.add_edge(<span class="str">"synthesize"</span>, END)
+
+<span class="com"># 4. 编译时挂上 checkpointer（支持状态保存 / 恢复）</span>
+app = graph.compile(checkpointer=MemorySaver())
+result = app.invoke({<span class="str">"case"</span>: <span class="str">"疑似营销号视频"</span>})</pre>
+
+      <h4>设计哲学</h4>
+      <p>LangGraph 解决的是<em>"Agent 不能只是不可控循环，必须显式状态化、可恢复、可插人、可观测"</em>。它不关心 Java 生态，也不替你做企业权限和生产写动作治理。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可直接借鉴（思想 9/10）</b><br>
+        StateGraph · Checkpointer · Interrupt · Human-in-loop · 条件边 · 可恢复执行 · Subgraph 嵌套
+      </div>
+      <div class="callout warn">
+        <b>直接落地 6/10</b><br>
+        Python 技术栈 · 与快手 Java 服务体系距离大 · 生产权限治理不足
+      </div>
+      <p><b>结论</b>：LangGraph 是<em>自研 Java State Machine Agent Runtime 的最佳参照物</em>。它证明了方向，但不等于可以直接采用。<b>LangGraph4j 把它的思想搬到 Java，是更现实的选择</b>。</p>
+
+      <p><a class="ref-link" href="https://docs.langchain.com/oss/python/langgraph/overview" target="_blank">官方文档</a> <a class="ref-link" href="https://github.com/langchain-ai/langgraph" target="_blank">GitHub</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.5 Temporal / Restate / Conductor -->
+<section id="fw-temporal">
+  <div class="fw-card t3">
+    <div class="hd">
+      <span class="num">3.5</span>
+      <h3>Temporal / Restate / Conductor · Durable Workflow 底座</h3>
+      <div class="badges">
+        <span class="badge">Java / 多语言</span>
+        <span class="badge">大厂生产</span>
+        <span class="badge">非 Agent 框架</span>
+        <span class="score">9/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p>它们不是 Agent 框架，而是 <em>durable workflow engine</em>。<b>Temporal</b> 最成熟，强在长流程、重试、超时、状态恢复、补偿；<b>Conductor</b> 源自 Netflix，更偏微服务编排和可视化流程；<b>Restate</b> 更轻，强调 durable execution + event-driven service。</p>
+      <p>快手 Case 调查 Agent 这种 5-30s、可能失败重试、要恢复现场的流程，<em>Temporal 是关键底座</em>。</p>
+
+      <h4>核心抽象（Temporal）</h4>
+      <p><code>Workflow</code> · <code>Activity</code> · <code>RetryPolicy</code> · <code>Signal</code> · <code>Query</code> · <code>Timer</code> · <code>Workflow State</code>。</p>
+      <ul>
+        <li><b>Workflow</b>：管流程状态（durable）</li>
+        <li><b>Activity</b>：执行外部副作用（调 LLM / Tool）</li>
+        <li><b>Worker</b>：执行 Workflow + Activity 的进程</li>
+        <li><b>RetryPolicy</b>：失败按策略重试</li>
+        <li><b>Worker 挂了可恢复</b>（核心卖点）</li>
+      </ul>
+      <p>Temporal 不懂 LLM，但很适合<em>托管 Agent 外层生命周期</em>。</p>
+
+      <h4>代表代码（Java SDK）</h4>
+      <pre class="code"><span class="anno">@WorkflowInterface</span>
+<span class="kw">public interface</span> CaseInvestigationWorkflow {
+    <span class="anno">@WorkflowMethod</span>
+    InvestigationResult run(CaseRequest request);
+}
+
+<span class="kw">public class</span> CaseInvestigationWorkflowImpl <span class="kw">implements</span> CaseInvestigationWorkflow {
+    <span class="kw">private final</span> AgentActivities activities =
+        Workflow.newActivityStub(AgentActivities.<span class="kw">class</span>,
+            ActivityOptions.newBuilder()
+                .setStartToCloseTimeout(Duration.ofSeconds(30))
+                .setRetryOptions(RetryOptions.newBuilder()
+                    .setMaximumAttempts(3)
+                    .build())
+                .build());
+
+    <span class="kw">public</span> InvestigationResult run(CaseRequest request) {
+        Context ctx = activities.loadContext(request);       <span class="com">// 查档案/证据</span>
+        Evidence ev = activities.runAgentLoop(ctx);          <span class="com">// 调 Agent loop</span>
+        <span class="kw">return</span> activities.persistResult(request.caseId(), ev); <span class="com">// 落库/发消息</span>
+    }
+}</pre>
+
+      <h4>设计哲学</h4>
+      <p>Temporal 解决<em>"流程一定要跑完，失败可恢复"</em>；不解决<em>"Agent 怎么推理"</em>。它适合做 <b>Java Agent Service Host 的外壳</b>，让 Agent loop 不直接裸跑在线程里——挂了能在另一个 worker 续上。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>直接借鉴 / 直接采用</b><br>
+        Case 调查 / 判罚 review / 策略治理巡检 / 补偿 / 超时 / 幂等 都需要它。<em>Temporal 是快手 Agent 长流程底座的优先选项</em>。
+      </div>
+      <div class="callout warn">
+        <b>不适合</b><br>
+        1500 万 QPS 实时机审；毫秒级链路不能进 workflow（开销太大）
+      </div>
+      <p><b>结论</b>：<em>Temporal = Agent 长流程外壳</em>。Restate / Conductor 可作为备选对比，Temporal 是首选。</p>
+
+      <p><a class="ref-link" href="https://docs.temporal.io/temporal" target="_blank">Temporal 官方</a> <a class="ref-link" href="https://restate.dev/" target="_blank">Restate</a> <a class="ref-link" href="https://conductor-oss.org/" target="_blank">Conductor</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.6 MCP -->
+<section id="fw-mcp">
+  <div class="fw-card t4">
+    <div class="hd">
+      <span class="num">3.6</span>
+      <h3>MCP (Model Context Protocol) · Tool 协议的 USB-C</h3>
+      <div class="badges">
+        <span class="badge">协议 (非框架)</span>
+        <span class="badge">事实标准</span>
+        <span class="badge">Anthropic 推出</span>
+        <span class="score">8/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p>MCP 是 <b>Model Context Protocol</b>，Anthropic 推出的工具/上下文接入协议（2024.11），后来被多家生态采用：<em>Claude / ChatGPT / Cursor / VSCode / Zed / 各种 IDE</em> 都支持。</p>
+      <p>它不是 Agent 框架，而是让模型应用以<em>标准方式发现和调用外部工具、资源、提示模板</em>。可以理解为<b>"Agent 调工具的 USB-C"</b>。</p>
+
+      <h4>核心抽象</h4>
+      <p>核心是 <code>Server</code> · <code>Tool</code> · <code>Resource</code> · <code>Prompt</code> · <code>Client</code> · <code>Transport</code>。</p>
+      <ul>
+        <li><b>Tool</b>：可调用动作（带 JSON Schema 参数）</li>
+        <li><b>Resource</b>：可读上下文（如文档、数据）</li>
+        <li><b>Prompt</b>：模板</li>
+        <li><b>Client</b>：模型应用（Claude / ChatGPT 等）</li>
+        <li><b>Transport</b>：stdio / HTTP / SSE 等</li>
+      </ul>
+      <p>MCP 的边界是<em>"连接工具"</em>，不是<em>"治理工具"</em>。</p>
+
+      <h4>代表代码（TypeScript SDK）</h4>
+      <pre class="code"><span class="kw">import</span> { McpServer } <span class="kw">from</span> <span class="str">"@modelcontextprotocol/sdk/server/mcp.js"</span>;
+<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">"zod"</span>;
+
+<span class="kw">const</span> server = <span class="kw">new</span> McpServer({
+  name: <span class="str">"risk-tools"</span>,
+  version: <span class="str">"1.0.0"</span>
+});
+
+server.tool(
+  <span class="str">"query_user_archive"</span>,
+  { userId: z.string(), days: z.number().max(90) },
+  <span class="kw">async</span> ({ userId, days }) =&gt; {
+    <span class="kw">const</span> result = <span class="kw">await</span> queryArchive(userId, days); <span class="com">// 调内部档案服务</span>
+    <span class="kw">return</span> {
+      content: [{ type: <span class="str">"text"</span>, text: JSON.stringify(result) }]
+    };
+  }
+);
+
+<span class="kw">await</span> server.connect(transport);</pre>
+
+      <h4>设计哲学</h4>
+      <p>MCP 解决<em>工具生态碎片化</em>：每个模型应用不用为每个工具单独写适配。但它默认<em>不是风控级安全网关</em>——快手不能把 MCP server 直接接生产服务，必须外包一层 The Gate / Action Adapter。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可借鉴</b><br>
+        Tool schema · tool discovery · resource/prompt 标准化 · 生态互通（如果未来要对外暴露 agent 能力）
+      </div>
+      <div class="callout risk">
+        <b>不适合直接照搬</b><br>
+        权限 · 审计 · T3 动作隔离 · 跨业务线 ACL · 工具调用预算<br>
+        MCP 没有这些——它假设 host 可信。但在风控里 Agent 不可信。
+      </div>
+      <p><b>结论</b>：MCP 适合作为<em>内部工具协议参考</em>，不应替代 The Gate。可以借鉴 schema 设计但要加风控元数据（domain_scope / required_token / audit_level / rollback_capability）。</p>
+
+      <p><a class="ref-link" href="https://modelcontextprotocol.io/" target="_blank">MCP 官方</a> <a class="ref-link" href="https://github.com/modelcontextprotocol" target="_blank">GitHub</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.7 Google ADK + A2A -->
+<section id="fw-adk">
+  <div class="fw-card t4">
+    <div class="hd">
+      <span class="num">3.7</span>
+      <h3>Google ADK + A2A · Agent 协作协议</h3>
+      <div class="badges">
+        <span class="badge">支持 Java/Kotlin ★</span>
+        <span class="badge">2025.04 发布</span>
+        <span class="badge">Agent + 协议</span>
+        <span class="score">8.5/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p><b>ADK</b> = Google Agent Development Kit。<b>A2A</b> = Agent-to-Agent Protocol。二者重点不是单个 Agent 怎么写，而是<em>不同 Agent、不同系统之间如何发现、通信、委派任务</em>。</p>
+      <p>关键定位：<em>MCP 接 tool，A2A 接 agent</em>——这个区分对快手 Agent Society 很重要。</p>
+      <p><b>重大利好</b>：ADK <em>原生支持 Python / TypeScript / Go / Java / Kotlin 五种语言</em>——这对快手 Java 路线意义重大！</p>
+
+      <h4>核心抽象</h4>
+      <p><b>A2A 核心</b>：<code>Agent Card</code> · <code>Task</code> · <code>Message</code> · <code>Artifact</code> · <code>Capability</code>。</p>
+      <ul>
+        <li><b>Agent Card</b>：描述一个 Agent 会什么（capabilities / skills）</li>
+        <li><b>Task</b>：委派任务</li>
+        <li><b>Message</b>：交互内容</li>
+        <li><b>Artifact</b>：结果产物</li>
+        <li><b>Capability</b>：流式 / 推送 / 文件等能力</li>
+      </ul>
+
+      <h4>代表代码 + Agent Card 示例</h4>
+      <pre class="code"><span class="com"># ADK 最简 agent (Python，但 Java 完全等价)</span>
+<span class="kw">from</span> google.adk <span class="kw">import</span> Agent
+<span class="kw">from</span> google.adk.tools <span class="kw">import</span> google_search
+
+agent = Agent(
+    name=<span class="str">"researcher"</span>,
+    model=<span class="str">"gemini-flash-latest"</span>,
+    instruction=<span class="str">"You help users research topics thoroughly."</span>,
+    tools=[google_search],
+)</pre>
+
+      <p><b>A2A Agent Card 示例</b>：</p>
+      <pre class="code">{
+  <span class="str">"name"</span>: <span class="str">"content-risk-agent"</span>,
+  <span class="str">"description"</span>: <span class="str">"分析视频/评论是否存在营销号风险"</span>,
+  <span class="str">"url"</span>: <span class="str">"https://risk-agent.kwai/a2a"</span>,
+  <span class="str">"capabilities"</span>: {
+    <span class="str">"streaming"</span>: <span class="kw">true</span>,
+    <span class="str">"pushNotifications"</span>: <span class="kw">true</span>
+  },
+  <span class="str">"skills"</span>: [
+    {
+      <span class="str">"id"</span>: <span class="str">"marketing-content-investigation"</span>,
+      <span class="str">"name"</span>: <span class="str">"营销号内容调查"</span>,
+      <span class="str">"inputModes"</span>: [<span class="str">"text"</span>, <span class="str">"json"</span>],
+      <span class="str">"outputModes"</span>: [<span class="str">"json"</span>]
+    }
+  ]
+}
+
+<span class="com">// Task 调用</span>
+{
+  <span class="str">"taskId"</span>: <span class="str">"case_123"</span>,
+  <span class="str">"message"</span>: {
+    <span class="str">"role"</span>: <span class="str">"user"</span>,
+    <span class="str">"parts"</span>: [
+      { <span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="str">"请分析该视频是否疑似营销号"</span> }
+    ]
+  }
+}</pre>
+
+      <h4>设计哲学</h4>
+      <p>A2A 解决<em>"Agent 之间如何互相认识、派活、返回结果"</em>。它比 CrewAI 这类框架更<em>协议化</em>。它不规定 Agent 内部怎么推理，也不规定生产动作怎么审批。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可借鉴</b><br>
+        Agent Card · 能力声明 · 任务协议 · 跨 Agent 通信 · 异构 Agent 接入 · 跨语言（特别是 Java/Kotlin 原生支持）
+      </div>
+      <div class="callout warn">
+        <b>不适合直接照搬</b><br>
+        快手冲突仲裁 · 合规优先级 · 跨域权限 · The Gate
+      </div>
+      <p><b>结论</b>：A2A 是 <em>Risk Agent Society 的重要参考</em>，但快手需要扩展 <em>Risk Agent Card</em>：加 <code>domain_scope</code> / <code>policy_scope</code> / <code>trust_level</code> / <code>allowed_tools</code> / <code>forbidden_actions</code> / <code>escalation_rule</code> / <code>sla</code> / <code>owner</code> / <code>audit_level</code>。</p>
+
+      <p><a class="ref-link" href="https://adk.dev/" target="_blank">ADK 官方</a> <a class="ref-link" href="https://google-a2a.github.io/A2A/specification/" target="_blank">A2A 规范</a> <a class="ref-link" href="https://google.github.io/adk-docs/a2a/" target="_blank">A2A 文档</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3.8 OpenAI Agents SDK -->
+<section id="fw-openai">
+  <div class="fw-card t2">
+    <div class="hd">
+      <span class="num">3.8</span>
+      <h3>OpenAI Agents SDK · 轻量 Agent Loop + Handoff</h3>
+      <div class="badges">
+        <span class="badge">Python / TS</span>
+        <span class="badge">GA 2025.03.11</span>
+        <span class="badge">Handoff 范式</span>
+        <span class="score">7.5/10</span>
+      </div>
+    </div>
+    <div class="bd">
+      <h4>是什么</h4>
+      <p>OpenAI Agents SDK 是 OpenAI 的<em>生产级 Agent SDK</em>，2025 年 3 月 11 日 GA，<em>取代了早期的 Swarm</em>。它强调轻量 Agent loop + tools + handoff + guardrails + tracing。</p>
+      <p>它<em>不是 LangGraph 那种显式图范式</em>，更像"Agent 之间通过 handoff 切换控制权"——这是它的核心设计差异。</p>
+
+      <h4>核心抽象</h4>
+      <p>核心是 <code>Agent</code> · <code>Runner</code> · <code>Tool</code> · <code>Handoff</code> · <code>Guardrail</code> · <code>Tracing</code> · <code>Sessions</code>。</p>
+      <ul>
+        <li><b>Agent</b>：定义指令（instructions）和工具</li>
+        <li><b>Runner</b>：执行循环</li>
+        <li><b>Tool</b>：函数 / MCP server</li>
+        <li><b>Handoff</b>：把任务交给另一个 Agent</li>
+        <li><b>Guardrail</b>：输入/输出约束（前置 / 后置检查）</li>
+        <li><b>Tracing</b>：内置可视化（debug 友好）</li>
+        <li><b>Sessions</b>：会话持久化 / 自动维护 conversation history（跨多轮 Run 共享对话和工具结果）</li>
+      </ul>
+
+      <h4>代表代码（Python）</h4>
+      <pre class="code"><span class="kw">from</span> agents <span class="kw">import</span> Agent, Runner, function_tool
+
+<span class="anno">@function_tool</span>
+<span class="kw">def</span> query_similar_cases(case_text: str) -&gt; str:
+    <span class="kw">return</span> <span class="str">"similar_cases: case_123, case_456"</span>
+
+content_agent = Agent(
+    name=<span class="str">"Content Risk Agent"</span>,
+    instructions=<span class="str">"判断内容是否疑似营销号，必须引用证据。"</span>,
+    tools=[query_similar_cases],
+)
+
+compliance_agent = Agent(
+    name=<span class="str">"Compliance Agent"</span>,
+    instructions=<span class="str">"检查是否涉及合规高风险，需要升级则说明原因。"</span>,
+)
+
+triage_agent = Agent(
+    name=<span class="str">"Risk Triage Agent"</span>,
+    instructions=<span class="str">"先判断该交给哪个 Agent。"</span>,
+    handoffs=[content_agent, compliance_agent],  <span class="com"># handoff 是核心抽象</span>
+)
+
+result = Runner.run_sync(triage_agent, <span class="str">"分析这个疑似营销号 case"</span>)
+<span class="kw">print</span>(result.final_output)</pre>
+
+      <h4>设计哲学</h4>
+      <p>它解决<em>"少写 glue code，把 Agent、Tool、Handoff、Trace 组织起来"</em>。核心差异是 <em>handoff，而不是 graph</em>——通过让 Agent A 把控制权 handoff 给 Agent B 实现协作。适合客服、办公、代码、工作流助手；复杂状态机要自己补。</p>
+
+      <h4>风控适用度评估</h4>
+      <div class="callout choice">
+        <b>可借鉴</b><br>
+        Handoff（Agent 间任务移交）· Guardrail（Policy-as-Code 前置检查）· Tracing（内置实现参考）· 轻量 Agent loop · 工具注册体验
+      </div>
+      <div class="callout warn">
+        <b>不适合直接落地</b><br>
+        Python/JS 生态 · 快手全 Java · 强状态长流程 · The Gate · 跨域仲裁
+      </div>
+      <p><b>结论</b>：它适合参考<em>"多 Agent 任务切换" 和 guardrail API</em>，不适合作为快手主 runtime。Handoff 思想可以借鉴用到 Risk Agent Society 设计里——但 handoff 必须受 The Gate 和 Policy 控制。</p>
+
+      <p><a class="ref-link" href="https://openai.github.io/openai-agents-python/" target="_blank">官方文档</a> <a class="ref-link" href="https://platform.openai.com/docs/guides/agents-sdk/" target="_blank">Platform 文档</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 二线框架快速过 -->
+<section id="p4">
+  <h2 class="sec"><span class="n">4</span>22+ 二线框架速览</h2>
+  <div class="tldr"><b>TL;DR</b><br>除 Top 8 外，还有 22+ 框架值得快速过一遍——每个 1 句话定位 + 适用度评分。覆盖 Microsoft 系 / 云厂商 / 企业 Agent / 多 Agent 协作 / 中国开源 / 评估观测 / 轻量框架。</div>
+
+  <h3 class="sub"><span class="n">4.1</span>Microsoft 系</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">框架</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>Microsoft Agent Framework</b></td><td>Microsoft 正在把 Semantic Kernel 和 AutoGen 收敛到统一 Agent Framework。价值在企业级 agent 编排 / 流程 / 工具 / Azure 生态 / 生产化路径。对快手可参考"研究型 multi-agent 如何走向企业 SDK"，但 Java 主线和内部风控系统贴合度一般。</td><td><span class="score">7.5/10</span></td></tr>
+      <tr><td><b>AutoGen</b></td><td>多 Agent 对话协作的代表框架，group chat / role agent / conversation orchestration 很有启发。问题是默认范式偏研究和实验，Agent 之间通过对话推进——权限、状态、审计、回滚都不够硬。适合研究"Agent Society 的反面边界"。</td><td>6.5/10</td></tr>
+      <tr><td><b>Semantic Kernel</b></td><td>企业 AI SDK，插件 / planner / memory / function 体系成熟，支持多语言。更像"把 LLM 能力嵌入企业应用"的工具箱，不是风控级 Agent runtime。可借鉴 plugin/function 体系和企业集成方式。</td><td>7/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.2</span>云厂商</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">框架 / 产品</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>AWS Strands Agents</b></td><td>AWS 开源 Agent SDK（2025 发布），强调 model-first / tool use / multi-agent pattern。适合看云厂商如何把 agent loop 做轻，但它更偏模型驱动，不适合快手高确定性风控链路直接采用。</td><td>7/10</td></tr>
+      <tr><td><b>Amazon Bedrock AgentCore</b></td><td>非开源，但生产参考价值高。重点看 stateful runtime / 多 Agent 协作 / 托管工具 / 安全和云上治理。适合反推"生产 Agent 需要哪些基础设施"，不适合直接成为快手底座。</td><td>7.5/10</td></tr>
+      <tr><td><b>IBM BeeAI</b></td><td>IBM 开源 multi-agent 平台，强调 framework-agnostic / ACP / 部署和观测。适合参考异构 Agent 接入和跨框架互操作，但生态热度和快手 Java 体系贴合度需验证。</td><td>7/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.3</span>企业级 Agent 产品</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">产品</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>Salesforce Agentforce / Atlas</b></td><td>非开源，但企业 Agent 产品化非常值得看：Agent Builder · Agent Script · Atlas Reasoning Engine · <b>Trust Layer</b> · 业务权限和 CRM 数据集成。对快手的启发："Agent 必须进入业务系统和权限体系"。</td><td>7/10</td></tr>
+      <tr><td><b>ServiceNow AI Agents</b></td><td>重点在企业流程 / 工单 / ITSM / 审批 / 自动化执行。对快手的参考不在模型，而在"Agent 如何嵌入工单 / 审批 / SLA / 责任链"。适合参考 Incident Commander / Trace Auditor 工作台。</td><td>6.5/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.4</span>多 Agent 协作</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">框架</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>CrewAI</b></td><td>role / task / crew / process 范式清晰，做原型很快。适合展示多 Agent 分工，但状态恢复 / 权限隔离 / 审计 / 红线治理都偏弱。对快手是协作范式参考，不是生产底座。</td><td>6/10</td></tr>
+      <tr><td><b>MetaGPT</b></td><td>经典"软件公司式多 Agent"框架，PM / 架构师 / 工程师等角色协作。适合研究 role-based agent，但与风控 case 决策 / 判罚 / 审计链条距离较远。</td><td>5.5/10</td></tr>
+      <tr><td><b>AgentScope（阿里）</b></td><td>阿里开源多 Agent 框架，偏 multi-agent simulation / 消息机制 / 分布式 Agent 实验。值得看国产多 Agent 设计，但生产治理能力需下源码验证。</td><td>6/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.5</span>中国开源产品</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">产品</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>Dify</b></td><td>产品化 LLM 应用平台，RAG / workflow / agent / 运营界面完整。适合策略运营 / 知识库 / prompt 原型和 demo，不适合承载快手核心风控链路。</td><td>6/10</td></tr>
+      <tr><td><b>FastGPT</b></td><td>国内 RAG / 知识库应用平台，适合快速做问答 / 知识检索和流程原型。对核心 Agent runtime / The Gate / 审计治理参考有限。</td><td>5.5/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.6</span>Anthropic</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">框架</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>Claude Agent SDK</b></td><td>更贴近 Claude Code / Claude agent runtime 的工程化 SDK，MCP 支持强。适合研究"模型厂商如何组织工具 / 会话 / agent 执行和上下文"，但语言栈不是 Java，且不能绑定单一模型厂商。</td><td>7/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.7</span>评估 / 观测工具链（数据飞轮关键）</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">工具</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>Langfuse</b></td><td>LLM observability 代表：trace / prompt / dataset / eval / cost / release 管理。对快手 Trace / Replay / 数据飞轮极有参考价值。<em>虽不是 Agent 框架，但必须重点研究</em>。</td><td><span class="score">8/10</span></td></tr>
+      <tr><td><b>Arize Phoenix / OpenInference</b></td><td>OpenTelemetry 风格的 LLM tracing / eval 生态。适合借鉴标准化观测字段 / span / dataset / 评估闭环。</td><td>7.5/10</td></tr>
+      <tr><td><b>Ragas</b></td><td>RAG 评估工具，适合衡量检索相关性 / 忠实度 / 答案质量。对快手相似 case 检索 / Memory 引用质量 / 知识库污染检测有价值。</td><td>7/10</td></tr>
+      <tr><td><b>DeepEval</b></td><td>LLM / Agent eval 工具，适合做 gold set / 回归测试 / prompt 变更门禁。对自动 promote / 版本回归 / 红线评估有直接参考。</td><td>7.5/10</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">4.8</span>轻量框架</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">框架</th><th>快速判断</th><th>适用度</th></tr></thead>
+    <tbody>
+      <tr><td><b>DSPy</b></td><td>Programmatic prompting 代表，把 prompt 优化变成可评估 / 可搜索 / 可训练的程序。对快手数据飞轮 / Skill 模板 / Prompt 迭代非常有启发。</td><td>7.5/10</td></tr>
+      <tr><td><b>LlamaIndex</b></td><td>RAG / data framework 强项：索引 / 检索 / connector / query engine 成熟。对 URG / Memory / 相似 case 检索很有参考，但不是主 Agent runtime。</td><td>7.5/10</td></tr>
+      <tr><td><b>Pydantic-AI / Instructor</b></td><td>强类型结构化输出非常有价值，尤其 EvidenceBundle / Recommendation / Trace event 这类 DTO。语言不匹配但 schema-first 思想值得借鉴。</td><td>6.5/10</td></tr>
+      <tr><td><b>Agno（前 Phidata）</b></td><td>轻量 agent/workflow 框架，写法简洁，适合快速原型。对快手核心架构参考有限，可看 tool / multimodal / agent API 体验。</td><td>6/10</td></tr>
+      <tr><td><b>smolagents</b></td><td>HuggingFace 轻量 Agent 框架，强调简洁 / 代码执行 agent。适合理解最小 agent loop，不适合作为快手生产参考。</td><td>5/10</td></tr>
+      <tr><td><b>Mastra</b></td><td>TypeScript Agent framework，适合 Node/Web 生态，workflow / memory / tools 比较完整。对快手后端主链路参考有限，可借鉴 API 体验。</td><td>5.5/10</td></tr>
+      <tr><td><b>Vercel AI SDK</b></td><td>前端 / 全栈 AI SDK，streaming UI / tool calling / chat interface 很强。适合人审工作台交互层借鉴，不适合风控后端 Agent runtime。</td><td>5.5/10</td></tr>
+      <tr><td><b>PocketFlow</b></td><td>极简 workflow / agent 框架，适合看"少抽象"的 agent 设计。对大型风控系统参考价值偏低，但能帮助反思<em>不要过度框架化</em>。</td><td>5/10</td></tr>
+      <tr><td><b>Langflow / Flowise / n8n</b></td><td>可视化 LangChain / RAG / agent builder。适合原型 / 运营侧 demo / prompt 调试，不适合高可靠生产风控。</td><td>5/10</td></tr>
+      <tr><td><b>OpenHands（前 OpenDevin）</b></td><td>软件工程 Agent 平台，强在代码 / shell / 浏览器 / 文件环境。对风控业务 Agent 不直接适用，但可参考 sandbox / 工具权限 / 审计。</td><td>6/10</td></tr>
+      <tr><td><b>OpenClaw</b></td><td>个人自动化 / 本地 agent 平台，<em>安全争议大</em>。对快手最大价值<em>不是采用</em>，而是研究"工具权限失控 / 长期记忆污染 / agent 自执行风险"的反例。</td><td>4/10</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <b>二线框架的"补读优先级"</b><br>
+    如果继续深入，建议优先补这 6 个：① Langfuse / Phoenix / OpenInference（Trace + Eval + 数据飞轮）② DSPy（prompt/skill 自动优化的理论和工程边界）③ LlamaIndex（Memory/RAG/知识检索层）④ Microsoft Agent Framework（企业级生产化经验）⑤ AWS Bedrock AgentCore / Strands（云厂商 runtime / governance）⑥ Salesforce Agentforce（业务工作流 + trust layer）
+  </div>
+</section>
+
+<!-- 5. 横向对比表 -->
+<section id="p5">
+  <h2 class="sec"><span class="n">5</span>统一维度横向对比表</h2>
+  <div class="tldr"><b>TL;DR</b><br>30+ 框架按 12 个维度统一对比。<em>风控适用度是"对快手自研架构参考价值"，不是直接采用分</em>。表格横向滚动查看完整维度。</div>
+
+  <div class="scrollx">
+    <table class="tab bordered">
+      <thead>
+        <tr>
+          <th>框架 / 系统</th>
+          <th>编排范式</th>
+          <th>状态管理</th>
+          <th>Tool 抽象</th>
+          <th>Memory</th>
+          <th>HITL</th>
+          <th>Trace / Eval</th>
+          <th>治理 / 权限</th>
+          <th>多 Agent</th>
+          <th>语言生态</th>
+          <th>生产采用度</th>
+          <th>适用度</th>
+          <th>借鉴点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><b>Spring AI</b></td><td>function / advisor</td><td>短期，自建持久化</td><td>注解 / ToolCallback</td><td>短期 + VectorStore</td><td>自建</td><td>外接 Micrometer</td><td>弱</td><td>弱</td><td>Java</td><td>GA</td><td class="ok">8</td><td>Java LLM 标准适配层</td></tr>
+        <tr><td><b>LangChain4j</b></td><td>chain / AiService</td><td>短期，自建</td><td>注解</td><td>短期 + RAG</td><td>自建</td><td>外接</td><td>弱</td><td>弱</td><td>Java</td><td>GA</td><td class="ok">8.5</td><td>强类型 Agent / Tool 接口</td></tr>
+        <tr><td><b>LangGraph4j</b></td><td>graph / state machine</td><td>checkpoint</td><td>Java node/tool</td><td>自建</td><td>可自建</td><td>外接</td><td>弱</td><td>graph 协作</td><td>Java</td><td>成长期</td><td class="ok">8.5</td><td>Java StateGraph 思路</td></tr>
+        <tr><td><b>Embabel</b></td><td>GOAP / action-driven</td><td>自建</td><td>action / tool</td><td>自建</td><td>自建</td><td>可接 Langfuse</td><td>弱</td><td>支持 Agent</td><td>Java/Kotlin</td><td>早期</td><td>7.5</td><td>Action-driven Agent 建模</td></tr>
+        <tr><td><b>LangGraph</b></td><td>graph / state machine</td><td>持久 checkpoint</td><td>函数 / tool</td><td>短期 + 自建</td><td>原生 interrupt</td><td>LangSmith 强</td><td>弱</td><td>graph 原生</td><td>Python</td><td>高</td><td class="ok">9 思想 / 6 落地</td><td>State / Node / Edge / Interrupt</td></tr>
+        <tr><td><b>Temporal</b></td><td>workflow</td><td>强持久化</td><td>Activity</td><td>无</td><td>Signal / Query 自建</td><td>强 workflow trace</td><td>弱，需业务层</td><td>无</td><td>多语言 / Java 强</td><td>大厂生产</td><td class="ok">9</td><td>durable agent 外壳</td></tr>
+        <tr><td><b>MCP</b></td><td>protocol / tool</td><td>无</td><td>协议 Tool / Resource</td><td>无</td><td>无</td><td>自建</td><td>弱，需外包 Gate</td><td>无</td><td>多语言</td><td>事实标准</td><td>8</td><td>Tool 协议标准</td></tr>
+        <tr><td><b>Google ADK + A2A</b></td><td>agent protocol / task</td><td>框架相关</td><td>agent capability</td><td>框架相关</td><td>支持但需设计</td><td>外接</td><td>中等</td><td>协议原生</td><td>Python / Go / Java</td><td>快速增长</td><td class="ok">8.5</td><td>Agent Card / Task / Message</td></tr>
+        <tr><td><b>OpenAI Agents SDK</b></td><td>handoff / agent loop</td><td>短期 + runtime</td><td>function tool</td><td>有限</td><td>guardrail / handoff</td><td>内置 tracing</td><td>中等 guardrail</td><td>handoff 原生</td><td>Python / TS</td><td>GA</td><td>7.5</td><td>Handoff + Guardrail + Trace</td></tr>
+        <tr><td><b>Claude Agent SDK</b></td><td>agent loop / MCP</td><td>runtime 相关</td><td>MCP 强</td><td>runtime 相关</td><td>自建</td><td>外接</td><td>中等</td><td>可组合</td><td>Python / TS</td><td>增长中</td><td>7</td><td>MCP-first agent runtime</td></tr>
+        <tr><td><b>Microsoft Agent Framework</b></td><td>workflow / agent</td><td>中等</td><td>plugin / function</td><td>支持</td><td>支持</td><td>Azure / 外接</td><td>企业级中等</td><td>原生</td><td>.NET (C#) / Python</td><td>企业向</td><td>7.5</td><td>企业 agent 编排整合</td></tr>
+        <tr><td><b>AutoGen</b></td><td>conversation / actor</td><td>短期</td><td>函数</td><td>弱</td><td>可插入</td><td>外接</td><td>弱</td><td>原生 group chat</td><td>Python / C#</td><td>研究 + 部分生产</td><td>6.5</td><td>多 Agent 对话协作</td></tr>
+        <tr><td><b>Semantic Kernel</b></td><td>function / planner</td><td>短期</td><td>plugin</td><td>支持</td><td>自建</td><td>外接</td><td>中等</td><td>有</td><td>C# / Java / Python</td><td>GA</td><td>7</td><td>Plugin / planner 体系</td></tr>
+        <tr><td><b>AWS Strands</b></td><td>model-first agent loop</td><td>runtime 相关</td><td>tool</td><td>支持</td><td>自建</td><td>AWS 生态</td><td>中等</td><td>pattern 支持</td><td>Python / TS</td><td>AWS 内部</td><td>7</td><td>model-first 简化 Agent loop</td></tr>
+        <tr><td><b>Bedrock AgentCore</b></td><td>managed runtime</td><td>托管持久化</td><td>action group</td><td>托管</td><td>支持</td><td>云观测</td><td>较强</td><td>托管多 Agent</td><td>AWS</td><td>云上生产</td><td>7.5</td><td>生产 Agent runtime 控制面</td></tr>
+        <tr><td><b>IBM BeeAI</b></td><td>multi-agent platform</td><td>中等</td><td>ACP / tools</td><td>支持</td><td>自建</td><td>Phoenix 等</td><td>中等</td><td>原生</td><td>多语言</td><td>成长期</td><td>7</td><td>异构 Agent 互操作</td></tr>
+        <tr><td><b>Salesforce Agentforce</b></td><td>graph / script / reasoning</td><td>托管</td><td>business action</td><td>Data Cloud</td><td>原生业务流</td><td>平台内置</td><td class="ok">较强 trust layer</td><td>原生</td><td>平台型</td><td>企业生产</td><td>7</td><td>Agent + 业务权限 + Trust Layer</td></tr>
+        <tr><td><b>ServiceNow AI Agents</b></td><td>workflow / action</td><td>托管</td><td>workflow action</td><td>平台数据</td><td>原生审批</td><td>平台内置</td><td>较强</td><td>平台协作</td><td>平台型</td><td>企业生产</td><td>6.5</td><td>Agent 嵌入工单 / SLA</td></tr>
+        <tr><td><b>CrewAI</b></td><td>role / task / process</td><td>短期</td><td>tool 字典</td><td>弱</td><td>弱</td><td>外接</td><td>弱</td><td>原生</td><td>Python</td><td>原型多</td><td>6</td><td>简洁 role/task 协作</td></tr>
+        <tr><td><b>MetaGPT</b></td><td>role workflow</td><td>短期</td><td>action</td><td>弱</td><td>弱</td><td>外接</td><td>弱</td><td>原生</td><td>Python</td><td>研究 / 原型</td><td>5.5</td><td>role-based 多 Agent</td></tr>
+        <tr><td><b>AgentScope</b></td><td>actor / message</td><td>中等</td><td>tool</td><td>支持</td><td>自建</td><td>外接</td><td>弱</td><td>原生</td><td>Python</td><td>研究 / 开源</td><td>6</td><td>多 Agent 消息机制</td></tr>
+        <tr><td><b>Dify</b></td><td>workflow / app builder</td><td>平台持久化</td><td>tool / plugin</td><td>RAG</td><td>人工节点有限</td><td>平台内置</td><td>中等</td><td>有限</td><td>平台</td><td>生产应用多</td><td>6</td><td>运营侧低代码 AI 应用</td></tr>
+        <tr><td><b>FastGPT</b></td><td>workflow / RAG</td><td>平台持久化</td><td>plugin</td><td>RAG 强</td><td>弱</td><td>平台内置</td><td>中等</td><td>有限</td><td>平台</td><td>国内应用多</td><td>5.5</td><td>知识库 / RAG 原型</td></tr>
+        <tr><td><b>LlamaIndex</b></td><td>query engine / RAG pipeline</td><td>index 持久化</td><td>tool / retriever</td><td>RAG 强</td><td>自建</td><td>外接</td><td>弱</td><td>有</td><td>Python / TS</td><td>高</td><td>7.5</td><td>Memory / Retrieval 层</td></tr>
+        <tr><td><b>DSPy</b></td><td>programmatic prompting</td><td>dataset 驱动</td><td>module</td><td>无</td><td>无</td><td class="ok">eval 强</td><td>无</td><td>无</td><td>Python</td><td>研究 + 工程</td><td>7.5</td><td>Prompt/Skill 自动优化</td></tr>
+        <tr><td><b>Langfuse</b></td><td>observability</td><td>trace / dataset</td><td>无</td><td>dataset</td><td>无</td><td class="ok">强</td><td>权限中等</td><td>无</td><td>多语言 SDK</td><td>生产多</td><td class="ok">8</td><td>Trace / Eval / 数据飞轮</td></tr>
+        <tr><td><b>Ragas / DeepEval</b></td><td>eval pipeline</td><td>dataset</td><td>无</td><td>eval set</td><td>无</td><td class="ok">强</td><td>无</td><td>无</td><td>Python</td><td>工程采用</td><td>7-7.5</td><td>回归测试 / 自动 promote 门禁</td></tr>
+        <tr><td><b>Pydantic-AI / Instructor</b></td><td>structured function</td><td>短期</td><td>function</td><td>弱</td><td>自建</td><td>外接</td><td>弱</td><td>弱</td><td>Python</td><td>增长中</td><td>6.5</td><td>Schema-first 输出</td></tr>
+        <tr><td><b>Vercel AI SDK</b></td><td>UI streaming / tool</td><td>前端状态</td><td>tool calling</td><td>短期</td><td>UI 自建</td><td>外接</td><td>弱</td><td>弱</td><td>TS</td><td>高</td><td>5.5</td><td>人审工作台流式交互</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <b>从对比表能看出的几个 pattern</b><br>
+    1. <b>没有任何框架同时打满"治理 + 多 Agent + Java + 生产采用度"</b>——这是快手必须自研的核心信号<br>
+    2. <b>Java 生态在 GA 但偏薄</b>（Spring AI 1.1.6 / LangChain4j / LangGraph4j），是快手 v1 的现实选择<br>
+    3. <b>Python 框架"治理 / 权限 / 红线"列普遍是"弱"或"无"</b>——这不是 Python 的错，是这些框架的设计目标不在这<br>
+    4. <b>云厂商和企业 Agent 产品"治理"较强</b>但锁定在平台（Bedrock / Agentforce / ServiceNow）——快手不能锁定<br>
+    5. <b>评估 / 观测工具链（Langfuse / Ragas / DeepEval）是数据飞轮关键</b>——必须研究但不是 Agent 框架本身
+  </div>
+</section>
+
+<!-- 6. 引出自研必要性 -->
+<section id="p6">
+  <h2 class="sec"><span class="n">6</span>引出自研必要性</h2>
+  <div class="tldr"><b>TL;DR</b><br>没有任何现成 Agent 框架能直接承载快手风控终态。原因不是它们不成熟，是它们普遍缺少快手需要的<em>四件事</em>：全 Java 工程一致性 / 生产写动作统一 Gate / 风控级权限审计 / 跨域风险对象模型 URG。合理路线 = <strong>自研控制面 + 借鉴成熟抽象 + Java 生态落地</strong>。</div>
+
+  <h3 class="sub"><span class="n">6.1</span>现成框架直接用为什么不行（5 个原因）</h3>
+
+  <h4>1. 它们大多解决"Agent 怎么跑"，不解决"风控动作怎么被允许"</h4>
+  <p>快手终态最核心不是 Agent loop，而是：</p>
+  <ul>
+    <li>哪些动作能写生产</li>
+    <li>哪些必须人审</li>
+    <li>哪些必须多签</li>
+    <li>哪些永远禁止</li>
+    <li>谁能签 token</li>
+    <li>出事怎么回滚</li>
+    <li>trace 如何审计</li>
+    <li>memory 如何撤回</li>
+  </ul>
+  <p>LangGraph / OpenAI Agents SDK / CrewAI / AutoGen / Spring AI 都<em>不会替你解决这些</em>。</p>
+  <p>所以快手必须自研 <b>The Gate / Action Adapter / Policy-as-Code / Permission Token / Rollback / Kill Switch</b>。</p>
+  <div class="callout choice"><b>结论 1</b><br>框架可以管"推理"，不能管"生产责任"。</div>
+
+  <h4>2. 现成框架的 Memory 太轻，承载不了风控数据飞轮</h4>
+  <p>风控 Memory 不是聊天历史，也不是普通 RAG 文档。它至少要有：</p>
+  <pre class="code">{
+  source_type,
+  domain_scope,
+  human_verified,
+  policy_version,
+  trace_lineage,
+  tier,                  <span class="com">// A/B/C/D 分级</span>
+  expires_at,
+  revoked_at,
+  applicability_contract,
+  cross_domain_allowed
+}</pre>
+  <p>LlamaIndex / LangChain / Spring AI 都能做检索，但都<em>没有天然的风控 Memory 状态机</em>。</p>
+  <p>快手需要的是：</p>
+  <pre class="code">DRAFT -&gt; QUARANTINED -&gt; VERIFIED -&gt; PROMOTED -&gt; DEPRECATED -&gt; REVOKED</pre>
+  <div class="callout choice"><b>结论 2</b><br>RAG 框架只能提供检索能力，不能提供风控 Memory 治理。</div>
+
+  <h4>3. 多 Agent 框架缺少冲突仲裁协议</h4>
+  <p>CrewAI / AutoGen / A2A / OpenAI Handoff 都能让多个 Agent 协作，但快手需要的是：</p>
+  <ul>
+    <li>内容安全 Agent 说高风险</li>
+    <li>电商 Agent 说正常带货</li>
+    <li>未成年保护 Agent 说升级</li>
+    <li>合规 Agent 说证据不足</li>
+  </ul>
+  <p>这时<em>不能靠"聊天继续讨论"</em>。必须有：</p>
+  <ul>
+    <li>硬优先级：<code>合规 &gt; 用户安全 &gt; 反欺诈 &gt; 业务增长</code></li>
+    <li>Arbiter Agent（仲裁角色）</li>
+    <li>Policy-as-Code 优先级</li>
+    <li>escalation rule</li>
+    <li>conflict trace</li>
+    <li>human final authority</li>
+  </ul>
+  <div class="callout choice"><b>结论 3</b><br>现成多 Agent 框架有协作，没有风控仲裁。</div>
+
+  <h4>4. Python / TS 生态不匹配快手核心生产体系</h4>
+  <p>OpenAI Agents SDK / LangGraph / CrewAI / LlamaIndex / DSPy / Pydantic-AI 都很强，但快手风控主链路是 Java：</p>
+  <ul>
+    <li>机审 Java 实时引擎</li>
+    <li>Dubbo / gRPC 服务</li>
+    <li>Spring Boot 体系</li>
+    <li>Java 策略平台</li>
+    <li>Java 权限 / 配置 / 监控体系</li>
+    <li>内部研发主力也是 Java 后端</li>
+  </ul>
+  <p>如果核心 Agent runtime 用 Python，会引入：</p>
+  <ul>
+    <li>服务治理割裂</li>
+    <li>SDK / RPC 边界复杂</li>
+    <li>线上排障成本高</li>
+    <li>权限体系复用差</li>
+    <li>组织学习成本高</li>
+  </ul>
+  <div class="callout choice"><b>结论 4</b><br>Python 框架适合做参照物，不适合做快手风控核心 runtime。</div>
+
+  <h4>5. 云厂商 Agent 产品不能绑定快手终态</h4>
+  <p>Bedrock AgentCore / Agentforce / ServiceNow AI Agents 很有参考价值，但快手不能把风控核心控制面托给外部平台：</p>
+  <ul>
+    <li>数据出域</li>
+    <li>合规不可控</li>
+    <li>模型路由不可控</li>
+    <li>trace / memory 生命周期不可控</li>
+    <li>The Gate 无法深度内嵌</li>
+    <li>成本和供应商绑定不可接受</li>
+  </ul>
+  <div class="callout choice"><b>结论 5</b><br>云厂商产品适合反推生产能力清单，不适合成为快手风控底座。</div>
+
+  <h3 class="sub"><span class="n">6.2</span>哪些设计应该借鉴（8 个具体借鉴点）</h3>
+
+  <details class="expand">
+    <summary>① 从 Spring AI 借鉴：Java AI 标准适配层</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：ChatClient / Advisor / @Tool / ChatMemory / VectorStore / 模型厂商抽象 / Spring Boot 配置和观测体系</p>
+      <p><b>放到快手架构</b>：<code>Spring AI = LLM Gateway SDK + Tool Adapter SDK + RAG Adapter</code></p>
+      <p>它不负责 Agent Society，但负责<em>"Java 工程接 LLM 的标准姿势"</em>。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>② 从 LangChain4j 借鉴：强类型 AiService + Tool 注解</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：Java interface 描述 AI service / @Tool 暴露 Java 方法 / ChatMemory / Retriever / EmbeddingStore / 类型系统约束输入输出</p>
+      <p><b>放到快手架构</b>：<code>Agent Contract / Tool Contract / Recommendation DTO</code></p>
+      <p>快手让 Agent 输出不是字符串，而是：</p>
+      <pre class="code">EvidenceBundle
+RiskHypothesis
+CounterEvidence
+Recommendation
+EscalationDecision</pre>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>③ 从 LangGraph / LangGraph4j 借鉴：StateGraph</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：State / Node / Edge / conditional edge / checkpoint / interrupt / human-in-loop</p>
+      <p><b>放到快手架构</b>：Case Investigation Agent = 显式状态机</p>
+      <pre class="code">LOAD_CONTEXT -&gt; HYPOTHESIZE -&gt; INVESTIGATE -&gt; ADVERSARIAL -&gt; SYNTHESIZE -&gt; PERSIST</pre>
+      <p>这比"while true 让模型决定下一步"更适合风控。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>④ 从 Embabel 借鉴：Action-driven / GOAP 思想</summary>
+    <div class="body">
+      <p>Embabel 的价值不是 API，而是思想：</p>
+      <p><em>"Agent 不只是 graph，也可以是 action + goal + precondition + output"</em></p>
+      <p><b>放到快手架构</b>：风控 Agent 动作建模为：</p>
+      <pre class="code">Action:
+  name
+  input_type
+  output_type
+  precondition
+  tool_scope
+  policy_scope
+  budget_cost
+  side_effect_level</pre>
+      <p>这正好能和 The Gate 结合。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>⑤ 从 Temporal 借鉴：durable workflow</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：workflow state / activity retry / timeout / compensation / signal / query / worker crash recovery</p>
+      <p><b>放到快手架构</b>：</p>
+      <pre class="code">Temporal = Agent 长流程外壳
+Java Agent Runtime = 业务状态机
+LLM / Tool = Activity</pre>
+      <p>Temporal 不懂 Agent，但它能保证 Agent 跑崩后还能恢复。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>⑥ 从 MCP 借鉴：Tool 协议，但不能照搬</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：tool schema / resource / prompt / tool discovery / client/server 解耦</p>
+      <p><b>快手要改造成 MCP-like Tool Protocol + The Gate</b>：每个工具必须带</p>
+      <pre class="code">tool_id
+domain_scope
+action_level
+input_schema
+output_schema
+required_token
+audit_level
+rate_limit
+side_effect
+rollback_capability</pre>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>⑦ 从 A2A 借鉴：Agent Card / Task / Message</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：Agent Card / capability discovery / task / message / artifact / streaming / push</p>
+      <p><b>快手扩展成 Risk Agent Card</b>，增加字段：</p>
+      <pre class="code">domain_scope
+policy_scope
+trust_level
+allowed_tools
+forbidden_actions
+escalation_rule
+sla
+owner
+audit_level</pre>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>⑧ 从 OpenAI Agents SDK 借鉴：Handoff + Guardrail + Trace</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：handoff / guardrail / tracing / function tool / lightweight agent loop</p>
+      <p><b>放到快手架构</b>：</p>
+      <pre class="code">Handoff = Agent 间任务移交
+Guardrail = Policy-as-Code 前置检查
+Tracing = 每次 handoff / tool / decision 都入 trace</pre>
+      <p>但 <em>handoff 必须受 The Gate 和 Policy 控制</em>——不能像 OpenAI SDK 那样自由 handoff。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>⑨ 从 Langfuse / Ragas / DeepEval 借鉴：数据飞轮门禁</summary>
+    <div class="body">
+      <p><b>借鉴点</b>：trace dataset / eval set / prompt version / regression test / score tracking / release compare</p>
+      <p><b>放到快手架构</b>：</p>
+      <pre class="code">Agent 版本发布 = 必须过 Eval Gate
+Prompt promote = 必须过 Gold Set + 分桶无回归
+Memory promote = 必须过 Curator + 质量分</pre>
+    </div>
+  </details>
+</section>
+
+<!-- 7. 自研架构 -->
+<section id="p7">
+  <h2 class="sec"><span class="n">7</span>快手自研架构（基于 The Gate + URG + Agent Society）</h2>
+  <div class="tldr"><b>TL;DR</b><br>架构主体是 <em>The Gate + URG（控制平面）</em>，不是 Agent。Agent 是控制平面上的智能执行单元，可替换、可扩展、可下线。基于跟 codex 的多轮推演，新架构 = 自研控制面 + 6 个开源思想借鉴 + Java 落地。</div>
+
+  <h3 class="sub"><span class="n">7.1</span>架构主体（5 层 + 控制平面）</h3>
+
+  <svg viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;max-width:900px;display:block;margin:14px auto;background:#fbfcfd;border-radius:8px;border:1px solid #dde4ec;
+              font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;">
+    <defs>
+      <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#5e6b78"/>
+      </marker>
+    </defs>
+
+    <!-- ① 独立治理层 -->
+    <rect x="60" y="20" width="780" height="68" rx="8" fill="#e6f1f6" stroke="#0c5d80" stroke-width="2"/>
+    <text x="450" y="45" text-anchor="middle" font-size="15" font-weight="700" fill="#0c5d80">① 独立治理层（人为最终权威）</text>
+    <text x="450" y="65" text-anchor="middle" font-size="11.5" fill="#26333f">Policy Steward · Trace Auditor · Memory Curator · Incident Commander · 外部审计</text>
+    <text x="450" y="82" text-anchor="middle" font-size="10.5" font-style="italic" fill="#0c5d80">设红线 · 签 token · 抽审 · 切档</text>
+
+    <line x1="450" y1="92" x2="450" y2="120" stroke="#5e6b78" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+    <!-- ② The Gate -->
+    <rect x="60" y="125" width="780" height="86" rx="8" fill="#fbf2dc" stroke="#8a5d1f" stroke-width="2.5"/>
+    <text x="450" y="150" text-anchor="middle" font-size="15" font-weight="700" fill="#8a5d1f">② 控制平面 The Gate（架构承重墙 · 唯一写入口）</text>
+    <text x="180" y="178" text-anchor="middle" font-size="11.5" fill="#26333f">Action Adapter</text>
+    <text x="180" y="194" text-anchor="middle" font-size="10" fill="#5e6b78">唯一写动作入口</text>
+    <text x="380" y="178" text-anchor="middle" font-size="11.5" fill="#26333f">Policy-as-Code</text>
+    <text x="380" y="194" text-anchor="middle" font-size="10" fill="#5e6b78">红线代码化</text>
+    <text x="570" y="178" text-anchor="middle" font-size="11.5" fill="#26333f">Trace / Replay / Audit</text>
+    <text x="570" y="194" text-anchor="middle" font-size="10" fill="#5e6b78">全链路可追溯</text>
+    <text x="760" y="178" text-anchor="middle" font-size="11.5" fill="#26333f">Rollback</text>
+    <text x="760" y="194" text-anchor="middle" font-size="10" fill="#5e6b78">git-style 回滚</text>
+
+    <line x1="450" y1="211" x2="450" y2="240" stroke="#5e6b78" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+    <!-- ③ Risk Agent Society（多域 + 数据飞轮） -->
+    <rect x="60" y="245" width="780" height="130" rx="8" fill="#e6f3ec" stroke="#1f6f4f" stroke-width="2"/>
+    <text x="450" y="270" text-anchor="middle" font-size="15" font-weight="700" fill="#1f6f4f">③ Risk Agent Society（数据飞轮 + 自演进）</text>
+    <text x="450" y="290" text-anchor="middle" font-size="11" fill="#26333f">多域 Agent 群协作 · 秒-分钟级 · 借鉴 LangGraph4j StateGraph + Embabel Action-driven + A2A Card</text>
+
+    <rect x="80" y="305" width="115" height="50" rx="4" fill="#fff" stroke="#86d4a1" stroke-width="1"/>
+    <text x="138" y="324" text-anchor="middle" font-size="10.5" fill="#1f6f4f">内容安全 Agent</text>
+    <text x="138" y="342" text-anchor="middle" font-size="9" fill="#5e6b78">视频/直播/评论</text>
+
+    <rect x="205" y="305" width="115" height="50" rx="4" fill="#fff" stroke="#86d4a1" stroke-width="1"/>
+    <text x="263" y="324" text-anchor="middle" font-size="10.5" fill="#1f6f4f">反欺诈 Agent</text>
+    <text x="263" y="342" text-anchor="middle" font-size="9" fill="#5e6b78">账号/设备</text>
+
+    <rect x="330" y="305" width="115" height="50" rx="4" fill="#fff" stroke="#86d4a1" stroke-width="1"/>
+    <text x="388" y="324" text-anchor="middle" font-size="10.5" fill="#1f6f4f">商家电商 Agent</text>
+    <text x="388" y="342" text-anchor="middle" font-size="9" fill="#5e6b78">商家/交易</text>
+
+    <rect x="455" y="305" width="115" height="50" rx="4" fill="#fff" stroke="#86d4a1" stroke-width="1"/>
+    <text x="513" y="324" text-anchor="middle" font-size="10.5" fill="#1f6f4f">合规审查 Agent</text>
+    <text x="513" y="342" text-anchor="middle" font-size="9" fill="#5e6b78">监管/广告法</text>
+
+    <rect x="580" y="305" width="115" height="50" rx="4" fill="#fff" stroke="#86d4a1" stroke-width="1"/>
+    <text x="638" y="324" text-anchor="middle" font-size="10.5" fill="#1f6f4f">跨域 Arbiter</text>
+    <text x="638" y="342" text-anchor="middle" font-size="9" fill="#5e6b78">冲突仲裁</text>
+
+    <rect x="705" y="305" width="115" height="50" rx="4" fill="#fff" stroke="#86d4a1" stroke-width="1"/>
+    <text x="763" y="324" text-anchor="middle" font-size="10.5" fill="#1f6f4f">扩展…</text>
+    <text x="763" y="342" text-anchor="middle" font-size="9" fill="#5e6b78">v4+ 多域</text>
+
+    <line x1="450" y1="376" x2="450" y2="405" stroke="#5e6b78" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+    <!-- ④ 实时机审引擎（不动） -->
+    <rect x="60" y="410" width="780" height="60" rx="8" fill="#fff5f5" stroke="#a3373a" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="450" y="435" text-anchor="middle" font-size="14" font-weight="700" fill="#a3373a">④ 实时机审引擎（永远保留 · 物理隔离 · Agent 不进）</text>
+    <text x="450" y="455" text-anchor="middle" font-size="11" fill="#26333f">1500 万 QPS · 规则 + 模型 · 毫秒级 · 三层红线（架构 + 治理 + 责任）</text>
+
+    <line x1="450" y1="471" x2="450" y2="500" stroke="#5e6b78" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+    <!-- ⑤ URG 共享事实底座 -->
+    <rect x="60" y="505" width="780" height="85" rx="8" fill="#e6f3ec" stroke="#1f6f4f" stroke-width="2.5"/>
+    <text x="450" y="530" text-anchor="middle" font-size="15" font-weight="700" fill="#1f6f4f">⑤ 共享事实底座 URG (Unified Risk Graph)</text>
+    <text x="450" y="552" text-anchor="middle" font-size="11" fill="#26333f">Case · Action · EvidenceRef · TraceRef · Memory（其他实体逐步并入）</text>
+    <text x="450" y="572" text-anchor="middle" font-size="10.5" fill="#5e6b78">事件总线 Kafka · 向量库 · 关系库 · append-only 事件溯源</text>
+
+    <line x1="450" y1="591" x2="450" y2="618" stroke="#5e6b78" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+    <!-- ⑥ 数据飞轮 + 自进化 -->
+    <rect x="60" y="623" width="780" height="65" rx="8" fill="#efe9f7" stroke="#6b4596" stroke-width="2"/>
+    <text x="450" y="648" text-anchor="middle" font-size="14" font-weight="700" fill="#6b4596">⑥ 数据飞轮 + Agent 自进化（受控）</text>
+    <text x="450" y="668" text-anchor="middle" font-size="11" fill="#26333f">6 资产层 · L4 红线（自改永久禁）· Memory 6 状态机 · 跨域迁移 applicability_contract · 借鉴 Langfuse / DSPy / Ragas</text>
+  </svg>
+
+  <h3 class="sub"><span class="n">7.2</span>跟 codex 推演出的"借鉴 + 自研"组合公式</h3>
+  <pre class="code">Java Risk Agent Runtime
+  = Spring AI            <span class="com">// 接模型和工具（Java AI 标准适配层）</span>
+  + LangGraph4j          <span class="com">// 自研 StateGraph 做状态机</span>
+  + Temporal             <span class="com">// 做 durable workflow（外壳）</span>
+  + Embabel 式 Action Catalog   <span class="com">// 做动作建模</span>
+  + MCP-like Tool Protocol      <span class="com">// 做工具协议（加风控元数据）</span>
+  + A2A-like Agent Card         <span class="com">// 做 Agent 协作协议（加 trust_level / domain_scope）</span>
+  + The Gate（自研）            <span class="com">// 做生产动作控制面</span>
+  + URG（自研）                 <span class="com">// 做统一风险事实层</span>
+  + Langfuse/Ragas/DeepEval 思路 <span class="com">// 做 Trace/Eval/Data Flywheel</span></pre>
+
+  <div class="callout choice">
+    <b>一句话总结</b><br>
+    <em>现成框架负责启发抽象，自研系统负责承接责任。</em>
+  </div>
+</section>
+
+<!-- 8. 每层用了哪些框架 -->
+<section id="p8">
+  <h2 class="sec"><span class="n">8</span>每层用了哪些框架 / 借鉴点对照</h2>
+  <div class="tldr"><b>TL;DR</b><br>把架构每一层的"自研部分"和"借鉴的开源框架抽象"一一对应——避免"自研 = 重造轮子"误解，也避免"用开源 = 失控"风险。</div>
+
+  <table class="tab bordered">
+    <thead><tr><th style="width:22%">架构层</th><th>自研部分</th><th>借鉴 / 直接采用的框架</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>独立治理层</b><br>(Policy Steward / Trace Auditor / Memory Curator / Incident Commander)</td>
+        <td>具名角色 · KPI 设计 · 独立汇报线 · 多签流程 · 季度外审</td>
+        <td>Salesforce Agentforce Trust Layer 思想 · ServiceNow 审批工作流 · IBM BeeAI 治理观测</td>
+      </tr>
+      <tr>
+        <td><b>控制平面 The Gate</b><br>(Action Adapter / Policy-as-Code / Trace / Rollback)</td>
+        <td>Action Adapter 收编所有写入口 · 风控特定的 Policy DSL · 三层红线（架构+治理+责任）· 风控级 Trace schema</td>
+        <td>Spring AI Advisor 拦截链 · MCP tool 协议（改造）· OPA / Rego 规则引擎 · git-style commit / rollback 思想</td>
+      </tr>
+      <tr>
+        <td><b>Risk Agent Society</b><br>（多 Agent 群）</td>
+        <td>Risk Agent Card（A2A 扩展，加 domain_scope / policy_scope / trust_level）· 跨域 Arbiter Agent · 冲突仲裁优先级</td>
+        <td>Spring AI ChatClient · LangChain4j AiService · LangGraph4j StateGraph · Embabel Action Catalog · A2A Agent Card · OpenAI handoff 思想</td>
+      </tr>
+      <tr>
+        <td><b>实时机审引擎</b><br>（永远保留）</td>
+        <td>三层红线物理隔离 · Maven 依赖白名单 · NetworkPolicy · KPI 互斥</td>
+        <td><em>不用任何 Agent 框架</em>（这层不能进 LLM）</td>
+      </tr>
+      <tr>
+        <td><b>共享事实底座 URG</b></td>
+        <td>风控特定实体（Case / Action / EvidenceRef / TraceRef / Memory）· 事件溯源 · 跨域 ID 系统</td>
+        <td>LlamaIndex / Haystack RAG pipeline 思想 · Milvus / PGVector / ES 向量检索 · Kafka 事件总线</td>
+      </tr>
+      <tr>
+        <td><b>长流程外壳</b></td>
+        <td>Workflow 定义 · 失败兜底策略 · Agent loop 退出条件</td>
+        <td><b>Temporal（直接采用）</b>· 备选 Restate / Conductor</td>
+      </tr>
+      <tr>
+        <td><b>数据飞轮</b></td>
+        <td>Failure Taxonomy · Memory 6 状态机 · applicability_contract · L4 红线（永远禁自改）· Curator 4 维分层 · Red Team 隔离</td>
+        <td>Langfuse Trace + Eval · DSPy Prompt 优化 · Ragas / DeepEval gold set · OpenInference 观测标准</td>
+      </tr>
+      <tr>
+        <td><b>Java AI 接入层</b></td>
+        <td>LLM Gateway（多 provider 路由 / PII scrub / 限流 / 计费）· 模型版本灰度</td>
+        <td><b>Spring AI（直接采用）</b>· Anthropic Java SDK · LangChain4j AiService 模式</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">8.1</span>v1 实验阶段实际用什么</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:24%">组件</th><th>v1 选型</th><th>v2+ 演进</th></tr></thead>
+    <tbody>
+      <tr><td>LLM 接入</td><td>Spring AI 1.1.6 + Anthropic Java SDK</td><td>多模型路由 + 自部署 vLLM</td></tr>
+      <tr><td>Agent loop</td><td>受控最小 loop（显式状态枚举 + token/步数/超时预算 + trace/审计埋点 + 异常回滚），单文件不超过 ~150 行 Java，v1 内容安全 case 调查 Agent 不复杂</td><td>引入 LangGraph4j StateGraph（v2 多 case 状态机 / 分支 / checkpoint）</td></tr>
+      <tr><td>Tool 注册</td><td>Spring @Tool + LangChain4j @Tool（兼容两套）</td><td>统一到 MCP-like Tool Protocol（加风控元数据）</td></tr>
+      <tr><td>Memory</td><td>MySQL conversation_message + Redis 短期 + 现有档案中心</td><td>引入向量库 Milvus + 6 状态机</td></tr>
+      <tr><td>Workflow 外壳</td><td>Kafka + Temporal Java SDK</td><td>同上，加 compensation</td></tr>
+      <tr><td>Trace</td><td>自研 Trace 服务（参考 Langfuse schema）+ ES 30d/HBase 1y/OSS 3y</td><td>引入完整 Trace Auditor 抽审</td></tr>
+      <tr><td>Eval</td><td>简单 gold set（人工标 500-2000 case）+ shadow 模式对比</td><td>引入 DeepEval / Ragas 框架</td></tr>
+      <tr><td>多 Agent 协作</td><td>v1 不做（单 Agent 实验）</td><td>v3+ 引入 Risk Agent Card + Arbiter</td></tr>
+      <tr><td>治理</td><td>简单 Policy-as-Code（YAML 配置 + Java 检查）</td><td>OPA / Rego 引擎 + 多签</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout choice">
+    <b>v1 设计哲学</b><br>
+    用尽可能简单的组合先跑通 PoC（Spring AI + 受控最小 Java loop（显式状态机 + 预算/超时/trace） + Temporal + Kafka），再逐步引入更复杂的抽象（LangGraph4j / Embabel Action Catalog / A2A）。<em>不为未来过度设计</em>，但每一步都为未来留出演进空间（Tool Protocol / Memory 状态机 / Agent Contract 等抽象 v1 阶段就要定下来）。
+  </div>
+</section>
+
+<!-- 9. 数据飞轮 -->
+<section id="p9">
+  <h2 class="sec"><span class="n">9</span>数据飞轮 + Agent 自进化</h2>
+  <div class="tldr"><b>TL;DR</b><br>飞轮成立的关键不是"AI 自己改自己"，是<em>系统按结构化方式沉淀 6 类资产 + 受控自动化 + 严格的不可自改红线</em>。自进化的边界比能力更重要。</div>
+
+  <h3 class="sub"><span class="n">9.1</span>6 个资产层（Failure Taxonomy 是核心新增）</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:22%">资产层</th><th>每次 case 产生</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>① Trace</td><td>Agent 完整调查链路 + 引用 + 决策依据</td><td>监管解释 / 事故复盘 / Agent 回归测试</td></tr>
+      <tr><td>② 采纳信号</td><td>审核员"采纳 / 修改 / 驳回"+ 时延</td><td>分层 ground truth（不能直接当训练标签）</td></tr>
+      <tr><td>③ Memory 候选</td><td>成功闭环的 case 经状态机升级</td><td>下次相似 case 检索引用</td></tr>
+      <tr><td>④ Skill 模板</td><td>重复模式归纳的调查 / 处置 template</td><td>新版 Agent prompt / tool 选择优化</td></tr>
+      <tr><td>⑤ 对抗样本库</td><td>红队主动找 + 漏报 / 误杀 case 自动入库</td><td>eval set + 对抗鲁棒性训练</td></tr>
+      <tr><td><b>⑥ Failure Taxonomy</b><br><span style="color:var(--red);font-size:11px;">★ codex CTO 关键新增</span></td><td>失败原因结构化标签：证据缺失 / 工具错 / prompt 错 / 模型错 / Memory 污染 / 人审错 / 策略口径变了</td><td><b>让飞轮知道改 Agent / 改工具 / 改策略 / 改审核培训</b>——没这个飞轮只是堆数据不进化</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">9.2</span>自进化的 4 个层次（L4 永远关）</h3>
+  <table class="tab bordered">
+    <thead><tr><th style="width:8%">层</th><th>类型</th><th>允许范围</th><th>边界</th></tr></thead>
+    <tbody>
+      <tr><td><b class="ok">L1</b></td><td>自动</td><td>每日用 gold set 跑 eval，监控漂移</td><td>仅产报告，人看</td></tr>
+      <tr><td><b class="warn">L2</b></td><td>半自动 + 严格 guardrail</td><td>Prompt / Tool 变更先 A/B，达统计显著且无回归 → 自动 promote</td><td>必须 6 道 guardrail（最小样本 / 分桶无回归 / 红线零回退 / 冷启动 / 人 veto / 自动回滚）</td></tr>
+      <tr><td><b class="warn">L3</b></td><td>半自动</td><td>Memory 候选经状态机自动升级 tier；失败自动 deprecate</td><td>高 tier 必须人签</td></tr>
+      <tr><td><b class="em">L4</b></td><td><b>架构红线永远关</b></td><td>Agent 不能改自己的 prompt / tool / policy / eval / Memory 准入规则；不能合并自己的 PR</td><td>最多生成 proposal，由人或独立治理系统批准</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">9.3</span>Memory 6 状态机</h3>
+  <pre class="code">DRAFT  →  QUARANTINED  →  VERIFIED  →  PROMOTED  →  DEPRECATED
+                                ↓                       ↑
+                              事故 / 撤回 → REVOKED  ←  长时间未引用</pre>
+  <p>每个状态明确：谁能写 / 谁能读 / 哪些 Agent 可引用 / 过期时间 / 撤回后如何影响历史 trace。详细见 <code>ai-native-risk-case.html</code> Part 8.6.4。</p>
+
+  <h3 class="sub"><span class="n">9.4</span>跨域迁移 applicability_contract</h3>
+  <p>跨域 Memory 迁移<em>默认禁止</em>，需要显式 contract：</p>
+  <pre class="code">{
+  "memory_id": "M-12345",
+  "domain_scope": ["content-safety:marketing-account"],
+  "subject_type": ["video"],
+  "evidence_prerequisites": ["account_age", "post_count"],
+  "forbidden_scenarios": ["minor-user", "celebrity"],
+  "migration_audit": [
+    {"from": "content-safety", "to": "ecommerce-fraud",
+     "approved_by": "curator_id", "approved_at": "...",
+     "holdout_test_passed": true}
+  ]
+}</pre>
+
+  <h3 class="sub"><span class="n">9.5</span>飞轮转速指标</h3>
+  <ul>
+    <li>Memory 新增 + 升级数 / 月（飞轮"产出"）</li>
+    <li>Eval gold set 增长率（评估能力 vs 业务复杂度赛跑）</li>
+    <li>新对抗发现 → 入对抗样本库的中位时间（对抗响应速度）</li>
+    <li>Cross-domain memory reuse 率（受 applicability_contract 约束）</li>
+    <li>Agent 版本回滚率（L2 自动 promote 健康度，&gt;10% = guardrail 不严）</li>
+    <li>Failure Taxonomy 覆盖率（覆盖率低 = 飞轮在堆数据不在进化）</li>
+    <li>人审采纳率随时间变化（Agent 信任度演化）</li>
+  </ul>
+
+  <div class="callout choice">
+    <b>核心原则</b><br>
+    <em>没有 eval 的自进化就是自我污染</em>。飞轮的关键不是"自动越来越聪明"，是"每一次升级都被 eval / 人 / 治理验证过"。
+  </div>
+</section>
+
+<!-- 附录 A: codex 推演实录 -->
+<section id="app-a">
+  <h2 class="sec"><span class="n">A</span>codex 调研推演实录</h2>
+  <div class="tldr"><b>说明</b><br>本文档基于跟 codex（资深 AI Agent 架构师 + 开源生态观察者）的 3 轮深度推演 + WebFetch 校验最新生态。下面是关键阶段精华。</div>
+
+  <details class="qa">
+    <summary>Phase A · 清单 + 优先级（30 个框架）</summary>
+    <div class="qa-body">
+      <p>codex 在原 25 个清单基础上补漏 12 个，得到完整 30+ 框架清单。<b>Top 8 优先深入研究</b>：</p>
+      <ol>
+        <li><b>Spring AI</b> · 全 Java 落地核心</li>
+        <li><b>LangChain4j + LangGraph4j</b> · Java agent loop / tool / memory / graph 编排</li>
+        <li><b>Embabel</b> · JVM/Spring 风格 agent 框架（Rod Johnson 出品）</li>
+        <li><b>LangGraph</b> · 状态机 agent 事实标准</li>
+        <li><b>Temporal / Restate / Conductor</b> · 长流程 / 重试 / 补偿核心参考</li>
+        <li><b>MCP</b> · 工具协议标准</li>
+        <li><b>Google ADK + A2A</b> · Agent 通信协议（支持 Java/Kotlin！）</li>
+        <li><b>OpenAI Agents SDK</b> · Handoff / Guardrail / Tracing 参考</li>
+      </ol>
+      <p><b>关键判断</b>："对快手最有参考价值的不是'谁最火'，而是谁能回答：全 Java、强权限、强审计、长流程、跨域协作、可回滚。"</p>
+    </div>
+  </details>
+
+  <details class="qa">
+    <summary>Phase B · Round 1 Top 4 深挖（Spring AI / LangChain4j+LangGraph4j / Embabel / LangGraph）</summary>
+    <div class="qa-body">
+      <p>每个框架按 A 是什么 / B 核心抽象 / C 代表代码 / D 设计哲学 / E 风控适用度 5 个角度深挖。</p>
+      <ul>
+        <li><b>Spring AI 8/10</b>：Java AI 标准适配层，<em>偏薄</em>，不替你做 Agent Society</li>
+        <li><b>LangChain4j + LangGraph4j 8.5/10</b>：AiService 强类型接口 + StateGraph，<em>LangGraph4j 已经跟 Spring AI 集成</em></li>
+        <li><b>Embabel 7.5/10</b>：Rod Johnson 的 JVM 框架，借鉴游戏 AI 的 GOAP 算法，<em>不是 graph 是 action-driven</em></li>
+        <li><b>LangGraph 9/10 思想 / 6/10 落地</b>：思想可以照搬到 Java（用 LangGraph4j），Python 栈本身不能直接落地</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="qa">
+    <summary>Phase B · Round 2 Top 5-8 深挖（Temporal / MCP / Google ADK+A2A / OpenAI Agents SDK）</summary>
+    <div class="qa-body">
+      <ul>
+        <li><b>Temporal 9/10</b>：不是 agent 框架但是 agent 长流程外壳的<em>首选</em>。Restate / Conductor 备选</li>
+        <li><b>MCP 8/10</b>：工具协议事实标准，<em>但默认不是风控级安全网关</em>——必须外包一层 The Gate</li>
+        <li><b>Google ADK + A2A 8.5/10</b>：MCP 接 tool，<em>A2A 接 agent</em>；ADK 原生支持 Java/Kotlin（重大利好）</li>
+        <li><b>OpenAI Agents SDK 7.5/10</b>：核心抽象是 <em>handoff 不是 graph</em>；适合借鉴 API 体验</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="qa">
+    <summary>Phase B · Round 3 二线框架快速过 + 横向对比 + 自研论证</summary>
+    <div class="qa-body">
+      <p>22+ 二线框架 1 句话定位 + 评分；30 个框架统一 12 维度横向对比；5 个为什么不能直接用 + 9 个借鉴点 + 6 个保留思想 + 最终架构组合公式。</p>
+      <p><b>codex 关键裁决</b>：</p>
+      <div style="margin:8px 0;padding:8px 12px;background:#fbf2dc;border-left:3px solid #8a5d1f;font-style:italic;color:#5a4520;">
+      "没有一个现成 Agent 框架能直接承载快手风控终态。原因不是它们不成熟，而是它们普遍缺少快手需要的四件事：全 Java 工程一致性、生产写动作统一 Gate、风控级权限审计、跨域风险对象模型 URG。所以合理路线不是'选框架'，而是：<b>自研控制面 + 借鉴成熟框架抽象 + Java 生态落地</b>。"
+      </div>
+    </div>
+  </details>
+
+  <details class="qa">
+    <summary>关键洞察：通用 vs 风控的"性质差"</summary>
+    <div class="qa-body">
+      <table class="tab">
+        <thead><tr><th>维度</th><th>通用 Agent 框架假设</th><th>风控真实需求</th></tr></thead>
+        <tbody>
+          <tr><td>Agent 可信度</td><td>Agent 是 trusted host 的延伸</td><td>Agent 永远不可信，必须过门</td></tr>
+          <tr><td>Memory</td><td>聊天记忆 / RAG 文档</td><td>分级 + 状态机 + 审计 + 撤回</td></tr>
+          <tr><td>多 Agent</td><td>对话协作 / 自由 handoff</td><td>带 Policy 的责任转移 + 仲裁</td></tr>
+          <tr><td>Tool</td><td>函数 / API</td><td>受治理的生产能力（带 audit/rollback）</td></tr>
+          <tr><td>失败</td><td>retry / 报错</td><td>fail-close + escalate + Failure Taxonomy</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<!-- 附录 B: 术语速查 -->
+<section id="app-b">
+  <h2 class="sec"><span class="n">B</span>术语速查</h2>
+  <p>文档全篇出现的内部术语 + 行业术语集中解释。任何卡壳的词都能在这里查到。</p>
+
+  <details class="gloss">
+    <summary>Agent 是什么</summary>
+    <div class="body">
+      <p><b>一句话</b>：一段会调用大模型的代码，能根据大模型的回复去调用工具、把结果再喂回去、直到大模型说"我答完了"。</p>
+      <p>本质 = LLM 调用循环 + 工具执行。不是新概念。Claude / Codex / ChatGPT 都是这个套路。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>StateGraph / State Machine Agent</summary>
+    <div class="body">
+      <p>把 Agent 流程建模成<b>状态图</b>：节点是步骤（函数），边是流转条件，状态贯穿全程。代表是 LangGraph。</p>
+      <p>相比"while loop 让模型决定下一步"，状态图的好处：每一步显式 / 可追踪 / 可恢复 / 可中断给人。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>GOAP (Goal-Oriented Action Planning)</summary>
+    <div class="body">
+      <p>来自游戏 AI 的<b>规划算法</b>。Embabel 借鉴这个思想：给定目标 + 可用动作集 + 前置条件，框架自动选择动作组合。</p>
+      <p>风控场景：定义"查档案 / 查相似 case / 查策略 / 升级人审"等动作，每个动作带 precondition / output / cost / side_effect_level，框架围绕"判定风险等级"目标自动选择调用顺序。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Handoff</summary>
+    <div class="body">
+      <p>OpenAI Agents SDK 的核心抽象。Agent A 把控制权<em>移交</em>给 Agent B 处理一个任务。</p>
+      <p>跟 graph 的区别：graph 是中央调度（外层决定下一个 node），handoff 是去中心化（Agent A 自己决定移交给谁）。</p>
+      <p>风控扩展：handoff 必须受 Policy 约束（不能自由跳转），只能在 Risk Agent Card 声明的 allowed_handoffs 范围内。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>MCP (Model Context Protocol)</summary>
+    <div class="body">
+      <p>Anthropic 推出的<b>工具 / 上下文接入协议</b>。让模型应用以标准方式发现和调用外部工具。</p>
+      <p>核心抽象：Server / Tool / Resource / Prompt / Client / Transport。</p>
+      <p>类比："Agent 调工具的 USB-C"。已被 Claude / ChatGPT / Cursor / VSCode 等支持。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>A2A (Agent-to-Agent Protocol)</summary>
+    <div class="body">
+      <p>Google 推出的<b>多 Agent 通信协议</b>。不同 Agent / 不同系统之间如何发现、通信、委派任务。</p>
+      <p>核心抽象：Agent Card（描述 Agent 能力）/ Task（委派任务）/ Message / Artifact / Capability。</p>
+      <p>跟 MCP 的关系："MCP 接 tool，A2A 接 agent"。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Durable Workflow / Durable Execution</summary>
+    <div class="body">
+      <p>Temporal 的核心概念：<b>workflow 状态被持久化，进程崩了能在另一个 worker 续上</b>。</p>
+      <p>实现方式：Event History（事件历史）记录每一步状态变更，恢复时 replay event history 重建状态。</p>
+      <p>风控应用：Case 调查 Agent 跑到一半挂了，能从最近 checkpoint 续上，不重头跑。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>The Gate（控制平面）</summary>
+    <div class="body">
+      <p>快手自研架构核心概念。<b>所有"写到生产"的动作必须经过的唯一入口</b>。包含 4 个组件：</p>
+      <p>① Action Adapter（唯一写动作入口）② Policy-as-Code（红线代码化）③ Trace / Replay / Audit（全链路可追溯）④ Rollback（git-style 可回滚）</p>
+      <p>类比：机场安检——每个想登机的人必须过同一道门 / 同一套检查。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>URG (Unified Risk Graph)</summary>
+    <div class="body">
+      <p>快手自研架构核心概念。<b>风控所有事实的统一数据底座</b>。所有人 / Agent / 系统读同一份事实。</p>
+      <p>MVP 期 4 个核心实体：Case / Action / EvidenceRef / TraceRef / Memory。其他实体逐步并入。</p>
+      <p>关键约束：Agent 永远不直接写 URG，必须经 Action Adapter 过门。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Risk Agent Society</summary>
+    <div class="body">
+      <p>多个域内 Agent 协同跑的<b>运行时层</b>，跑在 The Gate + URG 之上。</p>
+      <p>包含：内容安全 Agent 群 / 反欺诈 Agent 群 / 商家电商 Agent 群 / 合规审查 Agent 群 / 跨域 Arbiter Agent。</p>
+      <p>"Society" 这个词刻意选用——多 Agent 不是"线性流水线"，是"协作社会"：有冲突、有仲裁、有专长分工，但仍受控制平面 + 治理层约束。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Memory Tier (A/B/C/D)</summary>
+    <div class="body">
+      <p>每条 Memory 按"可信度"分 4 级：</p>
+      <ul>
+        <li><b>A</b> 最高 · 事故复盘 / Curator 显式标注 / 监管确认</li>
+        <li><b>B</b> 较高 · 判罚生效 + outcome 回填后</li>
+        <li><b>C</b> 中 · 人审采纳 + 复核通过</li>
+        <li><b>D</b> 最低（DRAFT）· Agent 自己写的 / 未验证 · <em>不进检索</em></li>
+      </ul>
+      <p>Agent 写的 memory 永远 tier=D。必须经升级路径才能进检索。防"Agent 错 → memory → 再被引用"。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Failure Taxonomy（失败原因结构化标签）</summary>
+    <div class="body">
+      <p>codex CTO 关键新增。把 Agent 失败拆成可训练的<b>结构化根因标签</b>：</p>
+      <ul>
+        <li>EVIDENCE_MISSING（证据缺失）</li>
+        <li>TOOL_ERROR（工具错）</li>
+        <li>PROMPT_ERROR（Prompt 错）</li>
+        <li>MODEL_ERROR（模型错）</li>
+        <li>MEMORY_POISONED（Memory 污染）</li>
+        <li>HUMAN_OVERRIDE_WRONG（人审错被申诉推翻）</li>
+        <li>POLICY_DRIFTED（策略口径变了）</li>
+      </ul>
+      <p>用途：让飞轮知道改 Agent / 改工具 / 改策略 / 改审核培训——没这个飞轮只是堆数据不进化。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>applicability_contract（跨域迁移契约）</summary>
+    <div class="body">
+      <p>跨域 Memory 迁移默认禁止，需要显式 contract 才允许：</p>
+      <pre style="background:rgba(0,0,0,0.05);padding:6px 8px;font-size:12px;font-family:var(--mono);">
+domain_scope · subject_type · evidence_prerequisites
+forbidden_scenarios · migration_audit · holdout_test</pre>
+      <p>例：内容营销号模式不能直接迁移到电商商家。反欺诈设备关联不能直接迁移到未成年保护。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Checkpointer / Checkpoint</summary>
+    <div class="body">
+      <p>LangGraph / LangGraph4j 概念。<b>保存 Agent 在某个时点的完整状态</b>，进程崩了能从 checkpoint 恢复。</p>
+      <p>实现：序列化 state（JSON / Protobuf）+ 存储到 Postgres / Redis / 文件系统。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>HITL (Human-in-the-Loop)</summary>
+    <div class="body">
+      <p><b>人在环</b>。Agent 跑到某个点停下来等人决策 / 审批 / 修正，然后继续。</p>
+      <p>LangGraph 原生支持（Interrupt + Checkpointer）。OpenAI Agents SDK 通过 <em>HITL interruptions / RunState</em> 支持（Sessions 用于会话历史，与 HITL 兼容）。</p>
+      <p>风控应用：高影响判罚 Review、新对抗模式确认、Memory 升级签发等都是 HITL 点。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Tracing / Trace</summary>
+    <div class="body">
+      <p>Agent 跑的完整<b>过程录像</b>：调了哪个 LLM、prompt 是什么、调了哪些工具、参数是什么、返回了什么、最终决策。</p>
+      <p>用途：监管解释 / 事故复盘 / Agent 回归测试 / 数据飞轮。</p>
+      <p>跟普通日志区别：结构化 / 可关联（traceId）/ 可原样回放。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Guardrail（护栏）</summary>
+    <div class="body">
+      <p>OpenAI Agents SDK 概念。Agent 输入 / 输出的<b>前置 / 后置检查</b>。</p>
+      <p>例：用户输入是否含 PII？Agent 输出是否引用了禁用词？</p>
+      <p>对应快手：Policy-as-Code 的运行时检查。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Eval / Gold Set</summary>
+    <div class="body">
+      <p><b>Eval</b>：评估 Agent 质量的流程。给定一组测试 case，跑 Agent，对比实际输出 vs 期望输出。</p>
+      <p><b>Gold Set</b>：人工精标的"标准答案集"。1000-5000 条人工标注的 (case, 正确判罚) 对。</p>
+      <p>用途：每日跑 eval / Prompt 变更前 A/B / 新版本上线门槛 / 数据飞轮。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Advisor（Spring AI）</summary>
+    <div class="body">
+      <p>Spring AI 的<b>拦截器链</b>，类似 Spring MVC 的 HandlerInterceptor / Servlet Filter。</p>
+      <p>每次 ChatClient 调模型前后，按顺序经过多个 Advisor：RAG（注入检索片段）/ Memory（注入历史）/ 审计 / 内容审查 / 重写。可叠加可关闭。</p>
+      <p>风控场景：The Gate 的"前置 Policy 检查 + 后置审计落库"就可以做成 Advisor 链。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>ToolCallback（Spring AI）</summary>
+    <div class="body">
+      <p>Spring AI 把"模型要调一个工具"这件事抽象成 <code>ToolCallback</code>：包含 name / description / inputSchema / 真正执行的 lambda。</p>
+      <p><code>@Tool</code> 注解方法在运行时会被<em>包装 / 转换</em>成 ToolCallback；也可以手工 new 一个 ToolCallback 把任意 Java 方法暴露给模型。</p>
+      <p>对应概念：OpenAI 的 function tool / Anthropic 的 tool / MCP 的 tool。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Handoff（OpenAI Agents SDK）</summary>
+    <div class="body">
+      <p>Agent A 把<b>控制权连同上下文</b>整体交给 Agent B 继续处理（不是 A 调 B 然后 B 返回，是直接让 B 接管）。</p>
+      <p>实现：Handoff 在 OpenAI SDK 里是一种特殊 tool——模型决定"transfer to specialist agent"。</p>
+      <p>风控类比：内容安全 Agent 处理途中发现这是涉政 case，handoff 给涉政专项 Agent。<em>但快手要做的是受 The Gate 控制的 handoff，不允许 Agent 自由 handoff。</em></p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Sessions（OpenAI Agents SDK）</summary>
+    <div class="body">
+      <p>OpenAI Agents SDK 的<b>会话历史持久化机制</b>：把 user/assistant/tool 消息按 session_id 自动存起来，下一次 Run 自动加载。</p>
+      <p>用途：跨多轮对话保持上下文，省得每次都手工拼 history 数组。</p>
+      <p>注意：Sessions 是会话内存，不是 HITL 机制；HITL 由 interruptions + RunState 负责，Sandbox 又是另一套"工具沙箱"能力，三者不要混淆。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>RunState / Interrupt（OpenAI Agents SDK · LangGraph）</summary>
+    <div class="body">
+      <p><b>RunState</b>：OpenAI Agents SDK 在 Agent 执行过程中序列化的中间状态，可挂起、可恢复，是 HITL 的载体——比如 Agent 调到一个需要人审的 tool 时抛 interruption，把当前 RunState 存起来，等人审完接着跑。</p>
+      <p><b>Interrupt</b>：LangGraph 里类似的概念，在 graph 某节点 <code>interrupt(payload)</code>，等外部输入回来再 resume。</p>
+      <p>风控应用：高影响判罚的"机审建议 → 人审决定 → Agent 继续"流程，正好是 RunState/Interrupt 的典型场景。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Agent Card（A2A 协议）</summary>
+    <div class="body">
+      <p>Google A2A 协议里描述一个 Agent 能力的<b>JSON 名片</b>：name / description / url / capabilities / skills / securitySchemes 等字段（详见 A2A 规范），让其他 Agent 自动发现并协作。</p>
+      <p>快手风控扩展成 <em>Risk Agent Card</em>：加 domain_scope / policy_scope / trust_level / allowed_tools / forbidden_actions / escalation_rule / sla / owner / audit_level。这样平台才能审计"谁可以做什么"。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Policy-as-Code（治理）</summary>
+    <div class="body">
+      <p>把"哪些动作允许 / 哪些禁止 / 触发什么红线"<b>用代码（DSL / OPA Rego / JSON Schema）写死</b>，而不是写在文档里靠人记。</p>
+      <p>The Gate 在每次工具调用前查 Policy 决定放行 / 拒绝 / 升级人审。例：「单次封禁 ≥1 万账号需双人 + COO 审批」这种规则。</p>
+      <p>类比 K8s 的 OPA Gatekeeper / 云的 IAM Policy。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Permission Token（权限令牌）</summary>
+    <div class="body">
+      <p>Agent 调任何写操作前必须先去 The Gate <em>申请一个一次性 token</em>：声明 who / why / scope / amount / ttl，Gate 校验 Policy 后签发。</p>
+      <p>token 跟着 tool 调用一起带上，事后审计能 100% 还原"谁授权的 / 凭什么授权 / 实际做了什么"。</p>
+      <p>类比 AWS STS 临时凭证、Kerberos ticket。</p>
+    </div>
+  </details>
+
+  <details class="gloss">
+    <summary>Kill Switch（红线开关）</summary>
+    <div class="body">
+      <p>不可绕过的<b>全局熔断</b>：一旦触发，Agent 立刻停止所有写操作，回到只读 / 只建议人审状态。</p>
+      <p>触发条件示例：误判率突增 / 异常封禁速率 / 错杀大 V / Memory 状态机违例 / 监管事件。</p>
+      <p>设计要点：① 必须独立于 Agent 自身；② 物理上由 The Gate 强制；③ 触发后只能由人解除。</p>
+    </div>
+  </details>
+</section>
+
+<!-- 附录 C: 资料来源 -->
+<section id="app-c">
+  <h2 class="sec"><span class="n">C</span>资料来源</h2>
+  <div class="tldr"><b>说明</b><br>本文档所有框架信息基于官方文档 + WebFetch 校验（2026 年 5 月）。</div>
+
+  <h3 class="sub"><span class="n">C.1</span>Java 生态</h3>
+  <ul>
+    <li><a href="https://docs.spring.io/spring-ai/reference/" target="_blank">Spring AI 官方文档</a> · <a href="https://spring.io/blog/2025/11/12/spring-ai-1-1-GA-released" target="_blank">Spring AI 1.1 GA Blog</a> · <a href="https://spring.io/blog/2026/05/08/spring-ai-1-0-7-1-1-6-2-0-0-M6-available-now" target="_blank">1.1.6 发布</a></li>
+    <li><a href="https://docs.langchain4j.dev/" target="_blank">LangChain4j 文档</a></li>
+    <li><a href="https://langgraph4j.github.io/langgraph4j/" target="_blank">LangGraph4j 文档</a> · <a href="https://github.com/langgraph4j/langgraph4j" target="_blank">GitHub</a></li>
+    <li><a href="https://github.com/embabel/embabel-agent" target="_blank">Embabel GitHub</a> · <a href="https://docs.embabel.com/embabel-agent/guide/0.1.3/" target="_blank">文档</a> · <a href="https://medium.com/@springrod/embabel-a-new-agent-platform-for-the-jvm-1c83402e0014" target="_blank">Rod Johnson 博客</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">C.2</span>LangChain 生态</h3>
+  <ul>
+    <li><a href="https://docs.langchain.com/oss/python/langgraph/overview" target="_blank">LangGraph 文档</a> · <a href="https://github.com/langchain-ai/langgraph" target="_blank">GitHub</a></li>
+    <li><a href="https://docs.langchain.com/" target="_blank">LangChain 文档</a></li>
+    <li><a href="https://langfuse.com/docs" target="_blank">Langfuse</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">C.3</span>模型厂商</h3>
+  <ul>
+    <li><a href="https://openai.github.io/openai-agents-python/" target="_blank">OpenAI Agents SDK 官方</a> · <a href="https://platform.openai.com/docs/guides/agents-sdk/" target="_blank">Platform 文档</a></li>
+    <li><a href="https://docs.claude.com/" target="_blank">Anthropic Claude Agent SDK</a></li>
+    <li><a href="https://modelcontextprotocol.io/" target="_blank">MCP 官方</a> · <a href="https://github.com/modelcontextprotocol" target="_blank">GitHub</a></li>
+    <li><a href="https://adk.dev/" target="_blank">Google ADK</a> · <a href="https://google.github.io/adk-docs/a2a/" target="_blank">A2A 文档</a> · <a href="https://google-a2a.github.io/A2A/specification/" target="_blank">A2A 规范</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">C.4</span>云厂商 + 企业级</h3>
+  <ul>
+    <li><a href="https://aws.amazon.com/blogs/opensource/introducing-strands-agents-an-open-source-ai-agents-sdk/" target="_blank">AWS Strands Agents</a></li>
+    <li><a href="https://docs.aws.amazon.com/en_us/bedrock/latest/userguide/agents-multi-agent-collaboration.html" target="_blank">Amazon Bedrock multi-agent collaboration</a></li>
+    <li><a href="https://research.ibm.com/projects/bee-ai-framework" target="_blank">IBM BeeAI</a></li>
+    <li><a href="https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/" target="_blank">Microsoft Agent Framework / Semantic Kernel</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">C.5</span>工程化底座</h3>
+  <ul>
+    <li><a href="https://docs.temporal.io/temporal" target="_blank">Temporal 官方</a></li>
+    <li><a href="https://restate.dev/" target="_blank">Restate</a></li>
+    <li><a href="https://conductor-oss.org/" target="_blank">Netflix Conductor</a></li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>

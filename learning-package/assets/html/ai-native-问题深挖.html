@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>武器库 · AI Native 内容风控平台 · 从概念到价值</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F0;
+  --bg-card: #F4EFE3;
+  --bg-accent: #FDF3EE;
+  --ink: #1A1815;
+  --ink-soft: #4A4540;
+  --ink-mute: #8A847C;
+  --ink-faint: #B8B1A6;
+  --rule: #D8D0C0;
+  --rule-soft: #E8E0CE;
+  --accent: #C73E1D;
+  --accent-soft: #E04E2C;
+  --accent-bg: #FBE9DF;
+  --good: #3D6B3D;
+  --warn: #B5651D;
+  --font-display: 'Fraunces', 'Songti SC', serif;
+  --font-body: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.7;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.layout {
+  width: 92%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ============ 顶部横向导航 ============ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 16px 80px;
+  background: rgba(250, 247, 240, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+
+.nav-brand {
+  display: flex;
+  flex-direction: column;
+  margin-right: 8px;
+}
+
+.nav-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.nav-subtitle {
+  font-size: 9px;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.nav-list li {
+  margin: 0;
+}
+
+.nav-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nav-main {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13.5px;
+}
+
+.nav-sub {
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+  padding-left: 25px;
+}
+
+.nav-list a:hover {
+  color: var(--accent);
+}
+
+.nav-list a:hover .nav-sub {
+  color: var(--accent);
+}
+
+.nav-list a .num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.nav-list a:hover .num {
+  color: var(--accent);
+}
+
+/* ============ 主内容 ============ */
+.main {
+  padding: 0;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* ============ Hero ============ */
+.hero {
+  padding: 120px 60px 100px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 60px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 28px;
+}
+
+.hero-title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.hero-lead {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  letter-spacing: -0.01em;
+  margin-bottom: 40px;
+  max-width: 640px;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+}
+
+.hero-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-meta-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+}
+
+.hero-meta-value {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ============ 章节 ============ */
+.chapter {
+  padding: 44px 64px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.chapter:last-of-type {
+  border-bottom: none;
+}
+
+.chapter-header {
+  margin-bottom: 24px;
+}
+
+.chapter-num {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--bg-card);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  margin-bottom: -8px;
+  user-select: none;
+}
+
+.chapter-tag {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.chapter-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+
+.chapter-title em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ============ 拔高金句 ============ */
+.pullquote {
+  position: relative;
+  padding: 20px 28px 20px 32px;
+  margin: 20px 0 24px;
+  background: var(--bg-accent);
+  border-left: 3px solid var(--accent);
+}
+
+.pullquote::before {
+  content: 'KEY INSIGHT';
+  position: absolute;
+  top: -8px;
+  left: 36px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--bg);
+  padding: 0 8px;
+}
+
+.pullquote-text {
+  font-family: var(--font-display);
+  font-size: 23px;
+  line-height: 1.45;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.pullquote-text em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+/* ============ 电梯版 ============ */
+.elevator {
+  background: var(--bg-card);
+  padding: 20px 24px;
+  border-radius: 2px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.elevator-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.elevator-label::before {
+  content: '◆';
+  font-size: 7px;
+}
+
+.elevator-text {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+/* ============ 正文样式 ============ */
+.prose {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.prose p {
+  margin-bottom: 14px;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-block {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  margin-bottom: 36px;
+}
+.prose-block p { margin-bottom: 14px; }
+.prose-block .lead-line { margin-bottom: 16px; }
+
+.section-mark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--accent);
+  margin: 8px 0 24px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.impl-note {
+  background: #F4F1E8;
+  border-left: 3px solid #B8B1A6;
+  border-radius: 2px;
+  padding: 10px 14px;
+  margin-top: 14px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-mute);
+}
+.anthropic-proof {
+  display: block;
+  background: #F2EEE3;
+  border-left: 3px solid var(--brown);
+  border-radius: 2px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.anthropic-proof .ap-tag {
+  font-weight: 700;
+  color: var(--brown);
+  font-style: normal;
+}
+
+.bigmap-intro {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+.bigmap-fig {
+  margin: 0 0 36px;
+  padding: 20px;
+  background: #FCFAF5;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+.bigmap-fig svg { width: 100%; height: auto; display: block; }
+
+.appendix-toc {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #FCFAF5;
+  padding: 8px 0;
+  margin-bottom: 36px;
+}
+.toc-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+  padding: 11px 22px;
+  border-bottom: 1px solid var(--rule-soft);
+  align-items: baseline;
+}
+.toc-row .toc-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 500;
+}
+.toc-row .toc-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.toc-foot {
+  padding: 12px 22px 6px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-mute);
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .toc-row { grid-template-columns: 1fr; gap: 3px; }
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.prose em {
+  font-style: italic;
+  color: var(--ink);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  background: var(--bg-card);
+  padding: 1px 6px;
+  border-radius: 2px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.prose h3 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 28px 0 14px;
+  line-height: 1.3;
+}
+
+.prose h3 .sub-num {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+  margin-right: 12px;
+  font-size: 0.85em;
+}
+
+.prose h4 {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  margin: 20px 0 10px;
+  text-transform: none;
+}
+
+/* ============ 表格 ============ */
+.table-wrap {
+  margin: 22px 0;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th {
+  text-align: left;
+  padding: 14px 18px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+td {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--ink-soft);
+  line-height: 1.6;
+  vertical-align: top;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+td:first-child {
+  color: var(--ink);
+  font-weight: 500;
+  width: 28%;
+}
+
+.table-narrow td:first-child {
+  width: 20%;
+}
+
+.table-narrow td {
+  font-size: 13.5px;
+}
+
+.cell-good { color: var(--good); }
+.cell-warn { color: var(--warn); }
+.cell-accent { color: var(--accent); font-weight: 500; }
+
+/* ============ 卡片网格 ============ */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 20px 0;
+}
+
+.cell {
+  background: var(--bg);
+  padding: 24px 26px;
+}
+
+.cell-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.cell-traditional .cell-label { color: var(--ink-mute); }
+.cell-native .cell-label { color: var(--accent); }
+
+.cell-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.cell-content strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ============ 列表 ============ */
+.list-numbered {
+  counter-reset: list;
+  list-style: none;
+  margin: 24px 0;
+}
+
+.list-numbered li {
+  counter-increment: list;
+  padding: 16px 0 16px 48px;
+  position: relative;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.list-numbered li:last-child { border-bottom: none; }
+
+.list-numbered li::before {
+  content: counter(list, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 16px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.list-numbered li strong {
+  color: var(--ink);
+  font-weight: 600;
+  display: inline;
+}
+
+.list-bullet {
+  list-style: none;
+  margin: 16px 0;
+}
+
+.list-bullet li {
+  padding: 6px 0 6px 18px;
+  position: relative;
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.list-bullet li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ============ 价值层级图 ============ */
+.value-pyramid {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pyramid-row {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.pyramid-row.row-1 { grid-template-columns: 1fr; max-width: 60%; }
+.pyramid-row.row-2 { grid-template-columns: repeat(3, 1fr); }
+.pyramid-row.row-3 { grid-template-columns: repeat(3, 1fr); }
+
+.pyramid-cell {
+  padding: 18px 16px;
+  text-align: center;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+}
+
+.pyramid-cell.top {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.pyramid-cell.top .pyramid-title {
+  color: var(--accent);
+}
+
+.pyramid-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.pyramid-sub {
+  font-size: 12px;
+  color: var(--ink-mute);
+  line-height: 1.4;
+}
+
+.pyramid-arrow {
+  font-size: 12px;
+  color: var(--ink-faint);
+  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+  margin: 4px 0;
+}
+
+/* ============ 决策权梯度图 ============ */
+.gradient-table .level-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 2px;
+}
+
+.level-L1 { background: #E8F0E0; color: #3D6B3D; }
+.level-L2 { background: #E8F0E0; color: #3D6B3D; }
+.level-L3 { background: #F8E8D4; color: #8B5A1F; }
+.level-L4 { background: #F8DED4; color: #A04020; }
+.level-L5 { background: #F5D5D0; color: var(--accent); border: 1px solid var(--accent); }
+
+/* ============ 流程图卡片 ============ */
+.flow-step {
+  display: flex;
+  gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--rule);
+  margin-bottom: 12px;
+  background: var(--bg);
+  position: relative;
+}
+
+.flow-step.final {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+}
+
+.flow-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--accent);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 36px;
+}
+
+.flow-content {
+  flex: 1;
+}
+
+.flow-title {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.flow-text {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.flow-text code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--bg-card);
+  padding: 1px 5px;
+}
+
+/* ============ YAML 代码块 ============ */
+.code-block {
+  background: #FBF6E9;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  padding: 24px 28px;
+  margin: 28px 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--ink);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-block .k { color: var(--accent); font-weight: 600; }
+.code-block .c { color: var(--ink-mute); font-style: italic; }
+.code-block .s { color: var(--good); }
+.code-block .h { color: var(--warn); font-weight: 600; }
+
+/* ============ 引用注解 ============ */
+.aside {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 16px 0;
+  margin: 22px 0;
+  font-size: 14px;
+  color: var(--ink-mute);
+  line-height: 1.65;
+  font-style: italic;
+}
+
+.aside::before {
+  content: '※ ';
+  color: var(--accent);
+  font-style: normal;
+}
+
+/* ============ 章节末尾页码 ============ */
+.chapter-footer {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ============ 尾章 ============ */
+.closing {
+  padding: 100px 60px;
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.closing .chapter-tag { color: var(--accent-soft); }
+.closing .chapter-title { color: var(--bg); }
+.closing .prose { color: rgba(250, 247, 240, 0.75); }
+.closing .prose strong { color: var(--bg); }
+.closing .pullquote {
+  background: rgba(224, 78, 44, 0.12);
+  border-color: var(--accent-soft);
+}
+.closing .pullquote::before {
+  background: var(--ink);
+  color: var(--accent-soft);
+}
+.closing .pullquote-text { color: var(--bg); }
+
+.closing-yardsticks {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(250, 247, 240, 0.15);
+}
+
+.yard-cell {
+  background: var(--ink);
+  padding: 24px;
+}
+
+.yard-num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 28px;
+  color: var(--accent-soft);
+  font-weight: 400;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.yard-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--bg);
+  margin-bottom: 6px;
+}
+
+.yard-text {
+  font-size: 13px;
+  color: rgba(250, 247, 240, 0.65);
+  line-height: 1.55;
+}
+
+/* ============ 入场动画 ============ */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up:nth-child(1) { animation-delay: 0.1s; }
+.fade-up:nth-child(2) { animation-delay: 0.2s; }
+.fade-up:nth-child(3) { animation-delay: 0.3s; }
+.fade-up:nth-child(4) { animation-delay: 0.4s; }
+.fade-up:nth-child(5) { animation-delay: 0.5s; }
+
+.pullquote {
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 1024px) {
+  .nav { padding: 14px 40px; gap: 20px; }
+  .hero { padding: 80px 40px 60px; }
+  .chapter { padding: 64px 40px; }
+  .closing { padding: 64px 40px; }
+  .hero-title { font-size: 44px; }
+  .chapter-title { font-size: 32px; }
+  .chapter-num { font-size: 72px; }
+  .pullquote-text { font-size: 19px; }
+}
+
+@media (max-width: 640px) {
+  .hero { padding: 60px 24px 40px; }
+  .chapter { padding: 48px 24px; }
+  .closing { padding: 48px 24px; }
+  .hero-title { font-size: 36px; }
+  .chapter-title { font-size: 26px; }
+  .chapter-num { font-size: 56px; }
+  .pullquote { padding: 20px 20px 20px 24px; }
+  .pullquote-text { font-size: 17px; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .pyramid-row.row-2, .pyramid-row.row-3 { grid-template-columns: 1fr; }
+  .hero-meta { gap: 24px; flex-wrap: wrap; }
+  .closing-yardsticks { grid-template-columns: 1fr; }
+}
+
+/* ============ SVG 图表通用 ============ */
+.diagram {
+  margin: 20px 0;
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  padding: 24px;
+  border: 1px solid var(--rule);
+}
+
+.diagram text {
+  font-family: var(--font-body);
+  fill: var(--ink-soft);
+}
+
+.diagram .label-title {
+  font-weight: 600;
+  fill: var(--ink);
+  font-size: 13px;
+}
+
+.diagram .label-sub {
+  font-size: 11px;
+  fill: var(--ink-mute);
+}
+
+.diagram .label-section {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  fill: var(--ink);
+  font-style: italic;
+}
+
+.diagram-caption {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 12px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ============ 图文并排 ============ */
+.split {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 32px;
+  align-items: start;
+  margin: 18px 0 0;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--rule);
+}
+.split-fig { margin: 0; }
+.split-fig svg { width: 100%; height: auto; }
+.split-fig .diagram-caption { margin-top: 14px; text-align: left; }
+.split-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+.split-text p { margin-bottom: 12px; }
+.split-text p:last-child { margin-bottom: 0; }
+.split-text strong { color: var(--ink); font-weight: 600; }
+.split-text .lead-line {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+.split-text .lead-line em { font-style: italic; color: var(--accent); }
+@media (max-width: 860px) {
+  .split { grid-template-columns: 1fr; gap: 24px; }
+}
+
+/* ============ 90秒口播框 ============ */
+.pitch {
+  border: 1px solid var(--accent);
+  border-left: 3px solid var(--accent);
+  padding: 20px 26px;
+  margin: 22px 0;
+  background: var(--bg);
+}
+.pitch-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pitch-label::before { content: '◊'; font-size: 11px; }
+.pitch-text {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+.pitch-text .hl {
+  background: var(--accent-bg);
+  padding: 0 3px;
+  font-weight: 500;
+}
+.split-text .hl, .prose-block .hl {
+  background: var(--accent-bg);
+  padding: 0 3px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.pitch-text .sl { color: var(--accent); font-weight: 500; margin: 0 2px; }
+.pitch-meta {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--rule);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ============ 预判追问框 ============ */
+.followup-q {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+}
+.followup-a {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+.followup-a strong { color: var(--ink); font-weight: 600; }
+.followup-a .hl { background: var(--accent-bg); padding: 0 3px; font-weight: 500; color: var(--ink); }
+.divider-list {
+  list-style: none;
+  border-top: 1px dashed var(--rule);
+  padding-top: 16px;
+}
+.divider-list li {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+  padding: 9px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  align-items: baseline;
+}
+.divider-list li:not(:last-child) { border-bottom: 1px solid var(--rule-soft); }
+.divider-list .dim {
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 13px;
+}
+.divider-list .cmp { color: var(--ink-soft); }
+.divider-list .cmp .na { color: var(--ink); font-weight: 600; }
+@media (max-width: 640px) {
+  .divider-list li { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ============ 附录 · 关键技术选型 ============ */
+.appendix-intro {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  margin-bottom: 32px;
+  padding-left: 16px;
+  border-left: 2px solid var(--rule);
+}
+.qa-group { margin-bottom: 36px; }
+
+/* 名词解释 · 术语词条 */
+.term-block {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  background: var(--bg-card-soft, #FCFAF5);
+}
+.term-block-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.term {
+  margin-bottom: 11px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.term:last-child { margin-bottom: 0; }
+.term .t {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.term .t-cn { color: var(--ink); font-weight: 600; }
+.term strong { color: var(--ink); font-weight: 600; }
+.layer-map {
+  background: #FBF6E9;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  padding: 20px 24px;
+  margin: 18px 0 24px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.85;
+  color: var(--ink);
+  white-space: pre;
+  overflow-x: auto;
+}
+.layer-map .k { color: var(--accent); font-weight: 600; }
+.layer-map .c { color: var(--ink-mute); font-style: italic; }
+
+/* 附录内表格 */
+.metric-table {
+  margin: 14px 0;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  font-size: 12.5px;
+}
+.mt-row {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1.6fr;
+  gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule-soft);
+  line-height: 1.5;
+}
+.mt-row:last-child { border-bottom: none; }
+.mt-head {
+  background: #F4F1E8;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+}
+.mt-row .mt-l { font-weight: 600; color: var(--ink); }
+.mt-row span:nth-child(2) { color: var(--ink-mute); }
+.mt-row span:nth-child(3) { color: var(--ink-soft); font-family: var(--font-mono); font-size: 11.5px; }
+.flow-line {
+  margin: 12px 0;
+  padding: 11px 14px;
+  background: #FBF6E9;
+  border-left: 3px solid var(--accent);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .mt-row { grid-template-columns: 1fr; gap: 3px; }
+}
+
+.qa-group-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 20px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.qa-group-link {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.qa-item {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  background: var(--bg-card-soft, #FCFAF5);
+}
+.qa-q {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.qa-q .qnum { color: var(--accent); font-weight: 500; margin-right: 6px; }
+.qa-a {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+.qa-a strong { color: var(--ink); font-weight: 600; }
+.qa-a .hl { background: var(--accent-bg); padding: 0 3px; font-weight: 500; color: var(--ink); }
+.qa-a .todo {
+  display: inline-block;
+  background: #FBE9DF;
+  border: 1px dashed #C73E1D;
+  border-radius: 3px;
+  padding: 1px 8px;
+  margin: 4px 0;
+  font-size: 12px;
+  color: #C73E1D;
+  font-weight: 600;
+}
+.qa-a .think {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #F4F1E8;
+  border-radius: 3px;
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  font-style: italic;
+}
+
+/* ============ 核心亮点 / 避坑 ============ */
+.highlight-box, .pitfall-box {
+  padding: 18px 24px;
+  margin: 22px 0;
+  background: var(--bg-card);
+  border-radius: 2px;
+}
+.highlight-box { border-left: 3px solid var(--good); }
+.pitfall-box { border-left: 3px solid var(--accent); }
+.hp-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.highlight-box .hp-label { color: var(--good); }
+.pitfall-box .hp-label { color: var(--accent); }
+.hp-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.hp-item .mk { flex-shrink: 0; font-weight: 600; }
+.highlight-box .mk { color: var(--good); }
+.pitfall-box .mk { color: var(--accent); }
+.hp-item strong { color: var(--ink); font-weight: 600; }
+.pitfall-wrong {
+  font-size: 14px;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--rule);
+}
+
+/* ============ 那一句话扉页 (Venn) ============ */
+.endpoint {
+  padding: 100px 60px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-accent);
+}
+.endpoint-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.endpoint-title {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 36px;
+}
+.endpoint-title em { font-style: italic; color: var(--accent); }
+.endpoint-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+.venn-caption {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-mute);
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* ============ 附录 ============ */
+.appendix {
+  padding: 100px 60px;
+  border-top: 3px double var(--rule);
+}
+.appendix-tag {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.appendix-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.appendix-intro {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin-bottom: 48px;
+  max-width: 600px;
+}
+.appendix-item { margin-bottom: 56px; }
+.appendix-item-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.appendix-item-note {
+  font-size: 13px;
+  color: var(--ink-mute);
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+@media (max-width: 1024px) {
+  .endpoint { padding: 64px 40px; }
+  .appendix { padding: 64px 40px; }
+  .endpoint-title { font-size: 30px; }
+  .endpoint-grid { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (max-width: 640px) {
+  .endpoint { padding: 48px 24px; }
+  .appendix { padding: 48px 24px; }
+  .endpoint-title { font-size: 24px; }
+  .pitch-meta { gap: 12px; }
+}
+
+.weapon-nav {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(250,247,240,0.96); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+  margin: 0 -60px 40px; padding: 16px 60px;
+  display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline;
+}
+.weapon-nav-label { font-family: var(--font-display); font-style: italic; font-weight: 700; color: var(--accent); font-size: 15px; margin-right: 8px; }
+.weapon-nav a { color: var(--ink-mute); text-decoration: none; font-size: 13.5px; transition: color .15s; }
+.weapon-nav a:hover { color: var(--accent); }
+.qa-group { scroll-margin-top: 70px; }
+</style>
+</style>
+</head>
+<body>
+<div class="layout">
+<section class="chapter" id="appendix">
+  <header class="chapter-header">
+    <div class="chapter-num">＋</div>
+    <div class="chapter-tag">附录 · 关键技术选型</div>
+    <h2 class="chapter-title">关键技术选型 ·<br><em>与深挖</em></h2>
+  </header>
+
+  <nav class="weapon-nav">
+    <span class="weapon-nav-label">目录</span>
+    <a href="#g-terms">名词解释</a>
+    <a href="#g-orch">编排（Q1–Q5）</a>
+    <a href="#g-harness">harness（Q6–Q7）</a>
+    <a href="#g-eval">评估（Q8–Q12）</a>
+    <a href="#g-intent">策略意图（Q13）</a>
+  </nav>
+
+
+
+
+
+  <div class="qa-group" id="g-terms">
+    <div class="qa-group-title">名词解释 · 把技术语言垫清楚</div>
+    <div class="qa-group-link">贯穿全文 · 编排与 Agent 基础概念</div>
+
+    <p class="qa-a" style="margin-bottom:18px;">
+      多 Agent 的名词常被混在一起，其实分属两个层次：<strong>宏观看多个 Agent 怎么编排，微观看单个 Agent 怎么运转</strong>。先建立这张全景，再看单个术语就不会乱：
+    </p>
+
+    <div class="layer-map"><span class="c"># 宏观 · 多个 Agent 怎么编排</span>
+Orchestrator-Worker / Sequential / Fan-out / Handoff ...
+    <span class="c">↓ 其中每个 Agent 内部</span>
+<span class="c"># 微观 · 单个 Agent 怎么运转</span>
+Agent Loop
+  └─ ReAct（推理 → 行动 → 观察，循环）
+       └─ Tool Calling（调用具体工具）</div>
+
+    <div class="term-block">
+      <div class="term-block-label">核心模式 · 本系统采用</div>
+      <div class="term"><span class="t">Orchestrator-Worker</span>（编排者-执行者）— 一个<strong>调度者</strong>负责拆任务、派活、汇总、仲裁，多个<strong>执行者</strong>各自干一件专门的事；worker 之间不直接对话，都经调度者中转。优点是有<strong>单一问责点</strong>、流程可追踪，是生产环境最常用的模式。<span class="t-cn">本系统的"一主三辅"</span>即此模式——调度 Agent 是 orchestrator，识别 / 研判 / 处置是三个 worker。</div>
+    </div>
+
+    <div class="term-block">
+      <div class="term-block-label">其他编排模式 · 平级的选择</div>
+      <div class="term"><span class="t">Sequential Pipeline</span>（顺序流水线）— Agent A→B→C 固定顺序，每步依赖上一步输出。比 orchestrator-worker 更死板，无中央动态调度。</div>
+      <div class="term"><span class="t">Fan-out / Fan-in</span>（扇出 / 扇入，并发）— 一个任务同时分给多个 worker 并行干，再收拢汇总；适合子任务互不依赖。<strong>风控里"多个 Agent 同时从不同策略维度查同一条内容"即此模式。</strong></div>
+      <div class="term"><span class="t">Handoff / Swarm</span>（交接 / 蜂群）— 无中央协调者，每个 Agent 自行判断该不该把任务转给更合适的 Agent；更灵活但更难调试。</div>
+      <div class="term"><span class="t">Hierarchical</span>（分层）— orchestrator 下的 worker 自身又是小 orchestrator，层层嵌套，处理超复杂任务。</div>
+    </div>
+
+    <div class="term-block">
+      <div class="term-block-label">协调机制 · 编排里的零件</div>
+      <div class="term"><span class="t">Router / Routing</span>（路由）— 决定"任务该交给哪个 Agent"的分发逻辑；orchestrator 内部通常含一个 router。</div>
+      <div class="term"><span class="t">Handoff</span>（交接）— 一个 Agent 把控制权和上下文移交给另一个 Agent 的动作。</div>
+      <div class="term"><span class="t">Shared State</span>（共享状态）— 多个 Agent 间传递、共享的数据（如已查到的证据）；由 orchestrator 维护。</div>
+    </div>
+
+    <div class="term-block">
+      <div class="term-block-label">单 Agent 内部 · 更底层的运转</div>
+      <div class="term"><span class="t">ReAct</span>（推理-行动循环）— 单个 Agent 在"推理 → 行动 → 观察"间循环，<strong>动态决定下一步</strong>，适合解法路径不固定、要边查边判的任务。<span class="t-cn">注意层级</span>：它是"一个 Agent 内部怎么思考"，与 orchestrator-worker（多个 Agent 怎么配合）不在同一层，可叠加使用。</div>
+      <div class="term"><span class="t">Agent Loop</span>（智能体循环）— Agent "思考-行动-再思考"直到任务完成的运行循环；ReAct 是其中一种实现。</div>
+      <div class="term"><span class="t">Tool Calling</span>（工具调用）— Agent 调用外部工具（查库、调模型、搜索）的能力；worker 干活主要靠它，ReAct 的每一次"行动"就是一次 tool calling。</div>
+    </div>
+
+    <p class="qa-a" style="margin-top:16px;">
+      <span class="hl">用本系统串一遍</span>：宏观上是 <strong>orchestrator-worker</strong>（调度 + 一主三辅）；其中识别 / 研判 worker 内部可跑 <strong>ReAct 循环</strong>（自主决定先查评论还是先查行为数据）；ReAct 的每次"行动"就是一次 <strong>tool calling</strong>（调用某个数据源）。三层各司其职，不冲突。
+    </p>
+  </div>
+
+  <div class="qa-group" id="g-orch">
+    <div class="qa-group-title">编排类 · Multi-Agent Orchestration</div>
+    <div class="qa-group-link">关联正文 · 03 系统骨架 / harness 基座</div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q1</span>为什么用多个 Agent，而不是一个大 Agent 全干？</div>
+      <div class="qa-a">
+        <strong>职责隔离</strong>——识别要快要全、研判要准要可解释、处置要严要可审计，三种诉求塞进一个 Agent 会互相拖累；拆开后每个 Agent 上下文更干净、可独立优化和验证。<span class="hl">但我不盲目堆 Agent</span>：多 Agent 不是越多越强，它会带来额外的编排成本、上下文传递成本和分歧仲裁成本，还会拉高延迟、增加调试难度。所以我只在三类场景才拆——<strong>职责目标不同、权限边界不同、评估指标不同</strong>。主链路拆成识别 / 研判 / 处置，正是因为它们分别追求召回、定性准确和动作安全，不是为了显得复杂。
+        <span class="anthropic-proof"><span class="ap-tag">〔Anthropic 踩坑印证〕</span>这个"不盲目堆 Agent"的判断，和 Anthropic 做 Claude Code 的踩坑一致：他们最初设想让 Claude 把任务拆成多个子 Agent 并发执行，实际发现 Claude 并不擅长并发拆解，子 Agent 真正有用的反而是"探索类任务"（让它去消耗上下文读资料、只回传结论）；他们甚至主动下架工具——给模型少一点选择、给上下文少一点干扰。多 Agent 和工具都不是越多越好，关键看是否真有职责隔离的收益。（来自 Anthropic 公开分享，非一手经验。）</span>
+        <span class="think">思路：这题答的是"克制地用多 Agent"，呼应 04"看代价不看能力"。拆是为职责干净，不是为数量——这句可作为这块的金句。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q2</span>你的主链路具体怎么编排？一主三辅怎么配合？</div>
+      <div class="qa-a">
+        <strong>orchestrator-worker 模式</strong>（业界生产环境最常用的多 Agent 编排）：一个<strong>调度 Agent</strong>做编排协调，下挂三个 worker——<strong>识别 Agent</strong>（看出有什么信号）、<strong>研判 Agent</strong>（定性、判风险等级）、<strong>处置 Agent</strong>（执行动作）。
+        <span class="todo">待补：调度 Agent 怎么协调三辅？</span>
+        <span class="think">需你决策：是①严格顺序（识别→研判→处置一条线走完，调度只串联），还是②调度 Agent 动态决定调用谁、调几次？两种讲法不同——顺序更简单可控，动态更灵活但难追踪。告诉我你的真实做法。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q3</span>三个 Agent 判断有分歧时怎么办？谁说了算？</div>
+      <div class="qa-a">
+        多 Agent 编排公认最大的挑战就是"<strong>Agent 分歧时谁裁决</strong>"——比如识别说涉政、研判说误报。
+        <span class="todo">待补：你的分歧仲裁机制？</span>
+        <span class="think">需你决策：分歧/低置信时是①升级人审（最稳，勾回 harness 授信和人审兜底），还是②调度 Agent 按规则拍板，还是③两者结合（低风险调度拍板、高风险升级人审）？这题是 P8 加分位，因为它连回了 harness 授信。告诉我真实机制，我帮你串成"分歧→升级"的闭环表达。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q4</span>为什么是一主三辅、不多不少？</div>
+      <div class="qa-a">
+        <span class="todo">待补：你拆成四个的真实考虑</span>
+        <span class="think">需你决策：这题考的是"你的拆分判断"。我的推测是——识别/研判/处置对应风控的三个天然环节（看信号→定性→执行），调度负责串联和仲裁，刚好覆盖、不冗余。但"为什么不把研判合进识别"这种取舍是你的真实决策，你补一句真实理由，比我推测有说服力。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q5</span>为什么用会推理的 Agent（ReAct），而不是固定 workflow？</div>
+      <div class="qa-a">
+        因为<strong>风控的取证路径是不固定的，没法事先写死成流程图</strong>。<span class="hl">workflow 适合"步骤已知、有唯一正确路径"的任务；而风控判一条内容，路径取决于边查边发现的线索。</span><br>
+        举个真实场景：一条视频被举报，光看视频内容判不准——还要看发布者的<strong>行为数据</strong>。过去人工取证是"先去评论区找线索 → 验证 → 不够再回到视频里找 → 验证 → 直到形成结论"，<strong>下一步查哪里，取决于上一步查到了什么</strong>。这是典型的 <strong>ReAct 模式</strong>（推理 → 行动 → 观察，再循环），不是固定 workflow 能覆盖的——workflow 把路径写死了，遇到"该去哪找证据因案而异"就僵住。
+        <span class="hl">我做的，是把这套"边推理边取证"的过程交给 Agent</span>：Agent 自主决定下一步调用什么工具、查哪个数据源，像资深审核员一样顺着线索找，直到证据链完整。
+        <span class="anthropic-proof"><span class="ap-tag">〔Anthropic 踩坑印证〕</span>这条判断 Anthropic 用 Claude Code 验证过：他们早期接触的客户多用 workflow 架构（有客户串联了 50 个 prompt），踩了两个坑——只能处理事先编码好的场景、中途出意外不会自愈反而继续跑出垃圾，最终转向 Agent 架构（让模型在循环里自己判断何时完成）。风控取证比写代码更"路径不可预知"，更要避免把链路写死成 workflow。（来自 Anthropic 公开分享，非一手经验。）</span>
+        <span class="think">思路：基于你的视频举报案例，查证确认了 ReAct vs workflow 术语准确（ReAct=路径依赖中间结果的动态循环，workflow=预定义固定步骤）。这是编排块的"灵魂论证"——解释你的多 Agent 为什么是"会推理的 Agent"而非"自动化流水线"。需你确认：识别/研判 Agent 内部是否真跑 ReAct 多轮循环（自主取证），还是目前固定几步？据实调整。</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="qa-group" id="g-harness">
+    <div class="qa-group-title">harness 类 · 怎么把 Agent 管控住</div>
+    <div class="qa-group-link">关联正文 · 03 系统骨架（基座二·运行时）/ 04 演进与取舍（约束分级）</div>
+
+    <p class="qa-a" style="margin-bottom:18px;">
+      harness 是包裹 Agent 的运行时，做三件事：<strong>编排、约束、授信</strong>。编排见前面 Q1–Q5；这里讲最核心的<strong>约束与授信</strong>——也就是"怎么让 Agent 在低风险动作上放手、在高风险动作上被死死兜住"。这是我在策略运营试点线上投入最大的一块。
+    </p>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q6</span>harness 的"约束"具体怎么做？凭什么敢让 Agent 动手？</div>
+      <div class="qa-a">
+        约束不是一道墙，是<strong>三层梯子</strong>，一层比一层往后兜：
+        <div class="metric-table">
+          <div class="mt-row mt-head"><span>层</span><span>拦什么</span><span>怎么拦</span></div>
+          <div class="mt-row"><span class="mt-l">事前 · 治理</span><span>该不该做</span><span>权限（RBAC）· 审批分级 · 合规扫描（歧视变量 / 脱敏）· 影响半径 · 限速</span></div>
+          <div class="mt-row"><span class="mt-l">事中 · 验证</span><span>做得对不对</span><span>5 道关：AST → 单测 → 影子回测 → 冲突检测 → 业务影响；失败结构化回灌、触发自愈循环</span></div>
+          <div class="mt-row"><span class="mt-l">事后 · 观测</span><span>出事能不能追</span><span>多维度大盘 + 5W 不可篡改审计（谁 / 何时 / 改了什么 / 为什么 / 影响谁）</span></div>
+        </div>
+        再加两道工程隔离：<strong>沙箱</strong>——Agent 产出的规则先在沙箱里只解析不执行（parse-time 校验，杜绝危险表达式）；<strong>灰度通道</strong>——Shadow（全量不生效）→ Canary（1/5/20%）→ Full，任何阶段触达回滚条件立即降回 shadow。
+        <span class="hl">关键区分：回测 ≠ 测试</span>——回测看业务影响（这条规则上线会误伤多少），测试看代码正确（语法对不对）。
+        <span class="impl-note" style="display:block;">落地状态（诚实交底）：治理 / 验证 / 观测三层为<strong>骨架（最小可用版）已落地</strong>；<strong>工具执行沙箱</strong>（7 条硬约束）设计已写、代码未起；<strong>灰度通道</strong>规划中。生产端到端闭环依赖沙箱 + 灰度补齐。</span>
+        <span class="think">思路：本块素材来自真实试点项目。面试时先讲"三层梯子"心智模型（事前拦 / 事中抓 / 事后追），被深挖某一层再展开。诚实标注未落地项——附件原则"roadmap 当 achievement 讲会崩"。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q7</span>"授信"怎么给？凭什么决定哪个动作能让 Agent 自决、哪个必须人审？</div>
+      <div class="qa-a">
+        授信的标尺是<strong>动作的可逆性 × 影响范围</strong>——约束强度随动作风险递增：
+        <div class="flow-line">分析 / 查询（无副作用）→ 放手　|　产规则草稿（可丢弃）→ 放手　|　影子回测（不生效）→ 放手　|　发布生效（不可逆 · 影响海量分发）→ 必须人审</div>
+        所以在试点线上，Agent 当前真正放开的是<strong>"分析 → 规则草稿"段</strong>（走偏的代价只是人工弃用一次输出）；<span class="hl">"发布到生产"这种不可逆的高风险动作仍走人审、还在补齐</span>。这不是保守，是<strong>把放权对齐到代价</strong>——低风险充分自治、高风险死守人审。等沙箱和灰度把"发布"这段的代价也兜住了，再逐步抬升放权。<strong>（这是"按什么标尺分级"；至于"怎么验证才敢往上抬一档"，见评估类 Q9。）</strong>
+        <span class="think">思路：呼应 04"约束随动作风险递增、看代价不看能力"。这里把"为什么发布还没让 Agent 自主做"讲透——是代价决定的，不是技术不行，且诚实说明在补。</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="qa-group" id="g-eval">
+    <div class="qa-group-title">评估类 · 怎么证明它行</div>
+    <div class="qa-group-link">关联正文 · 03 系统骨架 / 04 演进与取舍</div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q8</span>怎么证明 Agent 比传统规则系统更好？</div>
+      <div class="qa-a">
+        不靠主观感觉，靠<strong>对比评估</strong>：同一批 golden set（标注好的真实案例集）上，比 Agent 和规则系统的 <strong>precision / recall / 误杀率 / 漏放率</strong>；线上用 <strong>shadow-run</strong>（Agent 跟跑但不生效）对比判定差异；再灰度 A/B。
+        <span class="todo">待补：你实际用的核心指标和真实数值</span>
+        <span class="think">需你决策：这块通用方法论我写好了，但"你实际看哪几个指标、当时的真实数字、怎么定的放权阈值"必须你来——这正是面试官最爱深挖、也最容易问穿的地方。没有真实数字就别写具体数字，宁可只讲方法。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q9</span>上线前怎么决定某类动作能不能放权给 Agent？</div>
+      <div class="qa-a">
+        分级验证：离线 golden set 跑通 → 线上 shadow-run 比对人工判定一致率 → 小流量灰度盯指标 → 达标才升一档放权。<span class="hl">放权是"挣来的"——用证据，不是拍脑袋</span>。
+        <span class="think">思路：这题呼应 04"先在赔得起的地方验证再扩张"。可直接引用 04 的演进逻辑，附录这里给出具体的验证四步。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q10</span>怎么证明系统"真的变好了"？只看准确率够吗？</div>
+      <div class="qa-a">
+        不够——单一准确率高，掩盖不了误杀上升、飞轮没转、线上扛不住、出事查不清。我把指标分成<strong>六层</strong>，共同判断"能不能继续放权"：
+        <div class="metric-table">
+          <div class="mt-row mt-head"><span>指标层</span><span>回答的问题</span><span>典型指标</span></div>
+          <div class="mt-row"><span class="mt-l">业务效果</span><span>风险有没有真变少</span><span>拦截率 · 漏放率 · 误杀率 · 申诉成功率</span></div>
+          <div class="mt-row"><span class="mt-l">Agent 判断</span><span>判得准不准</span><span>precision · recall · 等级准确率 · 证据命中率</span></div>
+          <div class="mt-row"><span class="mt-l">放权治理</span><span>能不能扩大自治</span><span>各档自决率 · 升级率 · 人审推翻率</span></div>
+          <div class="mt-row"><span class="mt-l">策略迭代</span><span>飞轮转没转</span><span>发现到上线耗时 · 回归集通过率</span></div>
+          <div class="mt-row"><span class="mt-l">系统工程</span><span>线上扛不扛得住</span><span>P95/P99 延迟 · 成本 · 工具成功率 · 超时率</span></div>
+          <div class="mt-row"><span class="mt-l">安全审计</span><span>出事能不能兜住</span><span>case replay 覆盖率 · 版本可追溯率 · 回滚耗时</span></div>
+        </div>
+        <span class="hl">六层不是并列，是一套健康度框架</span>：业务层证明有价值、Agent 层证明判得准、治理层证明能放权、迭代层证明飞轮转、工程层证明扛得住、审计层证明兜得住。<strong>任何一层不达标，都不该继续放权。</strong>
+        <span class="think">思路：这张分层表整理自外部评审建议，已用业界审核 KPI 框架（准确率/运营/质量/业务结果多维）佐证，归类站得住。面试时不必背全表，记住"六层 = 结果·能力·权限·成长·稳定·底线"即可。真实数值需你按项目填，没有就只讲框架、不编数字。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q11</span>人调了一次意图，怎么知道它真的达成了目的？</div>
+      <div class="qa-a">
+        这是飞轮"<strong>微观</strong>"那一圈——每次调意图都要能验证"这次到底有没有用"，否则就是改完不管的开环。一条完整的验证链：
+        <div class="flow-line">绑定目标+护栏指标 → 事前历史流量预判 → 灰度（Shadow→Canary→Full）实测"调前 vs 调后"的差 → 自动比对：达标放量 / 护栏破线回滚</div>
+        关键不是看"现在拦截率多少"，而是看<strong>调这次意图前后的差</strong>（拦截 75%→80% 即 +5，代价误杀 +0.5）——只有对比能证明变化是这次意图带来的，这就是 A/B / champion-challenger 的内核。
+        <span class="hl">两个判断最容易被追问穿，我的答案是：</span>
+        <ul class="divider-list">
+          <li><span class="dim">灰色地带怎么权衡</span><span class="cmp">目标达成但护栏轻微越界（误杀涨了但拦截收益更大）／ <span class="na">用<strong>代价量化</strong>裁决——把"漏过的代价"和"误杀的代价"折算成可比的量（风险分/影响人数/申诉成本），不拍脑袋</span></span></li>
+          <li><span class="dim">底线兜底</span><span class="cmp">高危品类（涉未成年 / 暴恐等）／ <span class="na"><strong>护栏一票否决</strong>，不允许任何"收益更大"的权衡，宁可误杀也不放过</span></span></li>
+        </ul>
+        宏观整体效果看 Q10（六层指标 + 大盘趋势），防脏数据带歪看 Q12（反馈治理）；这三个 Q 合起来，就是飞轮"怎么转、转得好不好、不转歪"的完整回答。
+        <span class="impl-note">落地状态（诚实交底）：这套"意图→效果验证"的闭环，目前设计在推进中——影子回测有雏形、灰度通道规划中，完整的"自动比对预期 vs 实际 + 自动回滚"还在建设。讲的是想清楚的设计，不是已跑通的产线。</span>
+        <span class="think">思路：本块沉淀自"意图效果评估"专项讨论。代价量化（用钱/风险表达权衡）和高危一票否决，都是查证支撑的业界做法（OEC+护栏、非劣性检验）。和 Q9 区分：Q9 是"某类动作能否放权给 Agent"（放权决策），本 Q 是"单次意图变更有没有达成"（效果验证）。</span>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q12</span>数据飞轮怎么防止被"脏反馈"带歪？（防投毒）</div>
+      <div class="qa-a">
+        风控系统最怕的不是没反馈，而是<strong>把脏反馈当成真相吸收</strong>。一条"用户申诉说我没违规"，可能是真误杀、可能是违规者狡辩、可能是黑产组织化攻击。全自动喂回飞轮，Agent 会学会放过违规、策略边界被恶意拉宽、越迭代越松。
+        <br><br>
+        所以反馈进飞轮前必须过一道<strong>治理层</strong>——它不只是"洗数据"（去重、清噪、修标签），更要判断<span class="hl">这条反馈有没有资格成为系统学习的"真相"</span>：
+        <div class="flow-line">反馈 → 来源识别 → 可信度打分 → 去重/聚类 → 冲突检测 → 对抗投毒识别 → 人审仲裁 → 分流入库</div>
+        最终按来源可信度<strong>分流</strong>，而非一锅烩：
+        <div class="metric-table">
+          <div class="mt-row mt-head"><span>反馈来源</span><span>可信度</span><span>处理方式</span></div>
+          <div class="mt-row"><span class="mt-l">高级审核员仲裁 / 多人一致复核</span><span>高</span><span>可进案例库、eval 候选集</span></div>
+          <div class="mt-row"><span class="mt-l">用户申诉成功</span><span>中高</span><span>聚合 + 抽检后入</span></div>
+          <div class="mt-row"><span class="mt-l">普通用户申诉</span><span>中低</span><span>不直接进，先判真伪</span></div>
+          <div class="mt-row"><span class="mt-l">被处罚账号集中申诉</span><span>低</span><span>隔离观察，疑组织化对抗</span></div>
+          <div class="mt-row"><span class="mt-l">新账号批量反馈</span><span>极低</span><span>默认隔离，疑水军投毒</span></div>
+          <div class="mt-row"><span class="mt-l">红队样本</span><span>高价值·特殊</span><span>单独标记，不混入自然分布</span></div>
+        </div>
+        干净反馈再<strong>分流入库</strong>：可信判例→案例库、稳定规律→策略库、典型错误→回归集、可疑→隔离池、对抗→红队库。<span class="hl">入口不吃脏数据，出口不靠单一指标拍脑袋——这才是"受控飞轮"。</span>
+        <span class="think">思路：本块整理自外部讨论，并用查证佐证——"基于举报者声誉的信任审核"是业界真实机制（有专利），飞轮投毒也是被研究证实的真实威胁。这块是 04"可信反馈自动迭代/可疑人校验"的展开。需你确认：你们真实的反馈分级是否就这几类、有没有真用"来源可信度打分"。</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="qa-group" id="g-intent">
+    <div class="qa-group-title">策略意图类 · 概念怎么落成对象</div>
+    <div class="qa-group-link">关联正文 · 01 是什么·价值（策略意图）</div>
+
+    <div class="qa-item">
+      <div class="qa-q"><span class="qnum">Q13</span>"策略意图"具体长什么样？怎么从自然语言变成可执行？</div>
+      <div class="qa-a">
+        策略意图是一份<strong>结构化的 YAML 规则对象</strong>——人类可读、机器可解析。它不是一段 prompt，而是经过<strong>静态校验、冲突检测、权限映射</strong>后，再被编译进 Agent instructions、工具权限、处置 guardrails 和回归评估集。它把"什么算违规、看哪些信号、分几档、各档怎么处置、要什么证据"一次性写清，让策略从"写在脑子里和文档里"变成"可下发、可校验、可灰度、可回滚的对象"。以色情低俗品类为例：
+        <div class="code-block"><span class="k">规则编号</span>: P-SEX-001
+<span class="k">品类</span>: 色情低俗
+
+<span class="c"># 1 · 违规定义</span>
+<span class="k">违规定义</span>: 以挑逗、刺激、引诱为主要目的，描绘或暗示性行为、
+  性器官、裸露身体敏感部位的图文 / 音视频内容。
+
+<span class="c"># 2 · 判断信号（内容 / 行为 / 关系 三维）</span>
+<span class="k">判断信号</span>:
+  <span class="k">内容信号</span>: [明确性行为描述, 裸露生殖器官, 含性挑逗动作视频]
+  <span class="k">行为信号</span>: [同用户 24h 发 5 条以上类似内容, 头像简介含性暗示]
+  <span class="k">关系信号</span>: [关注/被关注集中在同类发布者, 评论区高频"加我""私聊"引流]
+
+<span class="c"># 3 · 例外情形（不视为违规，但仍需分级处理）</span>
+<span class="k">例外情形</span>: [医学科普, 认证机构的性教育, 严肃人体艺术, 母婴哺乳, 新闻事实性描述]
+  <span class="c"># 注：即便例外，未成年人可见环境下仍需打"成人内容"标签</span>
+
+<span class="c"># 4 · 处置档位</span>
+<span class="k">处置档位</span>:
+  <span class="k">L1</span>: { 特征: 软色情擦边·暗示不明确, 动作: 内容降权·不可见于推荐流 }
+  <span class="k">L2</span>: { 特征: 明确性暗示·软色情图文, 动作: 删除内容·用户警告 }
+  <span class="k">L3</span>: { 特征: 露骨色情内容,         动作: 删除·7 天禁言 }
+  <span class="k">L4</span>: { 特征: 露骨色情且批量传播·引流, 动作: 永久封号·设备拉黑 }
+  <span class="k">L5</span>: { 特征: 涉未成年人色情内容,    动作: 立即封号·上报执法机关 }
+
+<span class="c"># 5 · 证据要求（与放权强度挂钩）</span>
+<span class="k">证据要求</span>:
+  <span class="k">L1-L3</span>: <span class="h">Agent 可直接处置</span>，需保留完整推理链抽检
+  <span class="k">L4</span>:    需 Agent 置信度 ≥ 0.9 且至少 2 类信号，否则升级人工
+  <span class="k">L5</span>:    <span class="h">必须人工复核 + 法务备案</span>，Agent 仅做识别冻结</div>
+        说明：以上是脱敏的示例规则，用于演示策略意图的写法，不是任何具体平台的真实策略；实际落地会依据《网络信息内容生态治理规定》等法规和业务场景大量调整。
+        <br><br>
+        <span class="hl">这份模板里藏着三个设计判断</span>：其一，<strong>信号分内容 / 行为 / 关系三维</strong>——单看内容会漏判，结合行为（批量发布）和关系（引流话术、团伙关注）才能识别隐蔽违规，这正是 Agent 比纯规则强的地方；其二，<strong>证据要求与放权强度挂钩</strong>——L1-L3 Agent 自决、L4 要双信号高置信、L5 锁死人工，把"放权边界"直接编进了策略；其三，<strong>例外情形显式声明</strong>——避免医学、艺术、母婴等正常内容被误伤。
+        <span class="anthropic-proof"><span class="ap-tag">〔Anthropic 踩坑印证〕</span>"不是一段 prompt、而是结构化对象"这点也有教训佐证：Anthropic 提到有客户把几十页的 SOP 直接塞进 system prompt，结果把模型搞蒙了。指令不是越多越细越好——这正是我把策略意图设计成结构化对象（可校验、可编译、可灰度）、而不是一长串自然语言 prompt 的原因。（来自 Anthropic 公开分享，非一手经验。）</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="appendix-intro" style="margin-top:32px;border-left-color:#C73E1D;">
+    <strong>下一梯队（可继续补）：</strong>事故响应与回滚（误杀了怎么熔断、case replay）、自定义放权等级表（L0-L5 各档权限与人审边界）。需要时再逐块加。
+  </p>
+
+  <div class="chapter-footer">
+    <span>Appendix</span>
+    <span>关键技术选型 · End</span>
+  </div>
+</section>
+</div>
+</body>
+</html>

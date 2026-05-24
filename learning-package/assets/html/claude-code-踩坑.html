@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 建设中的坑点 · 工程复盘档案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF7F0; --bg2:#FCFAF5; --panel:#F4EFE3; --panel2:#FBE9DF;
+    --ink:#1A1815; --ink-dim:#4A4540; --ink-faint:#8A847C;
+    --amber:#C73E1D; --amber-bright:#E04E2C; --rust:#B5651D; --green:#3D6B3D;
+    --line:#D8D0C0; --line-soft:#E8E0CE;
+    --sidebar:268px;
+    --font-body:'Inter Tight',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1100px 560px at 88% -8%, rgba(199,62,29,.05), transparent 60%),
+      radial-gradient(800px 460px at -5% 100%, rgba(181,101,29,.05), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);font-weight:400;
+    line-height:1.7;letter-spacing:.005em;font-feature-settings:'ss01','cv11';
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.018;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- Layout ---------- */
+  .layout{display:grid;grid-template-columns:var(--sidebar) 1fr;max-width:1280px;margin:0 auto;position:relative;z-index:2}
+
+  /* ---------- Sidebar / TOC ---------- */
+  aside{
+    position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+    border-right:1px solid var(--line);padding:34px 26px 40px;
+    background:linear-gradient(180deg,rgba(244,239,227,.7),rgba(250,247,240,.4));
+    backdrop-filter:blur(2px);
+  }
+  aside::-webkit-scrollbar{width:5px}
+  aside::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  .brand{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
+  .brand-sub{font-family:'Fraunces',serif;font-weight:900;font-size:22px;color:var(--ink);line-height:1.1;margin-bottom:4px}
+  .brand-sub em{font-style:italic;font-weight:500;color:var(--amber-bright)}
+  .brand-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:.05em;margin-top:12px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)}
+  nav{margin-top:22px}
+  .nav-group{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);margin:20px 0 10px}
+  .nav-group:first-child{margin-top:0}
+  nav a{
+    display:flex;align-items:baseline;gap:9px;text-decoration:none;color:var(--ink-dim);
+    font-size:13px;padding:6px 10px;border-radius:4px;border-left:2px solid transparent;
+    transition:all .2s;margin-bottom:1px;
+  }
+  nav a .pid{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);flex-shrink:0;width:22px}
+  nav a:hover{color:var(--ink);background:var(--panel)}
+  nav a.active{color:var(--amber-bright);background:var(--panel2);border-left-color:var(--amber)}
+  nav a.active .pid{color:var(--amber)}
+
+  /* ---------- Main ---------- */
+  main{padding:44px 52px 60px;min-width:0;max-width:900px}
+
+  /* ---------- Header ---------- */
+  .hero{padding-bottom:26px;border-bottom:1px solid var(--line);margin-bottom:30px}
+  .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+  .kicker::before{content:"";width:30px;height:1px;background:var(--amber)}
+  h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(34px,5vw,56px);line-height:1.02;letter-spacing:-.02em}
+  h1 em{font-style:italic;font-weight:500;color:var(--amber-bright)}
+  .subtitle{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(16px,2vw,20px);color:var(--ink-dim);margin-top:14px;max-width:640px}
+
+  /* ---------- Callout ---------- */
+  .callout{margin:0 0 30px;padding:22px 26px;border:1px solid var(--line);border-left:3px solid var(--rust);background:linear-gradient(180deg,var(--panel),var(--bg2));border-radius:3px}
+  .callout .tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;font-weight:700}
+  .callout p{color:var(--ink-dim);font-size:14px}
+  .callout strong{color:var(--ink);font-weight:500}
+  .mono-pill{font-family:'JetBrains Mono',monospace;font-size:11px}
+
+  /* ---------- Section ---------- */
+  section{padding:38px 0;border-bottom:1px solid var(--line-soft);scroll-margin-top:24px}
+  section:first-of-type{padding-top:6px}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:26px}
+  .sec-num{font-family:'Fraunces',serif;font-weight:900;font-size:40px;color:var(--line);line-height:1;flex-shrink:0}
+  .sec-title{font-family:'Fraunces',serif;font-weight:600;font-size:25px;color:var(--ink);letter-spacing:-.01em}
+  .sec-desc{color:var(--ink-dim);font-size:14px;margin-top:5px}
+
+  /* ---------- Grid of cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .grid .span2{grid-column:1 / -1}
+
+  .card{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line-soft);border-radius:6px;padding:22px 24px;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+  .card:hover{border-color:var(--line);transform:translateY(-2px)}
+  .card::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--amber),transparent 70%);opacity:.5}
+  .card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+  .card-id{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--bg);background:var(--amber);padding:2px 8px;border-radius:3px;flex-shrink:0;margin-top:3px}
+  .card-h{font-family:'Fraunces',serif;font-weight:600;font-size:18.5px;color:var(--ink);line-height:1.25}
+  .badges{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 14px}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;padding:3px 9px;border-radius:30px;border:1px solid var(--line);color:var(--ink-faint)}
+  .badge.cc{border-color:var(--rust);color:var(--rust)}
+  .badge.gen{border-color:var(--green);color:var(--green)}
+  .card p{color:var(--ink-dim);font-size:13.5px;margin-bottom:11px}
+  .card p:last-child{margin-bottom:0}
+  .card p strong{color:var(--ink);font-weight:500}
+  code{font-family:'JetBrains Mono',monospace;color:var(--amber);font-size:.92em}
+  .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--amber);margin:15px 0 7px;font-weight:500;display:flex;align-items:center;gap:7px}
+  .label::before{content:"▸";color:var(--amber)}
+  .quote{border-left:2px solid var(--line);padding:4px 0 4px 15px;margin:11px 0;font-family:'Fraunces',serif;font-style:italic;font-size:14px;color:var(--ink)}
+  .quote cite{display:block;font-family:'JetBrains Mono',monospace;font-style:normal;font-size:10.5px;color:var(--ink-faint);margin-top:6px;letter-spacing:.04em}
+  .fix{background:var(--panel2);border-radius:4px;padding:13px 15px;margin-top:8px;border:1px solid var(--line-soft)}
+  .fix p{margin:0;font-size:13px}
+  .fix p:not(:last-child){margin-bottom:7px}
+  .note{margin-top:11px;color:var(--ink-faint);font-size:12.5px}
+  .note strong{color:var(--ink-dim)}
+
+  /* ---------- Diagram ---------- */
+  .diagram{margin:0;padding:24px;background:var(--bg2);border:1px solid var(--line-soft);border-radius:6px;text-align:center}
+  .diagram svg{max-width:100%;height:auto}
+  .dcap{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint);margin-top:14px;letter-spacing:.04em}
+
+  /* ---------- Think ---------- */
+  .think-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .think-card{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line-soft);border-radius:6px;padding:22px 24px;display:flex;gap:15px;align-items:flex-start}
+  .think-dot{font-family:'Fraunces',serif;font-weight:900;font-size:30px;color:var(--amber);flex-shrink:0;width:34px;line-height:1}
+  .think-card h4{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px;color:var(--ink);margin-bottom:6px;line-height:1.25}
+  .think-card p{color:var(--ink-dim);font-size:13px}
+  .think-card em{font-style:italic;color:var(--amber-bright)}
+  .think-card strong{color:var(--ink);font-weight:500}
+
+  /* ---------- Sources ---------- */
+  .src-item{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink-dim)}
+  .src-item .n{font-family:'JetBrains Mono',monospace;color:var(--amber);flex-shrink:0;font-size:11.5px;margin-top:2px}
+  .src-item a{color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--ink-faint);word-break:break-all}
+  .src-item a:hover{color:var(--amber-bright);border-color:var(--amber)}
+  .src-item .desc{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:3px}
+
+  footer{padding:30px 0 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint);letter-spacing:.08em}
+
+  ::selection{background:var(--amber);color:var(--bg)}
+
+  /* ---------- Responsive ---------- */
+  @media(max-width:920px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line);padding:24px 22px}
+    nav{columns:2;column-gap:18px}
+    main{padding:30px 22px 50px}
+    .grid,.think-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    nav{columns:1}
+    .sec-head{gap:12px}
+    .sec-num{font-size:30px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ============ SIDEBAR / TOC ============ -->
+  <aside>
+    <div class="brand">Engineering Post-mortem</div>
+    <div class="brand-sub">Claude Code<br><em>建设坑点</em>复盘</div>
+    <div class="brand-meta">SOURCE · Anthropic 一手资料<br>2026-05-23 · 12 个坑点</div>
+    <nav id="toc">
+      <div class="nav-group">导览</div>
+      <a href="#overview"><span class="pid">00</span>坑点全景图</a>
+      <div class="nav-group">一 · 上下文工程</div>
+      <a href="#p1"><span class="pid">P1</span>上下文压缩极难做对</a>
+      <a href="#p2"><span class="pid">P2</span>上下文腐烂 Context Rot</a>
+      <a href="#p9"><span class="pid">P9</span>开局塞满所有文档</a>
+      <a href="#p8"><span class="pid">P8</span>系统提示词两极翻车</a>
+      <div class="nav-group">二 · 工具与架构</div>
+      <a href="#p3"><span class="pid">P3</span>子 agent 设想落空</a>
+      <a href="#p4"><span class="pid">P4</span>工具被模型搞混</a>
+      <a href="#p6"><span class="pid">P6</span>Artifacts 整文件重写</a>
+      <a href="#p11"><span class="pid">P11</span>无意打破 Prompt 缓存</a>
+      <div class="nav-group">三 · 架构与评估</div>
+      <a href="#p7"><span class="pid">P7</span>Workflow 脆弱无纠错</a>
+      <a href="#p10"><span class="pid">P10</span>按 token 单价算成本</a>
+      <a href="#p12"><span class="pid">P12</span>用不懂的框架</a>
+      <a href="#p5"><span class="pid">P5</span>90% 失败=烂 prompt</a>
+      <div class="nav-group">收尾</div>
+      <a href="#think"><span class="pid">04</span>批判性补充</a>
+      <a href="#sources"><span class="pid">05</span>资料来源</a>
+    </nav>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+    <div class="hero">
+      <div class="kicker">从官方资料反向拆解的真实失败案例</div>
+      <h1>Claude Code 建设中的<em>坑点</em></h1>
+      <p class="subtitle">基于 Anthropic 官方工程博客与团队负责人公开演讲，整理出 12 个真实失败案例与设计教训。</p>
+    </div>
+
+    <div class="callout">
+      <div class="tag">⚠ 阅读前必读 · 关于"坑点"的定性</div>
+      <p>官方语境里几乎<strong>没有正式的"踩坑清单"</strong>，教训散落在复盘里，表述多为"我们试了 X 不行、改成 Y"。本文档把它们<strong>反向工程</strong>成坑点，并为每条标注两个属性 ——
+      <span class="mono-pill" style="color:var(--rust)">● CLAUDE-CODE 特有</span>（官方明确是建 Claude Code 或同源 harness 时踩的）与
+      <span class="mono-pill" style="color:var(--green)">● 通用 AGENT 教训</span>（广义经验，别误以为它独有）。</p>
+    </div>
+
+    <!-- ===== 00 概览 ===== -->
+    <section id="overview">
+      <div class="sec-head">
+        <div class="sec-num">00</div>
+        <div>
+          <div class="sec-title">坑点全景：踩在哪个环节</div>
+          <div class="sec-desc">核心 agent 循环为「收集上下文 → 执行动作 → 验证结果 → 重复」，绝大多数坑都落在这条循环上。</div>
+        </div>
+      </div>
+      <div class="diagram">
+        <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+          <defs><marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#C73E1D"/></marker></defs>
+          <g><rect x="20" y="78" width="150" height="62" rx="6" fill="#F4EFE3" stroke="#D8D0C0"/><text x="95" y="103" fill="#1A1815" font-size="14" text-anchor="middle">收集上下文</text><text x="95" y="123" fill="#8A847C" font-size="10" text-anchor="middle">Gather context</text></g>
+          <g><rect x="225" y="78" width="150" height="62" rx="6" fill="#F4EFE3" stroke="#D8D0C0"/><text x="300" y="103" fill="#1A1815" font-size="14" text-anchor="middle">执行动作</text><text x="300" y="123" fill="#8A847C" font-size="10" text-anchor="middle">Take action</text></g>
+          <g><rect x="430" y="78" width="150" height="62" rx="6" fill="#F4EFE3" stroke="#D8D0C0"/><text x="505" y="103" fill="#1A1815" font-size="14" text-anchor="middle">验证结果</text><text x="505" y="123" fill="#8A847C" font-size="10" text-anchor="middle">Verify work</text></g>
+          <g><rect x="635" y="78" width="105" height="62" rx="6" fill="#FBE9DF" stroke="#C73E1D" stroke-dasharray="3 3"/><text x="687" y="106" fill="#C73E1D" font-size="13" text-anchor="middle">重复</text><text x="687" y="124" fill="#8A847C" font-size="10" text-anchor="middle">loop</text></g>
+          <line x1="172" y1="109" x2="221" y2="109" stroke="#C73E1D" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="377" y1="109" x2="426" y2="109" stroke="#C73E1D" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="582" y1="109" x2="631" y2="109" stroke="#C73E1D" stroke-width="1.5" marker-end="url(#arr)"/>
+          <path d="M687,74 C687,28 95,28 95,74" fill="none" stroke="#D8D0C0" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+          <text x="95" y="166" fill="#C73E1D" font-size="10" text-anchor="middle">坑 P1·P2·P8·P9</text>
+          <text x="300" y="166" fill="#C73E1D" font-size="10" text-anchor="middle">坑 P3·P4·P6·P11</text>
+          <text x="505" y="166" fill="#C73E1D" font-size="10" text-anchor="middle">坑 P7·P10</text>
+          <text x="380" y="196" fill="#8A847C" font-size="10" text-anchor="middle">P5 · P12 贯穿全局（系统提示词 / 框架抽象层）</text>
+        </svg>
+        <div class="dcap">FIG.0 — agent 循环与坑点分布（循环结构源自官方博客 "Building agents with the Claude Agent SDK"）</div>
+      </div>
+    </section>
+
+    <!-- ===== 01 上下文工程 ===== -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-num">01</div>
+        <div>
+          <div class="sec-title">上下文工程：最深的几个坑</div>
+          <div class="sec-desc">官方明确：agent 时代核心已从 prompt engineering 转向 context engineering，而这正是踩坑最集中处。</div>
+        </div>
+      </div>
+      <div class="grid">
+
+        <div class="card span2" id="p1">
+          <div class="card-top"><span class="card-id">P1</span><div class="card-h">上下文压缩（Compaction）极难做对，迭代约 100 次用户仍嫌弃</div></div>
+          <div class="badges"><span class="badge cc">● CLAUDE-CODE 特有</span><span class="badge">长任务 / Long-horizon</span></div>
+          <p>对话接近 200K token 上限时，系统发一条特殊消息让 Claude 总结全部进度，再清空对话、塞回摘要、继续。听着简单，<strong>实际是整个产品里最难调的部分之一</strong>。</p>
+          <div class="quote">Claude Code 在 compaction 提示词上大约迭代了 100 次，用户被"压缩"时的体验依然让人沮丧。<cite>—— Cal, Anthropic Applied AI 团队负责人（公开演讲）</cite></div>
+          <div class="label">为什么是坑</div>
+          <p>摘要必然丢信息。丢错了，agent 会在长任务中途"失忆"，把之前的决策、约束、踩过的雷全忘掉，导致返工甚至跑偏——这是个<strong>没有干净解</strong>的工程难题。</p>
+          <div class="label">官方的应对</div>
+          <div class="fix">
+            <p>① 持续迭代压缩提示词（但承认体验仍不完美）；</p>
+            <p>② 转向<strong>记忆系统</strong>：让 agent 自己往文件里写 markdown 笔记，清空对话后直接读自己的笔记，而非依赖外部摘要；</p>
+            <p>③ 正尝试把"主动记笔记"<strong>直接训练进模型</strong>，让其自动发生。</p>
+          </div>
+        </div>
+
+        <div class="card" id="p2">
+          <div class="card-top"><span class="card-id">P2</span><div class="card-h">"上下文腐烂"：没到 200K 上限性能就垮了</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">可靠性</span></div>
+          <p>很多人以为塞满前都安全。真相是：<strong>在 5 万–15 万 token 区间，模型表现就开始退化</strong>（阈值随任务而定），远早于撞上硬上限。</p>
+          <div class="label">为什么是坑</div>
+          <p>"窗口大"是种陷阱式安全感。盲目塞东西会在你没察觉时悄悄降准确率，且<strong>不会给明确报错</strong>。</p>
+          <div class="label">应对</div>
+          <p>把 context engineering 当一等公民：只在必要时加载（P9）、用子 agent 隔离（P3）、主动压缩与记忆（P1）。核心是<strong>少即是多</strong>。</p>
+        </div>
+
+        <div class="card" id="p9">
+          <div class="card-top"><span class="card-id">P9</span><div class="card-h">老 RAG 思路：开局把所有文档一次性塞进去</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">渐进式披露</span></div>
+          <p>2024 初主流是先检索一堆文档全塞进首个 prompt。Claude Code 走反路——<strong>启动时不读目录里所有文件</strong>，只告诉模型"在哪个目录"，给它列目录/读文件工具，需要时再读。</p>
+          <div class="label">容易忽略的反例</div>
+          <div class="fix"><p>渐进式披露<strong>有例外</strong>：永远有用的信息要前置。如 <code>CLAUDE.md</code>（用户指令）开局直接加载，不让 agent 再调工具读——因它与任何任务都相关。这条边界很多人没掌握：要么全前置撑爆，要么全延迟连必读的也不读。</p></div>
+        </div>
+
+        <div class="card span2" id="p8">
+          <div class="card-top"><span class="card-id">P8</span><div class="card-h">系统提示词写得"太具体"或"太模糊"，都会翻车</div></div>
+          <div class="badges"><span class="badge cc">● CLAUDE-CODE / 客户案例</span><span class="badge">Goldilocks 区间</span></div>
+          <p>真实案例：有客户把一份 <strong>32 页的 SOP（标准操作流程）PDF 直接灌进系统提示词</strong>，把模型压垮了。但反过来写太模糊，模型又缺指引。</p>
+          <div class="label">官方的判定方法</div>
+          <div class="quote">"好朋友测试"：把指令给一个不懂你领域的朋友看，若他看不懂该干嘛，模型多半也看不懂。<cite>—— Anthropic Applied AI 团队</cite></div>
+          <p>团队建议<strong>初期宁可偏模糊</strong>：先让 agent 跑、看它在哪崩，再逐条加必要指令。一上来写太细，根本分不清哪些规则真有用、哪些只是噪声拖累性能。</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== 02 工具与架构 ===== -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-num">02</div>
+        <div>
+          <div class="sec-title">工具设计与架构：预期落空的地方</div>
+          <div class="sec-desc">有些功能上线后才发现，根本不是按当初设想的方式起作用的。</div>
+        </div>
+      </div>
+      <div class="grid">
+
+        <div class="card span2" id="p3">
+          <div class="card-top"><span class="card-id">P3</span><div class="card-h">子 agent（Sub-agent）：原本的设想完全落空了</div></div>
+          <div class="badges"><span class="badge cc">● CLAUDE-CODE 特有</span><span class="badge">最典型的"预期 vs 现实"坑</span></div>
+          <p>最初设想：Claude 把任务拆成多个并发原子单元，分发给子 agent 同时干、再汇总。<strong>结果 Claude 在"拆并发原子单元"上表现很差</strong>，设想直接落空。</p>
+          <div class="label">意外发现的真正用途</div>
+          <div class="fix"><p>子 agent 在<strong>"探索"</strong>场景里反而极有价值。Claude Code 要理解代码库时，读大量文件吃掉巨量上下文；把"调研"丢给子 agent——让它<strong>把自己的上下文窗口炸满</strong>、最后只返回一份精简报告——主 agent 就能把宝贵上下文留给真正的实现工作。</p></div>
+          <p class="note">💡 全文档最值得记的一条：一个功能的<strong>实际价值</strong>常和你<strong>设计它的初衷</strong>不一样。</p>
+        </div>
+
+        <div class="card" id="p4">
+          <div class="card-top"><span class="card-id">P4</span><div class="card-h">工具混淆：分不清"用网页搜索还是网盘搜索"</div></div>
+          <div class="badges"><span class="badge cc">● CLAUDE.AI（同源 harness）</span><span class="badge">工具命名</span></div>
+          <p>线上真实问题：Claude.ai 同时有「网页搜索」和「Google Drive 搜索」，模型会<strong>把它们搞混</strong>——东西明明在网盘里却跑去搜网页，反之亦然。</p>
+          <div class="label">根因与修复</div>
+          <div class="fix"><p>工具描述被悄悄拼进系统提示词，所以<strong>写工具描述本质就是写 prompt</strong>。修复：在描述里讲清"什么数据存在哪里、何时用哪个工具"，并直接放 few-shot 示例。CC 和 Claude.ai 都大量用此模式。</p></div>
+        </div>
+
+        <div class="card" id="p6">
+          <div class="card-top"><span class="card-id">P6</span><div class="card-h">Artifacts 早期：每次改动都把整个 HTML 从头重写</div></div>
+          <div class="badges"><span class="badge cc">● CLAUDE.AI 演进坑</span><span class="badge">状态管理不足</span></div>
+          <p>Claude 3.5 Sonnet 擅长写带内嵌 JS/CSS 的 HTML，催生 Artifacts。但<strong>早期版本不会原地局部编辑，而是整份 HTML 从头重写</strong>。</p>
+          <div class="label">这暴露了什么</div>
+          <p>说明当时模型<strong>还搞不定复杂状态管理</strong>——无法在已有结构里做精准增量修改。这是随模型能力提升才逐步解决的<strong>能力型坑</strong>，非单纯工程可补。</p>
+        </div>
+
+        <div class="card span2" id="p11">
+          <div class="card-top"><span class="card-id">P11</span><div class="card-h">无意中"打破" Prompt Caching，悄悄推高成本与延迟</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">成本 / 延迟</span></div>
+          <p>Agent 会连续发很多次 API 调用。若系统提示词、工具定义、历史对话在调用间保持不变（只在末尾追加），prompt caching 能大幅降本提速。</p>
+          <div class="label">容易踩的坑</div>
+          <div class="fix"><p>context engineering 的某些操作会<strong>不小心把缓存打破</strong>：比如没必要地频繁增删可用工具集、重排本应静态的内容顺序。缓存一旦失效，成本和延迟都会悄悄上去，而你可能根本没注意到原因出在这。</p></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== 03 架构与评估 ===== -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-num">03</div>
+        <div>
+          <div class="sec-title">架构、评估与抽象层</div>
+          <div class="sec-desc">更高层面的教训：选错架构范式、用错评估口径、依赖看不懂的框架。</div>
+        </div>
+      </div>
+      <div class="grid">
+
+        <div class="card span2" id="p7">
+          <div class="card-top"><span class="card-id">P7</span><div class="card-h">用 Workflow（写死的链式调用）做开放任务，脆弱且无法纠错</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">架构范式</span></div>
+          <p>2024 初模型较弱时，主流是 workflow：多个 LLM 调用链在一起、中间夹写死逻辑。官方见过客户为客服场景<strong>把 50 个 prompt 串成一条链</strong>。两个致命限制：</p>
+          <div class="fix"><p>① 只能处理被显式编码进流程的场景，<strong>开放任务无能为力</strong>；</p><p>② <strong>缺乏错误恢复</strong>——中途出意外，系统通常"跑完流程但产出垃圾结果"。</p></div>
+          <p style="margin-top:11px">Claude Code 走 agent 路线：让 LLM 在带工具的循环里跑、自己判断何时完成。它能处理没预料的边界情况，也擅长识别异常工具返回并自我调整。</p>
+        </div>
+
+        <div class="card" id="p10">
+          <div class="card-top"><span class="card-id">P10</span><div class="card-h">按"每 token 单价"比成本，是误导性口径</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">成本评估</span></div>
+          <p>官方在 Claude Opus 4.5 评测里发现：<strong>更贵的模型用明显更少的 token 就拿到更高的 SWE-bench 分</strong>。</p>
+          <div class="label">结论</div>
+          <p>生产部署要<strong>按"每个完成任务的成本"算，而非 token 单价</strong>。list price 更高的模型，因效率更高，单任务反而可能更便宜。只盯单价选便宜模型是常见算账误区。</p>
+        </div>
+
+        <div class="card" id="p12">
+          <div class="card-top"><span class="card-id">P12</span><div class="card-h">用了自己根本不理解的框架 / 抽象层</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">框架抽象</span></div>
+          <p>官方观察的常见翻车原因：<strong>很多团队栽在使用了理解不够深的库上</strong>。生产级框架须给足控制力与灵活性——能换 prompt、定制工具、需要时上多 agent——而非过度封装、自作主张的脚手架。</p>
+          <div class="label">注脚</div>
+          <p>这正是 Anthropic 把 CC 底层 harness 抽成 Claude Agent SDK 的逻辑：暴露<strong>可控原语</strong>，而非黑盒。</p>
+        </div>
+
+        <div class="card span2" id="p5">
+          <div class="card-top"><span class="card-id">P5</span><div class="card-h">90% 的失败，根因就是 prompt 写得烂</div></div>
+          <div class="badges"><span class="badge gen">● 通用 AGENT 教训</span><span class="badge">头号失败模式</span></div>
+          <p>这是 Cal 在企业客户处遇到的<strong>最常见失败模式</strong>，单独压轴因为它太普遍：</p>
+          <div class="quote">90% 的情况下，系统表现不如预期时，问题就是指令本身——让一个不懂这领域的人来读，它根本讲不通。<cite>—— Anthropic Applied AI 团队，"2025–2026 头号 prompt 建议"</cite></div>
+          <p>换句话说：在怪模型、怪框架、怪架构之前，<strong>先回去读一遍自己的 prompt</strong>。</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== 04 批判性补充 ===== -->
+    <section id="think">
+      <div class="sec-head">
+        <div class="sec-num">04</div>
+        <div>
+          <div class="sec-title">我的批判性补充（不全顺着资料说）</div>
+          <div class="sec-desc">几点反向思考，帮你判断该如何看待和使用这些资料。</div>
+        </div>
+      </div>
+      <div class="think-grid">
+        <div class="think-card"><div class="think-dot">1</div><div><h4>这些"坑"带明显的幸存者 / 公关滤镜</h4><p>官方分享的都是"踩了坑然后优雅解决"的故事。真正难看的失败（彻底砍掉的功能、大规模事故）几乎不进工程博客。所以这是<strong>偏乐观的样本</strong>，别当成 Claude Code 问题的全貌。</p></div></div>
+        <div class="think-card"><div class="think-dot">2</div><div><h4>区分"能力型坑"与"结构型坑"</h4><p>P6（整文件重写）是<strong>能力型坑</strong>，靠模型迭代就解决；P1（压缩）、P11（缓存）是<strong>结构型坑</strong>，再强的模型也得靠工程管。学习时要分清：哪些值得你投工程精力，哪些等下一代模型就好。</p></div></div>
+        <div class="think-card"><div class="think-dot">3</div><div><h4>P3 才是最有迁移价值的一条</h4><p>它的元教训不是"子 agent 怎么用"，而是 <em>"先有能力、再找用途，而非先定用途、再硬塞能力"</em>。这个反直觉发现适用于几乎所有 AI 产品设计——先观察模型实际擅长什么。</p></div></div>
+        <div class="think-card"><div class="think-dot">4</div><div><h4>建议的学习路径</h4><p>① 读官方 <em>Building agents with the Claude Agent SDK</em> 建框架；② 看 Cal 演讲原视频补失败细节；③ 再读 <em>Effective context engineering</em> 与 <em>Writing tools for agents</em>。<strong>务必看一手来源</strong>，二手整理（含本文档）都有损耗。</p></div></div>
+      </div>
+    </section>
+
+    <!-- ===== 05 来源 ===== -->
+    <section id="sources" style="border-bottom:none">
+      <div class="sec-head">
+        <div class="sec-num">05</div>
+        <div>
+          <div class="sec-title">资料来源</div>
+          <div class="sec-desc">全部基于以下 Anthropic 一手资料整理，未引用模型内部记忆作为事实依据。</div>
+        </div>
+      </div>
+      <div class="src-item"><span class="n">[1]</span><div><a href="https://claude.com/blog/building-agents-with-the-claude-agent-sdk" target="_blank">Building agents with the Claude Agent SDK</a> — Anthropic 官方工程博客（2025-09-29，作者 Thariq Shihipar）<span class="desc">提供 agent 循环框架与子 agent / compaction / 工具设计 / 验证方法等官方原始论述。</span></div></div>
+      <div class="src-item"><span class="n">[2]</span><div><a href="https://www.youtube.com/watch?v=TledrLrVUQI" target="_blank">Building Production AI Agents: Lessons from Claude Code（YouTube 演讲）</a> — Anthropic Applied AI 团队负责人 Cal，2025<span class="desc">绝大多数具体坑点（压缩迭代100次、context rot 5万–15万、子agent落空、工具混淆、32页SOP、90%失败=烂prompt 等）出自此演讲，转引自 ZenML LLMOps Database 整理稿。</span></div></div>
+      <div class="src-item"><span class="n">[3]</span><div>延伸阅读：<a href="https://www.anthropic.com/engineering/writing-tools-for-agents" target="_blank">Writing effective tools for agents</a> 与 <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank">Building effective agents</a><span class="desc">作为下一步深入材料，补充工具设计与 agent 架构的完整方法论。</span></div></div>
+    </section>
+
+    <footer>整理自 Anthropic 官方一手资料 · 已标注 Claude-Code 特有 vs 通用教训 · 二手内容存在损耗，请回溯原始来源</footer>
+  </main>
+</div>
+
+<script>
+  // 滚动高亮目录
+  const links = [...document.querySelectorAll('#toc a')];
+  const map = {};
+  links.forEach(a=>{ const id=a.getAttribute('href').slice(1); const el=document.getElementById(id); if(el) map[id]=a; });
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        const a = map[e.target.id];
+        if(a) a.classList.add('active');
+      }
+    });
+  },{rootMargin:'-20% 0px -70% 0px',threshold:0});
+  Object.keys(map).forEach(id=>{ const el=document.getElementById(id); if(el) obs.observe(el); });
+</script>
+</body>
+</html>

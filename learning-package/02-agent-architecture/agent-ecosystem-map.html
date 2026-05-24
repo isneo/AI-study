@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent 生态认知地图 · 7 层框架 + 产品/记忆深读 · 2026.05</title>
+<style>
+  :root{
+    --bg:#fafaf7; --surface:#fffffc; --surface-muted:#f3f2ed;
+    --text:#2f302d; --text-muted:#676861; --text-soft:#8a8b82;
+    --primary:#2f5d50; --secondary:#8b5e34; --accent:#6f7f8f;
+    --line:#dedbd2; --line-soft:#ebe8df; --table-zebra:#f6f5ef;
+    --code-bg:#f1f0ea; --code-text:#3a3b36;
+    --shadow-sm:0 1px 2px rgba(47,48,45,.05); --shadow-md:0 10px 28px rgba(47,48,45,.08);
+    --radius-card:8px; --radius-small:5px;
+    --font-title:"Source Serif 4","Literata","Georgia","Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+    --font-body:"Inter","IBM Plex Sans","Helvetica Neue","Noto Sans SC","Source Han Sans SC","PingFang SC",Arial,sans-serif;
+    --font-mono:"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.72 var(--font-body);letter-spacing:0}
+  .wrap{max-width:none;margin:0;padding:42px max(40px, 6vw) 96px max(288px, 16vw);transition:padding .25s ease}
+  .wrap.toc-collapsed{padding-left:max(88px, 6vw)}
+  @media (max-width:1100px){ .wrap{padding:42px 32px 96px 32px !important} .toc{position:static !important;width:auto !important;height:auto !important;max-height:none !important;border-right:none !important;border-bottom:1px solid var(--line-soft);margin-bottom:24px} .toc-toggle{display:none !important} }
+  header{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:40px}
+  h1{margin:0 0 8px;font-family:var(--font-title);font-weight:600;font-size:30px;line-height:1.18;color:#252622;letter-spacing:-.2px}
+  .meta{color:var(--text-soft);font-size:13px;font-style:italic}
+  h2.sec{font-family:var(--font-title);font-weight:600;font-size:24px;line-height:1.2;margin:56px 0 18px;padding:0 0 12px;border-bottom:1px solid var(--line);color:#252622;display:flex;align-items:baseline;gap:14px}
+  h2.sec .n{font-family:var(--font-title);color:var(--primary);font-size:18px;font-weight:500;min-width:24px}
+  h3.sub{font-family:var(--font-title);font-weight:600;font-size:18px;color:#252622;margin:30px 0 10px;display:flex;align-items:baseline;gap:10px}
+  h3.sub .n{color:var(--secondary);font-size:14px;font-weight:500;font-family:var(--font-title)}
+  h4{margin:20px 0 8px;font-family:var(--font-title);font-weight:600;font-size:15px;color:var(--primary)}
+  p{margin:0 0 14px}
+  em{color:var(--secondary);font-style:normal;font-weight:600}
+  code{background:var(--code-bg);color:var(--code-text);padding:1px 6px;border-radius:var(--radius-small);font:12.5px/1.6 var(--font-mono);border:1px solid #dedbd0}
+  pre.code{background:var(--code-bg);color:var(--code-text);border:1px solid #dedbd0;border-radius:var(--radius-small);padding:16px 18px;overflow-x:auto;font:12.5px/1.62 var(--font-mono)}
+  .tldr{padding:18px 20px;border:1px solid #ded7cc;border-left:4px solid var(--secondary);background:#f7f3ed;border-radius:7px;margin:14px 0 20px;font-size:14.5px}
+  .tldr b{color:var(--secondary);font-weight:650}
+  .callout{padding:18px 20px;margin:14px 0;border:1px solid #d9ddd4;border-left:4px solid var(--primary);background:#f5f7f2;border-radius:7px;font-size:14px}
+  .callout.info{border-left-color:var(--accent);background:#f2f5f5;border-color:#d7dce0}
+  .callout.ok{border-left-color:var(--primary);background:#f0f4ee;border-color:#d4dccb}
+  .callout.warn{border-left-color:#9b6842;background:#f8f1eb;border-color:#e1d4c6}
+  table.tab{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);table-layout:fixed}
+  table.tab th,table.tab td{padding:13px 16px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere}
+  table.tab td code,table.tab td .keyfile{word-break:break-all;overflow-wrap:anywhere;display:inline-block;max-width:100%}
+  table.tab th{background:#f0eee6;color:#252622;font-weight:650;font-family:var(--font-body);font-size:13px;letter-spacing:.2px}
+  table.tab tr:nth-child(even) td{background:var(--table-zebra)}
+  table.tab.bordered th,table.tab.bordered td{border:1px solid var(--line-soft)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:11px;background:var(--surface-muted);color:var(--text-muted);font-size:11px;margin:0 4px 3px 0;border:1px solid var(--line-soft);font-weight:500;letter-spacing:.2px}
+  .badge.py{background:#eef2f8;color:#3a5275;border-color:#cdd5e3}
+  .badge.js{background:#f5efe0;color:#7a5e1e;border-color:#e1d5b4}
+  .badge.java{background:#f5e8e0;color:#7a3a1e;border-color:#e1c8b4}
+  .badge.ts{background:#e8eef5;color:#284b75;border-color:#c6d3e0}
+  .badge.go{background:#e0eff2;color:#1f5d68;border-color:#bcd6da}
+  .badge.multi{background:#ece8f0;color:#4a3a64;border-color:#cec4d8}
+  .badge.oss{background:#e6efde;color:#33572b;border-color:#c8d8b8}
+  .badge.closed{background:#f1e6ee;color:#6a3460;border-color:#dcc6d4}
+  .badge.proto{background:#e8e4ed;color:#4d3a64;border-color:#cec4d8}
+  .layer{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-card);padding:24px 26px;margin:18px 0;box-shadow:var(--shadow-sm)}
+  .layer .head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+  .layer .head .num{display:inline-block;width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-weight:700;color:#fff;font-family:var(--font-title);font-size:15px}
+  .layer.l1 .num{background:#5a7c4c}.layer.l2 .num{background:#4d7a90}.layer.l3 .num{background:#9b6842}
+  .layer.l4 .num{background:#7a5594}.layer.l5 .num{background:#a04748}.layer.l6 .num{background:#3f8c8f}.layer.l7 .num{background:#a85272}
+  .layer h3{margin:0;font-family:var(--font-title);font-weight:600;font-size:18px;color:#252622}
+  .layer .def{font-size:13.5px;color:var(--text-muted);margin-top:3px;line-height:1.55}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0}
+  .card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-card);padding:18px 20px;box-shadow:var(--shadow-sm)}
+  .card h5{margin:0 0 8px;color:#252622;font-family:var(--font-title);font-size:15px;font-weight:600}
+  .fig{margin:22px 0;padding:18px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-card);text-align:center;box-shadow:var(--shadow-sm)}
+  .fig svg{max-width:100%;height:auto;display:block;margin:0 auto}
+  .fig img{max-width:100%;height:auto;display:block;margin:0 auto;border-radius:6px}
+  .fig .cap{margin-top:12px;font-size:13px;color:var(--text-muted);text-align:left;line-height:1.65;font-style:italic;border-top:1px solid var(--line-soft);padding-top:12px}
+  .toc{position:fixed;top:0;left:0;width:248px;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--line-soft);padding:32px 22px 32px 28px;box-shadow:var(--shadow-sm);font-size:12.5px;z-index:50;transition:width .25s ease,padding .25s ease}
+  .toc.collapsed{width:48px;padding:32px 4px 32px 4px;overflow:hidden}
+  .toc.collapsed .toc-title,.toc.collapsed ul{opacity:0;pointer-events:none;transition:opacity .15s}
+  .toc.collapsed .toc-toggle{transform:rotate(180deg)}
+  .toc::-webkit-scrollbar{width:6px}.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  .toc-toggle{position:absolute;top:14px;right:10px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--surface-muted);border:1px solid var(--line-soft);border-radius:50%;cursor:pointer;color:var(--text-muted);font-size:14px;line-height:1;padding:0;transition:transform .25s ease,background .15s,color .15s;z-index:2}
+  .toc-toggle:hover{background:#e8e8e0;color:var(--primary)}
+  .toc-toggle svg{width:14px;height:14px;display:block}
+  .toc-title{font-family:var(--font-title);font-weight:600;font-size:13px;color:var(--text-soft);letter-spacing:.5px;text-transform:uppercase;margin:0 36px 14px 0;padding-bottom:10px;border-bottom:1px solid var(--line-soft);transition:opacity .25s ease}
+  .toc ul{list-style:none;margin:0;padding:0;transition:opacity .25s ease}
+  .toc li{margin:0;border-left:3px solid transparent;padding:7px 0 7px 12px;line-height:1.5;transition:border-color .2s,background .2s,padding-left .2s;position:relative}
+  .toc li.active{border-left-color:var(--primary);background:linear-gradient(90deg,#e8efe2 0%,#f0f4ee 70%, transparent 100%);padding-left:14px}
+  .toc li.active a{color:var(--primary);font-weight:650}
+  .toc li.active::before{content:"▸";position:absolute;left:-2px;top:7px;color:var(--primary);font-size:10px;line-height:1.5;animation:tocBlink 2s ease-in-out infinite}
+  @keyframes tocBlink{0%,100%{opacity:.5}50%{opacity:1}}
+  .toc a{color:var(--text-muted);text-decoration:none;display:block}
+  .toc a:hover{color:var(--primary)}
+  .sec-divider{border:none;border-top:1px solid var(--line);margin:64px 0 0;height:0}
+  .sec-divider::before{content:"❦";display:block;text-align:center;color:var(--text-soft);font-size:14px;margin-top:-10px;background:var(--bg);width:24px;margin-left:auto;margin-right:auto}
+  details.gloss{display:inline;background:transparent;border:none;padding:0;margin:0}
+  details.gloss summary{display:inline;cursor:help;color:var(--primary);text-decoration:underline dotted;text-underline-offset:3px;list-style:none;font-weight:500}
+  details.gloss summary::-webkit-details-marker{display:none}
+  details.gloss summary::after{content:" ⓘ";color:var(--text-soft);font-size:.85em;font-weight:normal}
+  details.gloss[open] summary::after{content:" ⊖";color:var(--secondary)}
+  details.gloss .body{display:block;background:#fbf8f1;border:1px solid #e7e1d0;border-left:3px solid var(--secondary);padding:12px 16px;margin:8px 0;border-radius:5px;font-size:13.5px;color:var(--text);line-height:1.7;font-weight:400}
+  details.gloss .body em{color:var(--secondary)}
+  details.expand{background:var(--surface-muted);border:1px solid var(--line-soft);border-radius:var(--radius-small);padding:10px 14px;margin:10px 0}
+  details.expand summary{cursor:pointer;font-weight:600;color:var(--primary);outline:none;font-family:var(--font-title);font-size:14.5px}
+  details.expand .body{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px;font-size:14px}
+  .keyfile{background:#fbf8f1;border:1px solid #e7e1d0;border-radius:var(--radius-small);padding:2px 8px;font:11.5px/1.6 var(--font-mono);color:#5d4f33;display:inline-block;margin:2px 0;word-break:break-all}
+  .insight{background:#f2f5f5;border-left:4px solid var(--accent);padding:14px 18px;margin:14px 0;font-size:14px;border-radius:5px;border-top:1px solid #d7dce0;border-right:1px solid #d7dce0;border-bottom:1px solid #d7dce0}
+  .insight b{color:var(--accent);font-weight:650}
+  ul.ref{font-size:13.5px;line-height:1.85}.ref a{color:var(--primary);text-decoration:underline;text-decoration-color:#bcc4b4;text-underline-offset:3px}
+  ul,ol{padding-left:22px}li{margin:4px 0}
+  .design-pros{color:var(--primary);font-weight:600}
+  .design-cons{color:var(--secondary);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Agent 生态认知地图 · 7 层框架 × 产品 × 记忆 · 源码深读</h1>
+  <div class="meta">2026 年 5 月 · 与 codex 多轮共审 · 面向零基础读者 · 所有专业名词支持就地展开 · 9 张配图由 ChatGPT image2 统一生成</div>
+</header>
+
+<nav class="toc" id="toc">
+  <button class="toc-toggle" id="tocToggle" type="button" aria-label="收起/展开目录" title="收起 / 展开目录">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 4 4 8 10 12"/></svg>
+  </button>
+  <div class="toc-title">目录 / Outline</div>
+  <ul>
+    <li data-target="p0"><a href="#p0">0 · 导读</a></li>
+    <li data-target="p1"><a href="#p1">1 · 顶层心智图</a></li>
+    <li data-target="l7"><a href="#l7">2 · L7 产品与工作台</a></li>
+    <li data-target="l6"><a href="#l6">3 · L6 编排运行时</a></li>
+    <li data-target="l5"><a href="#l5">4 · L5 上下文与记忆</a></li>
+    <li data-target="l4"><a href="#l4">5 · L4 工具与协议</a></li>
+    <li data-target="l3"><a href="#l3">6 · L3 执行环境</a></li>
+    <li data-target="l2"><a href="#l2">7 · L2 模型与推理</a></li>
+    <li data-target="l1"><a href="#l1">8 · L1 基础设施与治理</a></li>
+    <li data-target="vertical"><a href="#vertical">9 · 纵向端到端调用链</a></li>
+    <li data-target="ref"><a href="#ref">A · 参考来源</a></li>
+  </ul>
+</nav>
+
+<!-- ====================================== -->
+<section id="p0">
+  <h2 class="sec"><span class="n">0</span>导读：为什么需要"地图"</h2>
+
+  <div class="tldr"><b>这份文档想做什么</b><br>
+    现在市面上有 30 多个 Agent 相关产品、框架、协议在抢热度，名字相似、定位混乱（LangChain 和 LangGraph 是不是一个？Spring AI 和 LangChain4j 选哪个？OpenHands 和 Cursor 又是什么关系？）。本文不再用"框架罗列卡片"，而是把整个生态按<em>一次 Agent 完成任务的真实链路</em>分成 7 层，每层只回答一个问题。<em>把所有产品都按层挂回去，30 多张卡就有秩序了</em>。
+  </div>
+
+  <h3 class="sub"><span class="n">0.1</span>先用 3 分钟建立心智 · 用生活化的对应理解 7 层</h3>
+  <p>下面这张表<em>不</em>提任何技术名词。先把心智建好，第 1 章再换上工程世界的真实名字：</p>
+  <table class="tab bordered">
+    <thead><tr><th style="width:8%">层</th><th style="width:24%">这一层在管什么</th><th>生活化对应（如果是开餐厅）</th></tr></thead>
+    <tbody>
+      <tr><td><b>L7</b></td><td>用户看到的"完整产品"</td><td>开门迎客的<em>餐厅</em>本身（招牌、装修、客人怎么点单）</td></tr>
+      <tr><td><b>L6</b></td><td>Agent 内部"怎么思考"</td><td>厨房里<em>怎么排菜单</em>（先洗菜还是先切？谁配菜谁出菜？）</td></tr>
+      <tr><td><b>L5</b></td><td>Agent "记住什么"</td><td>厨师的<em>笔记本</em>（这位客人爱辣、上次差点放错盐）</td></tr>
+      <tr><td><b>L4</b></td><td>Agent "怎么调外部能力"</td><td><em>对讲机协议</em>（怎么向供应商下单、和外卖平台对接）</td></tr>
+      <tr><td><b>L3</b></td><td>Agent "真实动手"</td><td>厨房里的<em>炉灶、案板、锅</em>——真正动刀动火的地方</td></tr>
+      <tr><td><b>L2</b></td><td>底层的"大脑"</td><td><em>厨师本人的厨艺</em>（米其林大厨还是新手）</td></tr>
+      <tr><td><b>L1</b></td><td>"上线 / 监控 / 不出事"</td><td><em>消防、卫生、监控、流水账</em>（每天能开张、出事能查）</td></tr>
+    </tbody>
+  </table>
+  <div class="insight"><b>记住这个比喻就够了</b>：餐厅 = 产品（L7）；厨房流程 = 编排（L6）；厨师笔记 = 记忆（L5）；对讲机 = 工具协议（L4）；炉灶 = 执行环境（L3）；厨师本人 = 模型（L2）；消防卫生 = 治理（L1）。<em>本文后面所有"框架"，本质都是在解决其中某一层的问题。</em></div>
+
+  <h3 class="sub"><span class="n">0.2</span>为什么"快手要自研 Agent"？给非技术读者的一段话</h3>
+  <div class="callout ok"><b>非技术版结论</b><br>
+    快手做的是<em>风控</em>——决定要不要封一个账号、限流一段视频、把内容下架。<em>每一步都是高风险动作</em>：封错了平台被告，封漏了内容出事。任何"AI Agent 自动判罚"都必须满足 4 个硬要求：<br>
+    ① <b>每一步可解释</b>——监管来查"为什么封这个号"要给出依据<br>
+    ② <b>每一步可追回</b>——封错了 5 分钟内能撤销<br>
+    ③ <b>每一步可暂停</b>——发现 Agent 跑偏立刻拉闸<br>
+    ④ <b>关键决定可人工签发</b>——大 V、政治、涉黄涉政这种必须有人复核<br>
+    市面上现成的 Agent 产品（Cursor / Claude Code / OpenHands 等）都是给<em>开发者写代码</em>用的，没有这套<em>治理链路</em>。买不到现成的，所以要自研。<em>自研的核心不是"再造一个 LLM"，而是把这套 4 条审计治理链路真正建出来</em>。
+  </div>
+
+  <h3 class="sub"><span class="n">0.3</span>这份地图怎么读</h3>
+  <p>第 1 章给"7 层一张图"+ 每层一句话定义。<br>
+  第 2-8 章每章<em>放大一层</em>，给那一层的代表产品、关键设计理念、做得好/做不好的点、对快手的借鉴。<br>
+  第 9 章用一个真实的风控 case 把 7 层串起来。<br>
+  <em>所有专业名词都加了"<span style="border-bottom:1px dotted #2f5d50;color:#2f5d50">点这里展开 ⓘ</span>"的就地解释</em>——遇到不认识的就点开看。</p>
+</section>
+
+<!-- ====================================== Fig.0 顶层 -->
+<hr class="sec-divider">
+<section id="p1">
+  <h2 class="sec"><span class="n">1</span>顶层心智图（图 0）</h2>
+  <div class="tldr"><b>TL;DR</b><br>一张图。记住它，后 7 节都是放大某一层。</div>
+  <div class="fig">
+    <img src="images/fig-0.png" alt="图 0 · Agent 生态顶层心智图（7 层 + 3 横切维度）" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 0 · Agent 生态顶层心智图</b>。左：自下而上 7 层 stack；右：3 横切维度。<em>任意框架 = 层级 × 3 标签</em>。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">1.1</span>7 层一句话定义</h3>
+  <div class="callout info"><b>怎么读这张表（给零基础读者）</b><br>
+    下面表格右栏会出现一堆陌生英文名（LangGraph / MCP / Docker / OPA …），<em>不用记住技术细节</em>。每一个都是后面章节的主角，你只需要先看中间一栏的中文定义，能感受到"哦，原来 Agent 生态被切成 7 块"就够了。<em>所有英文名都加了"<span style="border-bottom:1px dotted #2f5d50;color:#2f5d50">点开 ⓘ</span>"的就地解释</em>。
+  </div>
+  <table class="tab">
+    <thead><tr><th style="width:6%">层</th><th style="width:22%">名字</th><th>一句话定义</th><th style="width:32%">代表项</th></tr></thead>
+    <tbody>
+      <tr><td><b>L7</b></td><td>产品与工作台</td><td>用户直接看到的<em>完整 Agent 产品</em>。封装了 L1-L6 全栈。</td><td>OpenHands · Aider · Cline · Continue · pi · <b>OpenClaw</b> · <b>Hermes Agent</b> · Cursor · Devin · Claude Code</td></tr>
+      <tr><td><b>L6</b></td><td>编排运行时</td><td>决定 Agent <em>怎么循环、规划、调用工具、协作、恢复状态</em>。</td><td>LangGraph · OpenAI Agents <details class="gloss"><summary>SDK</summary><span class="body">SDK = Software Development Kit，<em>软件开发工具包</em>。给一种语言（Python/Java/TS...）提供的一组 API + 库 + 文档，让开发者快速集成某个能力。OpenAI Agents SDK = "<em>给 Python/TS 开发者的快速构建 Agent 工具包</em>"。</span></details> · Spring AI · CrewAI · AutoGen · <b>DSPy</b>（声明式编译）</td></tr>
+      <tr><td><b>L5</b></td><td>上下文与记忆</td><td>Agent <em>知道什么、记住什么、如何取回</em>。</td><td>mem0 · Letta · Zep · LangMem · Cognee · A-MEM</td></tr>
+      <tr><td><b>L4</b></td><td>工具与协议</td><td>把 Agent 的<em>意图翻译成可调用的外部接口</em>。</td><td><details class="gloss"><summary>Function Calling</summary><span class="body">Function Calling = 函数调用，让 LLM 输出"我要调哪个工具、参数是什么"的 JSON，宿主程序拿到后真正去执行，再把结果喂回 LLM。是 Agent 能干"动作"的底层机制；OpenAI 2023 年 6 月首次原生支持。</span></details> · <details class="gloss"><summary>MCP</summary><span class="body">MCP = Model Context Protocol，Anthropic 2024 年 11 月发布的跨厂商工具调用协议。把 Agent 怎么调工具 标准化：Agent 端不用知道工具实现细节，只要按 MCP 协议发请求；任何符合 MCP 的服务端都能接入。Agent 工具协议事实标准。</span></details> · <details class="gloss"><summary>A2A</summary><span class="body">A2A = Agent-to-Agent，Google 2025 年发布的跨 Agent 协议。让不同公司、不同栈的 Agent 能互相协作：通过 Agent Card 声明能力，通过 Task/Message 互发任务。比 MCP 高一层（MCP 是 Agent 调工具，A2A 是 Agent 调 Agent）。</span></details> · Open<details class="gloss"><summary>API</summary><span class="body">API = Application Programming Interface，"<em>程序对外提供能力的接口</em>"。比如微信支付有 API，让别的程序能调起付款；OpenAI 有 API，让你的程序能调 GPT。</span></details> Tools</td></tr>
+      <tr><td><b>L3</b></td><td>执行环境</td><td>Agent <em>真正改文件、跑代码、点网页</em>的地方。</td><td>Shell · Browser · <details class="gloss"><summary>Docker</summary><span class="body">Docker = 一种"轻量级虚拟机"技术。把一个程序连同它需要的所有东西打包到"容器"里，运行时容器和宿主机完全隔离。Agent 跑在 Docker 容器里，即使做坏事也只能损害容器自己，不会动到宿主机。</span></details>/VM · Computer Use · DB/MQ/Feature Store</td></tr>
+      <tr><td><b>L2</b></td><td>模型与推理</td><td>提供<em>语言理解、推理、代码生成</em>的基础智能。</td><td>OpenAI · Anthropic · Gemini · DeepSeek · vLLM · LiteLLM</td></tr>
+      <tr><td><b>L1</b></td><td>基础设施与治理</td><td>让 Agent <em>可上线、可控、可观测、可回滚、可合规</em>。</td><td><details class="gloss"><summary>Langfuse</summary><span class="body">Langfuse = 开源 LLM 应用观测平台，做 Tracing / Eval / Cost / Prompt 管理。在 LLM 应用领域类似 DataDog / Sentry 的地位。Java 也有 SDK。</span></details> · Phoenix · <details class="gloss"><summary>OPA</summary><span class="body">OPA = Open Policy Agent，开源策略引擎。用 Rego 语言写"这个动作允不允许"的规则。和 Agent 配合时常用作 The Gate 的实现：所有真实写动作前过 OPA 校验。</span></details> · Ragas · DeepEval · K8s</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">1.2</span>3 个横切维度</h3>
+  <div class="grid3">
+    <div class="card"><h5>① 语言 / runtime</h5><p style="font-size:12.5px;margin:6px 0">解释"开发者采用路径"。<br><span class="badge py">Python</span><span class="badge js">JS/TS</span><span class="badge java">Java/Kotlin</span><span class="badge multi">.NET/Rust/Go</span><span class="badge multi">多语言协议</span></p></div>
+    <div class="card"><h5>② 形态</h5><p style="font-size:12.5px;margin:6px 0">解释"它是什么样的东西"。<br><span class="badge">产品</span><span class="badge">框架</span><span class="badge">SDK</span><span class="badge proto">协议</span><span class="badge">平台</span><span class="badge">基础设施</span></p></div>
+    <div class="card"><h5>③ 开放性</h5><p style="font-size:12.5px;margin:6px 0">解释"能不能自部署 / 二开"。<br><span class="badge oss">开源</span><span class="badge closed">商业闭源</span><span class="badge">云服务</span><span class="badge">本地优先</span></p></div>
+  </div>
+  <div class="insight"><b>记忆口诀：</b>纵向 7 层（L1→L7）= "做什么"；横向 3 维 = "怎么做 / 用什么做"。任意框架 = 1 层级 × 3 标签。</div>
+  <div class="callout ok"><b>7 层边界口诀（codex 共同推演定版）</b><br>
+    L7 = 用户入口 / L6 = 决策循环 / L5 = 可取回知识 / L4 = 调用契约 / L3 = 真实动作 / L2 = 模型推理 / L1 = 生产治理
+  </div>
+</section>
+
+<!-- ====================================== L7 -->
+<hr class="sec-divider">
+<section id="l7">
+  <div class="layer l7"><div class="head"><span class="num">7</span><div><h3>L7 · 产品与工作台 Product &amp; Workspace</h3><div class="def">用户直接使用的完整 Agent 产品。内部封装 L1-L6 全栈。</div></div></div></div>
+
+  <h3 class="sub"><span class="n">7.1</span>这一层的大图（图 7）</h3>
+  <div class="fig">
+    <img src="images/fig-7.png" alt="图 7 · L7 产品矩阵 11 个开源/闭源 Agent 产品" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 7 · 产品矩阵</b>。横轴 = 运行位置（本地 <details class="gloss"><summary>CLI</summary><span class="body">CLI = Command Line Interface，<em>命令行界面</em>。在终端里敲一行命令、回车、看输出，再敲下一行。和"图形界面 / Web 网页"对应。Agent 的 CLI 形态典型：Aider、Claude Code、pi。</span></details> → 云端 Web），纵轴 = 用户面（开发者工作流 ↔ 通用对话）。同象限产品差异在 agent loop / 状态 / 沙箱实现。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">7.2</span>5 个开源产品的"关键设计理念 / 核心问题"（先看这个）</h3>
+  <p>用户原话：<em>"5 个开源产品架构横向对比，需要点出来关键设计理念，和存在的核心问题，设计理念上比较具备特色的，是哪个方面做的比较好？存在哪些关键问题？"</em>。下表先回答这个问题，下一节再上详细维度表。</p>
+  <table class="tab bordered">
+    <thead><tr>
+      <th style="width:10%">产品</th>
+      <th style="width:10%">语言/形态</th>
+      <th style="width:30%">关键设计理念（最出彩的点）</th>
+      <th style="width:30%">核心问题 / 真实限制</th>
+      <th style="width:20%">对快手的"借鉴 / 不借鉴"</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><b>OpenHands</b><br><span class="badge oss"><details class="gloss"><summary>OSS</summary><span class="body">OSS = Open Source Software，开源软件。源代码公开、允许自由查看 / 修改 / 二次分发的软件。本文档里所有标了 OSS 的项目，都是任何人可以下载源码学习的。</span></details></span></td>
+        <td>Python · 云端 Web + Docker</td>
+        <td><span class="design-pros">把 AI 的每一步操作都"关在隔离房间里、并留下录像"</span>。Agent 跑在<em>独立的 Docker 隔离容器</em>里（房间），主服务只负责<em>把每一步动作都写成一条事件</em>（录像）：所有操作可重放、可审计。事件可以存本机、AWS <details class="gloss"><summary>S3</summary><span class="body">S3 = AWS（亚马逊）的"<em>云端对象存储</em>"服务。把文件、日志、备份扔到 S3，永远不会丢、永远能访问。OpenHands 把 Agent 的事件日志存 S3，做长期审计。</span></details> 或谷歌云。<details class="gloss"><summary>事件驱动</summary><span class="body">事件驱动 = 程序把每个动作（"开始/调工具/写文件/结束"）都<em>记成一条事件</em>，按时间顺序追加。和"记当前状态变量"相比，事件流可以回放、审计、分析，天然适合做"AI 干过什么"的记录。</span></details> + <details class="gloss"><summary>进程隔离</summary><span class="body">进程隔离 = 把 Agent 跑在独立的进程或容器里，和主服务不共享内存/文件权限。即使 Agent 出错或被攻击，也跑不出隔离区，不会伤到宿主机。</span></details></td>
+        <td><span class="design-cons">部署重</span>。装一套 OpenHands 要带 Docker / Web / <details class="gloss"><summary>agent-server</summary><span class="body">agent-server = OpenHands 设计里"<em>真正跑 Agent 的独立服务</em>"。和主服务（app-server，管路由 / 用户 / 会话）分开跑，通过 HTTP 通信。好处是 agent 容器可以单独升级、单独熔断，不影响主服务。</span></details> 三件套；调试时跨进程 <details class="gloss"><summary>trace</summary><span class="body">trace = "调用链路记录"。把 Agent 一次任务里所有步骤（每次调 LLM、每次调工具、状态变更、报错）按时间和层级关系记下来，<em>出错时一眼能看到具体哪一步出错了</em>。生产 LLM 应用的"<em>飞行记录仪</em>"。</span></details> 不直观。对单机轻量场景过重。</td>
+        <td><b>借鉴</b>：① 动作 = 事件的审计语义；② Docker 沙箱阻断 <details class="gloss"><summary>prompt injection</summary><span class="body">prompt injection = 提示注入攻击。攻击者在用户输入或外部数据（网页、文件）里塞入"忽略之前指令，改做 X"的话，诱导 LLM 偏离正常行为。Agent 因为要读外部内容，是 prompt injection 的重灾区。沙箱 + 输入校验 + Hook 是主要防御。</span></details> 的 blast radius。</td>
+      </tr>
+      <tr>
+        <td><b>Aider</b><br><span class="badge oss">OSS</span></td>
+        <td>Python · 本地 CLI</td>
+        <td><span class="design-pros">"一问一答到底 + 聊久了自动压缩老话题"</span>。整个主循环就是<em>一行循环</em>：发问→得答→再发问，每一步都<em>等完才下一步</em>，可以一步步追问"哪里出错了"。<em>聊太长怎么办？</em>自动把"开头几句 + 最近几句"保留，把"中段的旧对话"<em>用 AI 概括成几句</em>压回去——30 行代码实现长会话压缩。<em>另一个亮点</em>：让 LLM 不要直接写完整代码，而是输出"<details class="gloss"><summary>diff</summary><span class="body">diff = "改动差异"，比如"原文第 3 行的 A 改成 B"。让 LLM 输出 diff（而不是完整代码），人审 + 本地一键应用（<code>git apply</code>），<em>可控性极高</em>——AI 改错了能立刻看出在哪、能立刻撤回。</span></details>（改动差异）"，本地一键应用，AI 改错了能立刻看出在哪。</td>
+        <td><span class="design-cons">无沙箱、无并发、无<details class="gloss"><summary>服务化</summary><span class="body">服务化 = 把一段功能<em>拆出去，作为独立可调的服务</em>跑（而不是嵌进当前程序）。好处是这个服务可以独立升级、独立扩容、被多个程序复用；缺点是部署和调试更复杂。</span></details></span>。只能本地单人用；agent 在 <details class="gloss"><summary>host</summary><span class="body">host = "宿主机"。运行某个程序/容器的物理机器或虚拟机。Agent 在<em>容器</em>里跑，容器在 host 上跑——Agent 看不到 host，但 host 能监控容器。</span></details> 上直接 <details class="gloss"><summary>subprocess</summary><span class="body">subprocess = 子进程。当前程序临时启动的一个新进程去执行命令（比如运行 git、跑 lint）。不像 Docker 容器是完全隔离的环境，子进程<em>共享宿主机的文件系统和权限</em>——所以一旦 Agent 调用恶意命令就能损害宿主机。</span></details>，安全边界为零；持久化是 <details class="gloss"><summary>Markdown</summary><span class="body">Markdown = 一种用 <code>#</code> <code>**</code> <code>-</code> 等简单符号写排版的文本格式。<em>纯文本可读、版本控制友好、所有平台都能渲染</em>。Aider 把对话历史存成 Markdown，OpenClaw 把记忆存成 Markdown 都因为它<em>不锁数据</em>。</span></details> 聊天记录，不结构化、难审计。</td>
+        <td><b>借鉴</b>：① 递归 summary 直接照搬做"长 case 时间线压缩"；② LLM 输出 diff 思路 = 风控"建议 + 人审 apply"模式。<br><b>不借鉴</b>：Markdown 持久化、subprocess 无隔离。</td>
+      </tr>
+      <tr>
+        <td><b>Cline</b><br><span class="badge oss">OSS</span></td>
+        <td>TypeScript · VSCode 插件</td>
+        <td><span class="design-pros">"明牌记录 AI 的所有异常行为 + 关键<details class="gloss"><summary>节点</summary><span class="body">节点 = 状态图里的一个"<em>停留点</em>"。比如 case 调查流程里的"取证 / 推断 / 出建议 / 等人审"都是节点。LangGraph 让你显式定义节点和节点之间的边（跳转条件），整个流程一画就清楚。</span></details>强制人审"</span>。Cline 的主类有 3764 行，但<em>把 AI 当前的所有状态明明白白写进 20 多个标志位</em>：连错几次、重试几次、读过哪些文件、是否被中止。<em>异常苗头一目了然</em>，触发阈值直接<details class="gloss"><summary>Kill Switch</summary><span class="body">Kill Switch = "紧急熔断开关"。当监测到 Agent 行为异常（连错几次、读同一文件无限多次、用 token 超预算），立即中止任务、撤销中间动作、通知人工。是高风险 Agent 上线的必备保险丝。</span></details>（紧急停机）。<em>另一个亮点</em>：<details class="gloss"><summary>Hook</summary><span class="body">Hook = "钩子"，在某些关键时刻自动触发的回调。比如任务开始 / 用户提交 / 任务取消时执行特定校验或操作。是把"治理规则"插到 Agent 流程关键点的最干净办法。</span></details>（钩子）机制——AI 在每个关键节点强制经过审查点（TaskStart / UserPromptSubmit / TaskCancel）是 <details class="gloss"><summary>The Gate</summary><span class="body">The Gate = 自研架构里的"唯一写入口/控制平面"。所有 Agent 真实写动作（封禁、限流、扣款、发送消息）必经此处，强制过 Policy/OPA 校验、配额、审计签发。是 AI Native 风控的核心防线，不允许 Agent 旁路。</span></details> 的最佳样板。</td>
+        <td><span class="design-cons">VSCode 强绑定</span>。Agent 跑在 VSCode 进程里，状态恢复跨设备难；3764 行 Task 类内聚高但单点故障重；Playwright 浏览器是子进程而非容器。</td>
+        <td><b>借鉴</b>：① <details class="gloss"><summary>TaskState</summary><span class="body">TaskState = "任务状态对象"。把 Agent 当前的所有运行时变量（错了几次、读过哪些文件、是否中止）<em>集中放进一个对象</em>，而不是散落在各种回调闭包里。最大好处：调试 / 监控 / 异常熔断只需要看这一个对象。Cline 的看家本领。</span></details> 显式标志位 = 风控异常监测信号；② <details class="gloss"><summary>Hook</summary><span class="body">Hook = "钩子"，在某个关键事件发生时自动触发的回调。比如"任务开始时"、"用户提交输入时"、"工具被调用前"。Hook 是把"治理规则"插到 Agent 流程关键点的最干净办法——业务规则放钩子里，主流程不被污染。</span></details> 模式 = The Gate 的具体实现；③ fileReadCache 反"无限循环读同一对象" = 防隐私窥探。<br><b>不借鉴</b>：VSCode 嵌入。</td>
+      </tr>
+      <tr>
+        <td><b>Continue</b><br><span class="badge oss">OSS</span></td>
+        <td>TypeScript · VSCode/JetBrains 插件</td>
+        <td><span class="design-pros">"每个业务线一份独立配置 + 内置工具和远程接口混着用"</span>。每个项目/工作区可以放一份独立的 <code>.continuerc.json</code> 配置——<em>开发部门的 AI 和市场部的 AI 用同一个程序但不同规则</em>。工具可以是程序内置的，也可以是远程的 <details class="gloss"><summary>HTTP</summary><span class="body">HTTP = 互联网上"<em>客户端发请求 → 服务端发响应</em>"的标准协议。浏览器打开网页、App 调云服务、Agent 调工具都靠 HTTP。</span></details> 接口（比如调一个公司内部的合规检查服务），<em>新接口不用动核心代码</em>，只要往配置里加一条。</td>
+        <td><span class="design-cons">去中心化 = 无中心<details class="gloss"><summary>状态机</summary><span class="body">状态机 = 把一个复杂流程画成"<em>有几个状态、状态之间怎么跳</em>"的图。比如一个工单的状态机：新建 → 处理中 → 待人审 → 已完成 / 已驳回。优点是流程一目了然、可监控、可恢复；缺点是要先把流程画清楚再写代码。</span></details></span>。没有显式 TaskState，调试时"agent 当前在干什么"散落在多个<details class="gloss"><summary>回调</summary><span class="body">回调 = "你做完之后通知我"。程序 A 把一个函数交给程序 B，程序 B 做完事再调用这个函数告诉 A。好处是 A 不用一直等着；坏处是 A 的状态散落在各种回调里，"<em>当前到底在干什么</em>"很难一眼看清。</span></details>里；无沙箱，靠 IDE 权限边界。</td>
+        <td><b>借鉴</b>：① 每个组织/业务线独立配置 ≈ 按业务线下发不同 Policy；② HTTP 工具 = "远程合规 API"接入模式。<br><b>不借鉴</b>：无中心状态机。</td>
+      </tr>
+      <tr>
+        <td><b>pi</b><br>(earendil-works)<br><span class="badge oss">OSS</span></td>
+        <td>TypeScript · 本地 CLI + <details class="gloss"><summary>TUI</summary><span class="body">TUI = Terminal User Interface，"终端图形界面"。在命令行里用字符画出"按钮 / 列表 / 表格"的界面（想想 Vim、tmux、htop）。比 GUI 轻量，对终端老用户更友好。</span></details></td>
+        <td><span class="design-pros">"业务自己的事件模型 ≠ LLM 厂商的协议格式 · 一份事件流多端订阅 · 依赖严格防供应链投毒"</span>。pi 内部用<em>自己设计的事件结构</em>（叫 AgentMessage，包含审计 / 转交 / 人审等业务事件），<em>只在真正调 LLM 时</em>才转换成 OpenAI/Anthropic 那套协议——这样换 LLM 厂商业务代码不用动，业务的内部审计事件也不会暴露给 LLM。<em>一份事件流</em>：UI 显示、写盘、监控都订阅同一个事件源（不会出现 UI 看到的和写盘的不一致）。"<details class="gloss"><summary>供应链硬化</summary><span class="body">供应链硬化 = 防止"通过依赖库被投毒"的工程纪律。pi 用了三招：① 所有依赖锁到具体版本（不允许"用最新版"）；② 不允许使用"刚发布不到 2 天"的版本（攻击者上传恶意包后 2 天内通常被发现）；③ 锁文件提交到代码库，作为单一事实源。Java 引依赖时也该学这套。</span></details>"指通过严格的依赖版本管理防止"恶意第三方库"潜入——这在 JavaScript 生态里非常少见，体现 pi 的工程严肃度。</td>
+        <td><span class="design-cons">受众窄 + TS 生态</span>。"自扩展"门槛高，多数团队用不上；TUI + 本地 CLI 形态决定它不直接面向服务端 Agent；TypeScript 与快手 Java 主链路有距离，借鉴思想可，落地需重写。</td>
+        <td><b>借鉴</b>：① <em>AgentMessage ↔ LLM Message 边界转换</em> 直接照搬到 Java——风控的"事件模型"不该等于"OpenAI/Anthropic 协议"；② EventStream <details class="gloss"><summary>响应式流</summary><span class="body">响应式流 = "事件像水流一样推送给订阅者"的编程模型。Agent 跑的时候不停产生事件（开始/调工具/中间结果/结束），<em>UI、写盘、监控这些下游<em>统一订阅同一条流</em>，自然得到一份对齐的数据</em>。</span></details>给 trace/审计/UI 一份单一事件源；③ 供应链硬化思路（pin <details class="gloss"><summary>commit</summary><span class="body">commit = "<em>提交点</em>"，是 git 版本控制里某个时刻代码的快照。每个 commit 有一个唯一 SHA（如 7f05be04）。本文档所有源码引用都钉到具体 commit，避免 master 分支漂移导致引用失效。</span></details> + min-release-age）值得 Java 引依赖时学习。<br><b>不借鉴</b>：TS 实现、TUI 形态。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">7.2b</span>详细维度对比（源码深读 + file:line）</h3>
+  <p>下面 5 个仓库我已经 <code>git clone --depth 1</code> 下来逐文件读过。所有 <details class="gloss"><summary>file:line</summary><span class="body">file:line = "文件名:行号"，用来精确指引某段代码的位置（如 <code>agent.py:200</code>）。本文档每条架构断言都贴了 file:line，方便读者去 GitHub 上直接跳转验证。</span></details> 都基于<em>固定 commit</em>（防止 master 漂移）：<code>OpenHands@0ddbd85</code> · <code>aider@5dc9490</code> · <code>cline@0157ed9</code> · <code>continue@cb27309</code> · <code>pi@(snapshot 2026-05-23)</code>。</p>
+
+  <table class="tab bordered">
+    <thead><tr><th style="width:10%">维度</th><th style="width:18%">OpenHands</th><th style="width:18%">Aider</th><th style="width:18%">Cline</th><th style="width:18%">Continue</th><th style="width:18%">pi (earendil-works)</th></tr></thead>
+    <tbody>
+      <tr><td><b>Entry / 主类</b></td>
+        <td><code>app_server/app.py</code> <details class="gloss"><summary>FastAPI</summary><span class="body">FastAPI = Python 里最流行的<em>异步 Web 框架</em>。OpenHands 的 app-server 用 FastAPI 写。开发体验类似 Java 的 Spring Boot，比传统 Flask 性能更好、类型更严。</span></details><br><code>AppConversationService</code></td>
+        <td><code>aider/main.py</code> CLI<br><code>Coder</code> (base_coder.py:88)</td>
+        <td><code>src/core/task/index.ts</code><br><code>Task</code> 类（3764 行）</td>
+        <td><code>core/core.ts</code><br><code>Core</code> 单例（line 92）</td>
+        <td><code>packages/coding-agent/src/main.ts</code><br>+ <code>packages/agent/src/agent.ts</code></td></tr>
+      <tr><td><b><details class="gloss"><summary>Agent loop</summary><span class="body">Agent loop = "Agent 主循环"。让 LLM 不断重复"思考 → 调工具 → 看结果 → 再思考"直到任务完成的循环。是所有 Agent 框架的核心——区别只是这个循环写得多复杂（30 行 vs 3000 行）、有没有 checkpoint、能不能人审打断。</span></details> 形态</b></td>
+        <td>事件流（agent 跑独立进程）<br>HTTP 到 agent-server</td>
+        <td>同步 <details class="gloss"><summary>REPL</summary><span class="body">REPL = Read-Eval-Print Loop，读取-求值-输出循环。一次性的、阻塞的"输入 → 处理 → 输出 → 再输入"。比如 Python 交互式命令行就是 REPL。这种结构简单可靠，每一步都看得见，但不擅长长时间后台任务。</span></details> <code>run_one()</code> → <code>send_message()</code><br>base_coder.py:924/1419</td>
+        <td>异步 agentic loop <code>initiateTaskLoop()</code><br>index.ts:1453, while(!abort)</td>
+        <td>callback 流式 <code>llmStreamChat()</code><br>无显式 loop 文件</td>
+        <td>响应式 EventStream<br><code>agent-loop.ts</code>（742 行）<br><code>agentLoop()</code> 入口</td></tr>
+      <tr><td><b>状态模型</b></td>
+        <td>服务化状态<br><code>AppConversation</code> 模型</td>
+        <td><code>Coder</code> 实例持状态<br><code>self.cur_messages</code></td>
+        <td>显式 <code>TaskState</code> 类<br>20+ 标志位<br>(TaskState.ts:6)</td>
+        <td>分布式 <code>GlobalContext</code><br>无中心状态机</td>
+        <td><code>AgentContext</code> + <code>AgentState</code>（types.ts）<br><em>域模型 ↔ LLM Message 边界转换</em></td></tr>
+      <tr><td><b>Tool 注册</b></td>
+        <td>MCP 协议 + agent-server 内置</td>
+        <td>LLM <code>functions</code> 参数<br>Coder 方法即工具</td>
+        <td><code>src/core/task/tools/</code>（50+ tool 文件）<br>+ <code>McpHub</code> MCP 工具<br><code>ToolExecutor</code> dispatch</td>
+        <td><code>core/tools/builtIn.ts</code> enum<br>+ HTTP 工具 <code>callTool.ts:50+</code></td>
+        <td><code>AgentTool</code> 类型 + <code>validateToolArguments</code><br>before/afterToolCall hook</td></tr>
+      <tr><td><b>上下文压缩</b></td>
+        <td>外部 agent-server 负责</td>
+        <td><code>ChatSummary</code> 递归 summary<br>history.py:7</td>
+        <td><code>ContextManager</code> 跟踪 file/env/model <details class="gloss"><summary>token</summary><span class="body">token = LLM 处理文本的"最小单位"。一个汉字大约 1.5-2 token，一个英文单词大约 0.7-1 token。LLM 一次能处理的 token 数（上下文窗口）有上限（4K / 128K / 1M），超出后只能"忘掉一些"。token 也是 LLM 计费的单位：每千 token 几美分。</span></details><br>+ pre-compaction hook</td>
+        <td><code>countTokens()</code> 预算<br>没观察到 summary</td>
+        <td>由 <code>StreamFn</code> 抽象注入；<br>多 <details class="gloss"><summary>provider</summary><span class="body">provider = "<em>提供商</em>"，这里特指 LLM 厂商或它们提供的访问入口。比如 OpenAI / Anthropic / DeepSeek 是 provider；OpenRouter 是"<em>聚合 provider</em>"——一个入口背后接 200+ 模型。</span></details> 路由用 <code>Transport</code></td></tr>
+      <tr><td><b>沙箱</b></td>
+        <td><b>Docker 容器</b><br>docker_<details class="gloss"><summary>sandbox</summary><span class="body">sandbox = 沙箱。让 Agent 跑在受限的环境里（Docker 容器、VM、限权进程），即使 Agent 被攻陷或自己出错，也不能损害宿主机。OpenHands 的 Docker 容器是标杆。</span></details>_service.py:1+</td>
+        <td>subprocess 跑 git/lint<br>run_cmd.py · 无隔离</td>
+        <td>VSCode webview 改文件<br>+ 用户终端 subprocess<br>+ Playwright 浏览器</td>
+        <td>IDE 内联 · 无沙箱<br>靠 VSCode 权限</td>
+        <td>本地 CLI · 无沙箱<br>靠 OS 权限</td></tr>
+      <tr><td><b>system prompt</b></td>
+        <td>外部 agent-server</td>
+        <td><code>aider/prompts.py</code><br>~200-500 token 基底 + repo map</td>
+        <td><code>src/core/prompts/system-prompt/</code><br>模块注册表<br>~2000-3000 token</td>
+        <td><code>core/llm/defaultSystemMessages.ts</code><br>~1000 token + 工作区规则</td>
+        <td>分散在 modes（interactive / rpc / print）；<br>无单一文件</td></tr>
+      <tr><td><b>持久化</b></td>
+        <td><details class="gloss"><summary>EventService</summary><span class="body">EventService = "事件服务"，OpenHands 里负责把 Agent 的所有动作（开始/调工具/写文件/结束）作为<em>事件</em>持久化的组件。支持存本机文件、AWS S3、谷歌云存储三种后端。事件可重放、可审计、可分析。</span></details><br>FileSystem / S3 / GCS<br><details class="gloss"><summary>JSON</summary><span class="body">JSON = JavaScript Object Notation，一种"<em>用大括号和方括号写结构化数据</em>"的格式。是网络上最常用的数据交换格式，几乎所有 LLM API、Agent 工具调用都用 JSON 传消息。</span></details> per event</td>
+        <td>Markdown 聊天文件<br><code>~/.aider_chat_history.md</code></td>
+        <td><code>.cline/{taskId}/messages.json</code><br>+ <details class="gloss"><summary>checkpoint</summary><span class="body">checkpoint = 检查点。Agent 在每个关键步骤后把当前状态整体写盘，挂掉重启能从最近一次 checkpoint 恢复，不用从头跑。LangGraph / Temporal 的核心机制。</span></details> 快照</td>
+        <td>会话 JSON + <details class="gloss"><summary>SQLite</summary><span class="body">SQLite = 单文件嵌入式数据库。<em>不需要起独立服务进程</em>，整个数据库就是一个文件。Cline / mem0 用它存对话历史/审计日志，<em>简单可控</em>。</span></details> trace<br><code>~/.continue/</code></td>
+        <td>会话快照 + <em>可发布到 HuggingFace</em>（badlogicgames/pi-mono）作训练数据</td></tr>
+      <tr><td><b>独家特性</b></td>
+        <td>跨进程 / 跨主机部署</td>
+        <td>git apply diff（LLM 不写完整代码）</td>
+        <td>20+ 标志位 + <details class="gloss"><summary>Hook</summary><span class="body">Hook = 钩子。在程序的<em>关键步骤之前或之后插一段你自己的代码</em>。比如 Cline 的 TaskStart Hook 在每个 Agent 任务开始前跑，可以塞合规校验、记录审计、阻断危险动作。是 The Gate 的最佳样板。</span></details> 机制</td>
+        <td>工作区独立 <code>.continuerc.json</code></td>
+        <td>供应链硬化（pin commit + min-release-age=2 + 锁文件强约束）；<br>"自扩展" agent 可改自己代码</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">7.3</span>每个产品的"关键源码片段"</h3>
+
+  <details class="expand"><summary>OpenHands · 事件驱动 + Docker sandbox</summary><div class="body">
+    <p><b>架构核心</b>：app-server（FastAPI）只管 conversation 路由 + 事件持久化，<em>真正的 agent loop 跑在独立的 agent-server 进程里</em>（默认 Docker 容器）。两边通过 HTTP/Event Stream 协议通信。</p>
+    <p><span class="keyfile">openhands/app_server/app_conversation/app_conversation_router.py:119+</span> AgentServerContext 路由</p>
+    <p><span class="keyfile">openhands/app_server/event/event_service.py:16+</span> EventService 抽象（FileSystem / AWS / GCS 三种后端）</p>
+    <p><span class="keyfile">openhands/app_server/sandbox/docker_sandbox_service.py:1+</span> Docker 客户端，<code>docker.APIClient</code> 起容器</p>
+    <p><b>风控启示</b>：① <em>事件流是天然审计日志</em>——所有 agent 动作 = event，永远可回放；② Docker 隔离让 agent 即使被 prompt injection 攻陷也跑不出沙箱；③ MCP 工具协议让"DLP/合规扫描器"可以当 third-party <details class="gloss"><summary>MCP server</summary><span class="body">MCP server = 实现了 MCP 协议的"<em>工具提供方</em>"进程。Agent 这边按 MCP 协议发请求，MCP server 收到后真正去做事（查数据库、调外部 API、运行命令）。一个 Agent 可以同时接多个 MCP server，每个负责一个工具集。</span></details> 接入，不污染 agent 代码。</p>
+  </div></details>
+
+  <details class="expand"><summary>Aider · 同步 REPL + 递归 summarize</summary><div class="body">
+    <p><b>架构核心</b>：<code>Coder</code> 类 + 同步 <code>while message:</code> 循环。简单但可靠——每一步都是阻塞、可追溯的。</p>
+    <pre class="code"># aider/coders/base_coder.py:932-944  (run_one 内部)
+while message:
+    self.reflected_message = None
+    list(self.send_message(message))
+    if not self.reflected_message: break
+    message = self.reflected_message</pre>
+    <p><span class="keyfile">aider/coders/base_coder.py:924</span> <code>run_one()</code> 入口</p>
+    <p><span class="keyfile">aider/coders/base_coder.py:1419</span> <code>send_message()</code> 单次 LLM 调用</p>
+    <p><span class="keyfile">aider/history.py:7-96</span> <code>ChatSummary</code> 类 · 上下文超 token 限制时递归"切 head/tail + summarize 中段"</p>
+    <p><span class="keyfile">aider/prompts.py</span> 强调"review diffs"而非"write code"——LLM 输出 diff，本地 git apply</p>
+    <p><b>风控启示</b>：① 同步阻塞 = 决策可追溯，符合风控"每一步都要留证据"；② <em>递归 summarize</em> 完全可以照搬做"长 case 时间线压缩"。</p>
+  </div></details>
+
+  <details class="expand"><summary>Cline · 显式 TaskState + 模块化 system prompt</summary><div class="body">
+    <p><b>架构核心</b>：<code>Task</code> 类 3764 行，但状态全部抽到 <code>TaskState</code>（20+ 标志位）。<em>显式状态机让"agent 是否在做坏事"可以一眼看出来</em>。</p>
+    <pre class="code">// src/core/task/index.ts:1456-1479  (initiateTaskLoop)
+while (!this.taskState.abort) {
+    const didEndLoop = await this.recursivelyMakeClineRequests(...);
+    // Cline 会一直调工具，直到 attempt_completion
+    nextUserContent = [{type: "text", text: formatResponse.noToolsUsed(...)}];
+}</pre>
+    <p><span class="keyfile">src/core/task/index.ts:1453</span> <code>initiateTaskLoop()</code></p>
+    <p><span class="keyfile">src/core/task/TaskState.ts:6+</span> <code>TaskState</code>：<code>didEditFile</code> / <code>consecutiveMistakeCount</code> / <code>autoRetryAttempts</code> / <code>fileReadCache</code> / <code>abort</code> ...</p>
+    <p><span class="keyfile">src/core/prompts/system-prompt/index.ts:16+</span> <code>getSystemPrompt()</code> · 注册表模式 · 按模型/上下文挑变体</p>
+    <p><span class="keyfile">src/core/hooks/hook-executor.ts</span> Hook：<code>TaskStart</code> / <code>UserPromptSubmit</code> / <code>TaskCancel</code></p>
+    <p><b>风控启示</b>：① <code>consecutiveMistakeCount</code> + <code>autoRetryAttempts</code> 是天然的"异常 agent 行为指标"——可以接入快手 Kill Switch；② Hook 模型 = The Gate 的最佳实现样板，所有"敏感工具执行前"都过 hook；③ <code>fileReadCache</code> 防止"无限循环读同一文件"——风控对应：防止"agent 反复探查同一用户隐私"。</p>
+  </div></details>
+
+  <details class="expand"><summary>pi · 域模型与 LLM 协议边界转换 + EventStream 响应式</summary><div class="body">
+    <p><b>架构核心</b>：mono repo 拆 4 个包——<code>pi-ai</code>（多 provider 统一 LLM API） · <code>pi-agent-core</code>（agent runtime + tool calling + state） · <code>pi-coding-agent</code>（CLI） · <code>pi-tui</code>（差分渲染 TUI）。<em>边界纪律</em>：内部用 <code>AgentMessage</code> 这套域模型，<em>只在调 LLM 时</em>用 <code>convertToLlm()</code> 转成 <code>Message[]</code>——把"agent 内部事件"和"LLM 协议"严格分开。</p>
+    <pre class="code">// packages/agent/src/agent-loop.ts:30+
+export function agentLoop(
+    prompts: AgentMessage[],
+    context: AgentContext,
+    config: AgentLoopConfig,
+    signal?: AbortSignal,
+    streamFn?: StreamFn,
+): EventStream&lt;AgentEvent, AgentMessage[]&gt; { /* ... */ }
+
+// 默认转换器：过滤掉 agent 内部事件，只保留 LLM 能消化的
+function defaultConvertToLlm(messages: AgentMessage[]): Message[] {
+  return messages.filter(m =>
+    m.role === "user" || m.role === "assistant" || m.role === "toolResult");
+}</pre>
+    <p><span class="keyfile">packages/agent/src/agent-loop.ts:30+</span> <code>agentLoop()</code> 主入口</p>
+    <p><span class="keyfile">packages/agent/src/agent.ts:1-50</span> <code>defaultConvertToLlm()</code> · 域模型 → LLM 协议边界</p>
+    <p><span class="keyfile">packages/agent/src/proxy.ts:1+</span> Proxy 模式 · 服务端代理 LLM 调用以管 auth</p>
+    <p><span class="keyfile">packages/agent/src/types.ts</span> <code>AgentContext / AgentState / AgentTool / AgentEvent</code> 全套域模型类型</p>
+    <p><b>风控启示</b>：<em>这一条最值得照搬</em>——快手 Java Agent 一定要建一套 <code>AgentMessage</code> 自有领域模型（含 <code>type=audit_event / handoff / hitl_request</code> 等内部事件），<em>不要</em>让 OpenAI / Anthropic 的协议直接漏到业务层。代价是写一层转换器，收益是更换 LLM 厂商不用动业务代码、内部审计事件不会被 LLM 看到。<br>额外借鉴：① EventStream 给 trace / UI / 持久化 一份单一事件源；② 供应链硬化 <code>save-exact=true</code> + <code>min-release-age=2</code> 是 Java 引依赖时也该照学的纪律。</p>
+  </div></details>
+
+  <details class="expand"><summary>Continue · 模块化工具 + 工作区规则</summary><div class="body">
+    <p><b>架构核心</b>：去中心化 <code>Core</code> 类 + 工具实现散落 <code>core/tools/</code>。强调"可定制"——每个工作区可定义自己的工具集和规则。</p>
+    <p><span class="keyfile">core/core.ts:92+</span> <code>Core</code> 单例</p>
+    <p><span class="keyfile">core/tools/callTool.ts:50+</span> <code>callTool()</code> · 工具 dispatcher · 内置 + HTTP 工具混合调度</p>
+    <p><span class="keyfile">core/tools/builtIn.ts</span> 内置工具枚举</p>
+    <p><span class="keyfile">core/util/history.ts:186+</span> 历史 JSON 序列化</p>
+    <p><b>风控启示</b>：① <em>每个组织/频道可有自己的 .continuerc.json</em>——映射到快手"按业务线下发不同 Policy"；② HTTP 工具机制让"远程合规 API"可被 agent 调用，不用进程内塞。</p>
+  </div></details>
+
+  <h3 class="sub"><span class="n">7.4</span>5 个产品的"借鉴 / 不借鉴"汇总</h3>
+  <div class="callout ok"><b>✓ 直接借鉴（5 条核心）</b><br>
+    1. <b>OpenHands 事件流 + Docker 沙箱</b> → 风控 Agent "动作 = event" + 隔离执行<br>
+    2. <b>Cline 显式 TaskState + Hook</b> → The Gate 实现成 Hook，异常指标存进 TaskState<br>
+    3. <b>Aider ChatSummary 递归压缩</b> → 长 case 历史压缩，保留近端、压缩远端<br>
+    4. <b>Continue HTTP 工具 + 工作区规则</b> → 多业务线策略隔离<br>
+    5. <b>pi AgentMessage 域模型 + LLM 协议边界转换</b> → Java Agent 自有领域事件，<em>不让 LLM 协议漏到业务层</em>
+  </div>
+  <div class="callout warn"><b>✗ 不照搬</b><br>
+    1. <b>VSCode/IDE 嵌入</b>（Cline / Continue / Cursor）——快手 Agent 是服务端，不在 IDE 里跑<br>
+    2. <b>Markdown 聊天文件持久化</b>（Aider）——风控需要结构化审计日志，不是聊天记录<br>
+    3. <b>无沙箱 / 仅 subprocess</b>（Aider / Continue / pi）——风控涉及万级账号封禁，必须强隔离<br>
+    4. <b>本地 CLI + TUI 形态</b>（Aider / pi）——快手 Agent 是 7×24 服务端进程
+  </div>
+
+  <h3 class="sub"><span class="n">7.4b</span>L7 第二切片：通用个人助理类（OpenClaw · Hermes Agent）</h3>
+  <p>上面 5 个产品（OpenHands / Aider / Cline / Continue / pi）共同点是<em>面向开发者的 coding agent</em>。L7 还有一类社区讨论极热、定位非常不一样的产品——<em>通用个人助理</em>：跑在你自己机器上、接所有日常通讯渠道、长记忆、能自我演进。这类对快手风控启示<em>不在 coding</em>，而在<em>长期记忆 + 多通道接入 + 学习闭环</em>。</p>
+  <table class="tab bordered">
+    <thead><tr>
+      <th style="width:11%">产品</th>
+      <th style="width:12%">语言/形态</th>
+      <th style="width:30%">关键设计理念（最出彩的点）</th>
+      <th style="width:27%">核心问题 / 真实限制</th>
+      <th style="width:20%">对快手的"借鉴 / 不借鉴"</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><b>OpenClaw</b><br>(Peter Steinberger)<br><span class="badge oss">OSS · MIT</span></td>
+        <td>TS / Swift / Kotlin · 多端原生 + 网关</td>
+        <td><span class="design-pros">"网关 = 控制平面，产品 = 助手本身"</span>。OpenClaw 把消息网关（处理 20+ 通讯渠道接入：WhatsApp / Telegram / Slack / Discord / iMessage / 微信 / QQ ...）和助手本身彻底拆开。Memory 用本地 <em>Markdown 文件</em>存（local-first，不上云）；<em>心跳守护进程</em>让 Agent 能在没人催的情况下自主调度。三层 SDK 抽象（plugin-sdk · memory-host-sdk · plugin-package-contract）让插件生态可控扩展。2025-11 首发到 2026-02 涨到 24.7 万 star，<em>史上增速最快的开源 AI 仓库之一</em>。</td>
+        <td><span class="design-cons">个人助理形态 ≠ 服务端架构</span>。代码主体是 macOS/iOS/Android 原生 app + Node.js 网关，没有"水平扩展、千万 QPS"那一套；本地 Markdown 记忆好处是隐私和单用户优雅，坏处是组织级共享、<details class="gloss"><summary>ACL</summary><span class="body">ACL = Access Control List，访问控制列表。规定"<em>谁能对哪个资源做哪些操作</em>"的清单。比如"产品 A 的运营组能读 / 不能改 case 库"。多租户和组织内权限管理的标配。</span></details>、审计要重做。</td>
+        <td><b>借鉴</b>：① <em>"Gateway = 控制平面"思想</em> 直接映射到快手 The Gate——一个进程专管"动作合规校验 / 流量路由 / 审计签发"；② 心跳守护进程做"自主调度"对应 Agent 长流程外壳的极简版本。<br><b>不借鉴</b>：本地 Markdown 持久化、多端原生 app 形态。</td>
+      </tr>
+      <tr>
+        <td><b>Hermes Agent</b><br>(NousResearch)<br><span class="badge oss">OSS · MIT</span></td>
+        <td>Python · CLI + TUI + 多通道</td>
+        <td><span class="design-pros">"自我演进 = 经验自动结晶成技能"</span>。Hermes 最独特的设计：<em>Agent 解决一个难题后，自动写一份可复用的技能文档（skill doc），下次类似任务直接调技能</em>——这是闭环学习不是"运行时聊聊"。技能文档遵循 <code>agentskills.io</code> 开放标准。<em>关键工程纪律</em>：用 <code>ContextVar</code>（<code>tools/skill_provenance.py</code>）区分"<em>背景审查 <details class="gloss"><summary>fork</summary><span class="body">fork = 进程/数据的"分叉副本"。Hermes 的"background-review fork"是<em>另起一个干净的 Agent 实例</em>专门做技能审查，不污染前台用户的会话。"<em>fork 来源</em>"用来区分写入是来自背景任务还是用户直接操作。</span></details></em>"和"<em>前台用户驱动</em>"两种写入来源——curator 只自动整理自己创建的技能，<em>绝不动用户手写的</em>。多 provider 路由（Nous Portal / OpenRouter 200+ 模型 / NVIDIA NIM / Xiaomi MiMo / GLM / Kimi / OpenAI ...），<code>hermes model</code> 一条命令切换，无代码变更。7 种终端后端（local / Docker / SSH / Singularity / Modal / Daytona / Vercel Sandbox）。<details class="gloss"><summary>FTS5</summary><span class="body">FTS5 = SQLite 的<em>全文搜索引擎</em>（第 5 代）。让你能像搜 Google 一样在 SQLite 表里搜中文/英文文本。Hermes 用 FTS5 做跨会话历史检索——<em>不用上 ElasticSearch 也能做"搜过去聊过什么"</em>。</span></details> 全文搜索 + <details class="gloss"><summary>Honcho</summary><span class="body">Honcho = 一个开源的"<em>用户建模引擎</em>"。它持续观察用户的对话与反馈，<em>用对话辩证法</em>（dialectic）建立一个跨会话的"<em>用户长期模型</em>"。Hermes Agent 用它做长记忆。</span></details> 用户建模做跨会话长记忆。Research-ready：自带批量轨迹生成 + 压缩，喂下一代 tool-calling 模型训练。</td>
+        <td><span class="design-cons">Python + CLI 形态 + 个人单用户</span>。多租户 / 行级 ACL / 审计签发都没有；自我演进的"技能"在风控场景是巨大风险——AI 自己生成的技能能不能上生产必须有专门把关。</td>
+        <td><b>借鉴</b>：① <em>"技能文档化 + agentskills.io 标准"</em> 直接对应快手 Memory <details class="gloss"><summary>tier</summary><span class="body">tier = "<em>分级</em>"。Memory tier A/B/C/D 就是把记忆按可信度分 4 级：Tier A 红线规则（不可改）/ Tier B 已验证事实 / Tier C 新写入候选 / Tier D 隔离区（疑似污染）。<em>每级有不同读写权限和审计强度</em>。</span></details> 状态机的"Tier A Procedural"——把"如何处理某类 case"沉淀成可审计的技能 doc；② <em>"背景审查 fork vs 前台用户" 写入来源 <details class="gloss"><summary>ContextVar</summary><span class="body">ContextVar = Python 标准库的"<em>上下文局部变量</em>"。让一段代码<em>不需要传参</em>就能拿到"<em>当前任务的状态</em>"。Hermes Agent 用它区分"<em>背景任务 fork</em>"和"<em>前台用户操作</em>"两种执行上下文，避免 curator 自动整理用户手写技能。</span></details> 分离</em> 是 Java Agent 自我演进的最佳样板，curator 越权风险天然隔离；③ 跨终端后端抽象（local / Docker / Modal）值得学。<br><b>不借鉴</b>：自我演进自动上生产（必须人审签发）、CLI 形态。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">7.5</span>闭源 / 半闭源产品的"参考价值"（Claude Code · Cursor · Devin · Hermes）</h3>
+  <p>除了上面 5 个完全开源的产品，社区里还有几个高热度产品<em>源码不开</em>但<em>架构信息有迹可循</em>，对认知体系完整性很重要：</p>
+  <table class="tab bordered">
+    <thead><tr><th style="width:14%">产品</th><th style="width:18%">开放程度</th><th>能学到什么</th><th>来源 / 参考</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Claude Code</b><br>(Anthropic)</td>
+        <td>CLI 二进制 + 部分 SDK（<a href="https://github.com/anthropics/claude-code" target="_blank">claude-code SDK</a> + Claude Agent SDK）</td>
+        <td>① <em>Agent SDK 的设计哲学</em>：建议 "30 行 Java loop" 而不是上重型框架（Anthropic Building Effective Agents 白皮书的工程实践版本）；② 工具协议、context 管理、<details class="gloss"><summary>HITL</summary><span class="body">HITL = Human-In-The-Loop，人在回路。Agent 在关键节点暂停、把当前状态交给人审核、人决定后再继续。和"完全自主 Agent"对应，是高风险场景（封禁/资金/医疗）的必选项。</span></details>（人在回路）的具体 API；③ 社区有多份 "system prompt 逆向"讨论（reddit/HN），但要谨慎采信。</td>
+        <td><a href="https://www.anthropic.com/research/building-effective-agents" target="_blank">Building Effective Agents 论文</a> · <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank">Claude Code 文档</a> · 社区 reverse-engineering 讨论。</td>
+      </tr>
+      <tr>
+        <td><b>Cursor Agent</b></td>
+        <td>闭源</td>
+        <td><em>UI 形态</em>：IDE 内联 Agent 怎么管 diff 预览、跨文件改动、用户控制（Accept All / Reject）；启发 "Agent 输出建议、人 apply" 工作流。架构本身无法精读，但其产品形态值得 PM 学习。</td>
+        <td>用户实操 + 官方博客</td>
+      </tr>
+      <tr>
+        <td><b>Devin</b><br>(Cognition Labs)</td>
+        <td>闭源 + 营销驱动</td>
+        <td>对外宣传"<em>完全自主 SWE Agent</em>"，但社区评测（SWE-bench Verified、独立复现）显示自主能力被夸大。对快手的启示是<em>反例</em>：完全自主 Agent 在真实生产中还远未成熟，HITL 是必选项。</td>
+        <td><a href="https://www.cognition.ai/blog" target="_blank">Cognition 博客</a> · 独立第三方复现报告（如 Answer.AI）</td>
+      </tr>
+      <tr>
+        <td><b>Hermes 模型系列</b><br>(NousResearch · L2 模型层)</td>
+        <td>OSS · MIT 模型权重</td>
+        <td>这里特指 <em>Hermes 模型系列</em>（开源指令微调 LLM）·属 L2 模型层。<em>Hermes Agent</em>（同名 Agent 产品 / 运行时框架）已在 7.4b 独立讲，不在此处比较。<br>启示：<em>开源模型 + 函数调用能力</em>是 Agent 落地的关键变量。Hermes 模型在工具调用微调上做了大量优化（Hermes Function-Calling 数据集），对自部署 LLM 跑 Agent 非常友好。</td>
+        <td><a href="https://github.com/NousResearch" target="_blank">NousResearch GitHub</a> · <a href="https://huggingface.co/NousResearch" target="_blank">HF 模型库</a></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout info"><b>关于 "Claude Code system prompt 泄露源" 的说明</b><br>
+    社区有多份号称"逆向出 Claude Code system prompt"的帖子（HN / Reddit / X）。这些<em>不是 Anthropic 官方源码</em>，是用户通过 prompt injection 探出来的部分文本，<em>不完整、不可信、随版本变化</em>。本文档不引用这类源作为权威依据，只以官方 <a href="https://github.com/anthropics/claude-code" target="_blank">claude-code</a> SDK + Anthropic 公开文档 + "Building Effective Agents" 白皮书为准。
+  </div>
+</section>
+
+<!-- ====================================== L6 -->
+<hr class="sec-divider">
+<section id="l6">
+  <div class="layer l6"><div class="head"><span class="num">6</span><div><h3>L6 · 编排运行时 Orchestration &amp; Runtime</h3><div class="def">决定 Agent 怎么循环、规划、调用工具、协作、恢复状态。</div></div></div></div>
+
+  <div class="tldr"><b>这一章为什么重做了一次</b><br>
+    第一版把"<details class="gloss"><summary>编排范式</summary><span class="body">"编排范式"指 Agent 在内部是<em>用什么思维结构</em>组织一次任务的：是一条流水线？一张状态图？还是几个角色互相喊话？范式决定了同样的 LLM 在不同框架下表现出的"性格"。</span></details>"和"<details class="gloss"><summary>语言生态</summary><span class="body">"语言生态"指框架原生跑在哪门编程语言里：Python / JVM(Java/Kotlin) / TypeScript / .NET / Go。语言生态决定能不能直接嵌入快手现有 Java 后端，不决定 Agent 的思考方式。</span></details>"两个维度揉在一起了：把 LangGraph4j 当独立范式（其实它只是 LangGraph 的 Java 版本，范式仍是"<em>状态图</em>"）；把 Spring AI / LangChain4j / Embabel 三个不同范式的框架硬塞到"Java 桶"里。已和 codex 多轮推演后重做：横向只切"编排范式"，纵向"语言生态"另起一张表。
+  </div>
+
+  <h3 class="sub"><span class="n">6.1</span>这一层的大图（图 6）· 8 范式横向矩阵</h3>
+  <div class="fig" id="fig6-slot">
+    <img src="images/fig-6.png" alt="图 6 · L6 编排范式 8 大族横向矩阵" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 6 · L6 编排范式 8 大族（横向单维度，不掺生态）</b>。Chain/LCEL · State Graph · Agent Handoff · Multi-Agent Team · Planner/GOAP · Durable Workflow · Framework Glue · Declarative Compilation (DSPy)。族之间<em>可叠加但范式互斥</em>：生产系统常见组合是 State Graph + Durable Workflow（如 LangGraph + Temporal）。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">6.2</span>8 范式横向对比 · 关键设计理念 / 核心问题</h3>
+  <table class="tab bordered">
+    <thead>
+      <tr>
+        <th style="width:13%">范式</th>
+        <th style="width:18%">代表项目</th>
+        <th style="width:23%">关键设计理念（做得好的点）</th>
+        <th style="width:23%">核心问题 / 真实限制</th>
+        <th style="width:23%">适合什么场景</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>① 流水线式管道</b><br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px">Chain / <details class="gloss"><summary>LCEL</summary><span class="body">LCEL = LangChain Expression Language，LangChain 自己的"声明式管道语法"。允许用 <code>prompt | model | parser</code> 这样的 <em>管道符</em> 把组件串成可组合的流水线，并自动支持流式、批处理、异步。</span></details></span></td>
+        <td>LangChain · Haystack Pipelines</td>
+        <td><span class="design-pros">声明式组合</span>：所有组件实现统一接口，用 <code>|</code> 拼成可观察、可流式、可批量的流水线。学习曲线最低，"几行代码跑通 <details class="gloss"><summary>RAG</summary><span class="body">RAG = Retrieval-Augmented Generation，检索增强生成。先用语义检索从知识库里取出相关片段，再把片段当 context 给 LLM 一起生成答案。是缓解 LLM 幻觉、补充时新知识的标准做法。</span></details>"靠它。</td>
+        <td><span class="design-cons">复杂分支表达难</span>：管道是线性的，<em>循环 / 回滚 / 人审中断</em> 写起来扭曲；状态隐含在<details class="gloss"><summary>闭包</summary><span class="body">闭包 = 程序里"<em>把状态藏在函数内部</em>"的写法。优点是写起来快；缺点是别人看代码看不出"现在 Agent 是什么状态"——状态被裹在函数里，调试很难。Cline 的 TaskState 就是反例：所有状态明牌摆出来。</span></details>里，调试和审计困难。LangChain 官方在 2024 后把 agentic 部分基本让位给 LangGraph。</td>
+        <td>纯 RAG 问答、固定 prompt 流水、原型验证。<em>不</em>适合多步骤决策、长流程恢复。</td>
+      </tr>
+      <tr>
+        <td><b>② 状态图<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px">State Graph</span></b></td>
+        <td>LangGraph (Py) · LangGraph4j (<details class="gloss"><summary>JVM</summary><span class="body">JVM = Java Virtual Machine，<em>Java 虚拟机</em>。Java/Kotlin/Scala 程序最终都在 JVM 上跑。说"JVM 生态"= 这门语言能跑在 Java 虚拟机上、能复用 Java 的库和工具。LangGraph4j、Spring AI、Embabel 都属于 JVM 生态。</span></details>) · Burr (Py)</td>
+        <td><span class="design-pros">把 Agent 显式建模成状态机</span>：节点 = 步骤，边 = 转换条件，<details class="gloss"><summary>checkpoint</summary><span class="body">checkpoint 把 Agent 当前的"心智状态"（已说过什么、调过哪些工具、得到什么结果）整体存盘。系统挂了重启后，能从 checkpoint 接着跑，不用从头再做一遍。</span></details> + <details class="gloss"><summary>interrupt</summary><span class="body">interrupt 是"<em>停下来等人</em>"的机制。Agent 跑到某一步主动暂停，把当前状态写盘，等人审通过再继续——HITL（人在回路）的标准做法。</span></details> 是一等公民。复杂分支、循环、人审恢复都能直接画出来。</td>
+        <td><span class="design-cons">建模成本高</span>：把"调 LLM + 用工具"翻译成"画图"对新手不直观；简单线性任务用它显得过重。<em>不是</em>编程语言抽象，是流程图抽象。</td>
+        <td>复杂多步流程（case 调查、人审升级）、长任务恢复、需要审计的生产工作流。<em>风控核心借鉴对象。</em></td>
+      </tr>
+      <tr>
+        <td><b>③ 角色转交<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px">Agent Handoff</span></b></td>
+        <td>OpenAI Agents SDK · Swarm (legacy)</td>
+        <td><span class="design-pros">handoff = 特殊工具</span>：让一个 Agent 把控制权直接<em>"转给"</em>另一个专家 Agent，写起来像 <code>handoff(triage_agent)</code>，自然表达"分诊路由"。<details class="gloss"><summary>Guardrail</summary><span class="body">Guardrail = 护栏，在 Agent 输入/输出处做的校验。输入护栏：判断用户输入是否合规、有没有 prompt injection；输出护栏：判断 Agent 的回答有没有泄密、违规、超阈值。OpenAI Agents SDK 把它做成一等抽象。</span></details> / <details class="gloss"><summary>Tracing</summary><span class="body">Tracing = 把 Agent 一次任务里所有的步骤（LLM 调用、tool 调用、状态变更）按调用链记录下来。出错时能看到到底哪一步出错了；上线后做性能/成本分析。Langfuse / OpenAI Tracing 都是这一层。</span></details> 原生内置。</td>
+        <td><span class="design-cons">全局状态难管</span>：handoff 后老 Agent 的上下文要不要带过去？审计如何串起来？职责边界如何定义？大多数项目两个 Agent 之后就乱。</td>
+        <td>客服分诊（财务→技术→升级）、有清晰角色边界的路由场景。<em>不</em>适合所有 Agent 共享状态的协同任务。</td>
+      </tr>
+      <tr>
+        <td><b>④ 多智能体团队<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px">Multi-Agent Team</span></b></td>
+        <td>AutoGen (MS) · CrewAI · MetaGPT · AgentScope</td>
+        <td><span class="design-pros">用角色协同解决复杂任务</span>：给每个 Agent 一段"你是 X，负责 Y"的<details class="gloss"><summary>系统 prompt</summary><span class="body">系统 prompt = 给 LLM 的"<em>底层指令</em>"。比如"你是一个风控助手，每次回答要先列证据再下结论"。它在普通对话开始前先注入到 LLM，决定整个对话的"性格"。一个产品最核心的"<em>设定</em>"就藏在系统 prompt 里。</span></details>，让他们对话或<details class="gloss"><summary>仲裁</summary><span class="body">仲裁 = 多个 Agent 互相协作时，谁说了算？仲裁机制就是"<em>意见冲突时怎么定夺</em>"的规则——可以是固定的"产品经理 Agent 一票否决"，也可以是"投票"，也可以是"找第三方 Agent 来评"。多 Agent 系统最难做的就是仲裁。</span></details>。CrewAI 用"角色 + 任务"，AutoGen 用"群组对话"，MetaGPT 模仿软件公司的角色（PM/开发/测试）。</td>
+        <td><span class="design-cons">通信开销大、责任边界模糊</span>：N 个 Agent 互相喊话 → token 暴增、对话失控、错误归因困难、难以审计。研究 demo 漂亮，生产里很难落地为关键路径。</td>
+        <td>研究 / <details class="gloss"><summary>PoC</summary><span class="body">PoC = Proof of Concept，概念验证。一个验证"这个方案能不能跑通"的最小可行实现，不要求性能、不要求稳定性、不上生产。</span></details> / 演示型任务、不要求审计的内部工具。<em>不</em>建议放到风控这种强审计场景。</td>
+      </tr>
+      <tr>
+        <td><b>⑤ 目标倒推规划<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px">Planner / <details class="gloss"><summary>GOAP</summary><span class="body">GOAP = Goal-Oriented Action Planning，目标导向行动规划，来自游戏 AI（《F.E.A.R.》《Fallout 3》）。给 Agent 一个"目标状态"和一组"<em>带前置条件和后置效果</em>的动作"，Agent 自动反推出从当前状态到目标状态的动作序列。和"让 LLM 自己 ReAct 着推"相比，规划过程是<em>可解释、可校验</em>的。</span></details></span></b></td>
+        <td>Embabel (JVM · Rod Johnson)</td>
+        <td><span class="design-pros">从目标反推动作序列</span>：不让 LLM "自由发挥"，而是让 LLM <em>挑选</em>预先注册的、带前置/后置条件的动作。规划过程显式、可校验。Spring 之父 Rod Johnson 2025 创建。</td>
+        <td><span class="design-cons">建模门槛高</span>：动作目录需要工程师精心设计前置/后置条件；现实世界很难像游戏 AI 那样"封闭"，开放任务里规划容易失败。生态目前小。</td>
+        <td>动作集合明确、流程严格可审计的场景。<em>风控的"调查—判罚—复核"流程值得借鉴 GOAP 思路，但不一定上 Embabel。</em></td>
+      </tr>
+      <tr>
+        <td><b>⑥ 长流程不丢失<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px"><details class="gloss"><summary>Durable Workflow</summary><span class="body">Durable Workflow = "持久工作流"，把任务拆成 workflow（主流程）+ activity（具体步骤），状态由引擎自动持久化。机器挂了重启后，自动从挂掉那一步接着跑，<em>不会丢中间结果</em>。Temporal / Restate 是代表。和 Agent 配合时，它管"流程怎么活下来"，Agent 管"每步怎么思考"。</span></details></span></b></td>
+        <td>Temporal · Restate · Netflix Conductor</td>
+        <td><span class="design-pros">工作流持久执行</span>：把流程拆成 <code>workflow + activity</code>，状态由引擎持久化，自动重试 / 超时 / 补偿。<em>不懂 LLM，但能托住任何长流程</em>——挂了重启接着跑。</td>
+        <td><span class="design-cons">不是 LLM 语义抽象</span>：它解决"流程怎么活下来"，不解决"Agent 怎么思考"。需要叠加 State Graph 或 Agent loop 才完整。</td>
+        <td>跨小时 / 跨日的 Agent 任务外壳（批量调查 / 离线复核 / 数据飞轮训练）。<em>风控强烈推荐 + State Graph 叠加。</em></td>
+      </tr>
+      <tr>
+        <td><b>⑦ 企业系统接线板<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px"><details class="gloss"><summary>Framework Glue</summary><span class="body">Framework Glue = "胶水框架"。不发明 Agent 怎么思考，只负责把"调模型 / 用工具 / 接记忆 / 接向量库"打包成符合该语言生态习惯的 API（Spring AI 是 Spring Boot 风格，LangChain4j 是 Java 注解风格）。<em>不替代 ① ~ ⑥</em>——做复杂流程时仍需叠加状态图或转交。</span></details></span></b></td>
+        <td>Semantic Kernel (.NET/Py) · Spring AI (Java) · LangChain4j (Java) · LlamaIndex Workflows</td>
+        <td><span class="design-pros">企业应用层适配器</span>：不发明范式，而是把"调模型 / 用工具 / 接记忆 / 接向量库 / <details class="gloss"><summary>Advisor</summary><span class="body">Advisor = Spring AI 1.x 引入的拦截器抽象，类似 Spring MVC 的 Interceptor。在每次 LLM 调用前后切入，可做 RAG（取相关文档）、Memory（注入历史）、审计、敏感词过滤、限流。Spring AI 玩 Agent 的关键能力。</span></details> 拦截"打包成符合该语言生态习惯的 API。Spring AI 是 Spring Boot 风格，LangChain4j 是 Java <code>@Tool</code> 风格。</td>
+        <td><span class="design-cons">不替代编排范式</span>：本身不规定"Agent 怎么思考"——做复杂流程时仍需叠加 State Graph 或 Handoff。容易被误以为是"一个完整 Agent 框架"。</td>
+        <td><em>所有 Java 企业项目的标配底座</em>，包括快手。但要清醒：它是 L4-L5 的<em>语言适配器</em>，不是 L6 的<em>编排范式</em>。</td>
+      </tr>
+      <tr>
+        <td><b>⑧ 声明式编译<br><span style="font-weight:400;color:var(--text-muted);font-size:12.5px">Declarative Compilation</span></b></td>
+        <td>DSPy (Stanford NLP · Omar Khattab / Chris Potts / Matei Zaharia)</td>
+        <td><span class="design-pros">"写代码不写 prompt"</span>。把 Agent 程序写成<em>声明式 Python 模块</em>（<code>dspy.Module</code> + <code>dspy.Predict("question -&gt; answer")</code> 这种<em>签名</em>），DSPy 自带"<em>编译器</em>"（Teleprompter）会自动 trace 你的程序、生成高质量 prompt 或微调小模型——把"<em>调 prompt</em>"变成"<em>跑优化器</em>"。BootstrapFewShot / COPRO / BetterTogether / GRPO 等 12+ 优化器开箱即用。Stanford NLP 出品，2.4 万 star，250+ 贡献者。</td>
+        <td><span class="design-cons">范式离 "Agent 怎么思考" 较远</span>：DSPy 解决的是"<em>同一份程序，怎么自动产出最好 prompt</em>"，不解决"<em>Agent 怎么循环、怎么人审、怎么恢复</em>"。生产 Agent 仍需叠加 State Graph / Durable Workflow。学习曲线偏陡，<em>不是给"试一下 LLM"用户的</em>。</td>
+        <td>对 prompt 质量敏感、且<em>有评估数据</em>的场景（评分器 / 分类器 / 风控判罚信号）。<em>快手数据飞轮的 prompt 优化阶段值得专门接 DSPy</em>——把人工调 prompt 的工作交给优化器，但 Agent 主体仍走 State Graph + Spring AI。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">6.3</span>纵向：语言生态对照表（独立维度，不参与范式切分）</h3>
+  <p>语言生态决定"能不能嵌入快手 Java 后端"，但<em>不决定 Agent 的思考方式</em>。同一个范式可以有多个语言生态的实现：State Graph 在 Python 是 LangGraph，在 JVM 是 LangGraph4j。把它们放进同一行是<em>同范式 × 不同生态</em>，不是不同范式。</p>
+  <table class="tab bordered">
+    <thead><tr><th style="width:18%">范式 ＼ 生态</th><th>Python</th><th>JVM (Java/Kotlin)</th><th>TypeScript / Node</th><th>.NET / 多语言</th></tr></thead>
+    <tbody>
+      <tr><td><b>Chain / LCEL</b></td><td>LangChain · Haystack</td><td><em>无对应原生实现</em></td><td>LangChain.js</td><td>—</td></tr>
+      <tr><td><b>State Graph</b></td><td>LangGraph · Burr</td><td><b>LangGraph4j</b>（JVM 端口）</td><td>LangGraph.js</td><td>—</td></tr>
+      <tr><td><b>Agent Handoff</b></td><td>OpenAI Agents SDK (Py)</td><td><em>暂无 1:1 移植</em></td><td>OpenAI Agents SDK (TS)</td><td>—</td></tr>
+      <tr><td><b>Multi-Agent Team</b></td><td>AutoGen · CrewAI · MetaGPT · AgentScope</td><td><em>无主流</em></td><td>—</td><td>AutoGen.NET</td></tr>
+      <tr><td><b>Planner / GOAP</b></td><td><em>研究项目</em></td><td><b>Embabel</b>（Rod Johnson）</td><td>—</td><td>—</td></tr>
+      <tr><td><b>Durable Workflow</b></td><td>Temporal Python SDK</td><td>Temporal Java · Conductor</td><td>Temporal TS</td><td>Temporal .NET</td></tr>
+      <tr><td><b>Framework Glue</b></td><td>LlamaIndex Workflows</td><td><b>Spring AI · LangChain4j</b></td><td>—</td><td>Semantic Kernel</td></tr>
+      <tr><td><b>声明式编译</b></td><td><b>DSPy</b>（Stanford NLP）</td><td><em>无对应 Java 实现</em></td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <div class="insight"><b>读这张表的方式</b>：横着读 → "这个范式有没有我语言生态的实现"。竖着读 → "我用 Java，能用上哪些范式"。<em>LangChain4j 不在 State Graph 行里</em>——它是 Framework Glue 的 Java 实现，不是 LangGraph 的 Java 移植。这是和 LangGraph4j 最容易混的地方。</div>
+
+  <h3 class="sub"><span class="n">6.4</span>三个争议项目的判定（codex 多轮推演）</h3>
+
+  <details class="expand" open>
+    <summary>① LangChain4j 究竟是"状态图范式"还是"Java LLM 应用层"？</summary>
+    <div class="body">
+      <p><b>判定：Framework Glue（Java LLM 应用层），不是 State Graph。</b></p>
+      <p>官方定位（<a href="https://docs.langchain4j.dev/" target="_blank">docs.langchain4j.dev</a>）是"简化 Java 应用集成 LLM"：核心抽象 <code>ChatLanguageModel</code> / <code>AiServices</code> / <code>@Tool</code> / <code>ChatMemory</code> / <code>EmbeddingStore</code>。它<em>可以做 agentic <details class="gloss"><summary>workflow</summary><span class="body">workflow = "工作流"，一连串<em>有先后顺序、可能要等很久</em>的步骤。比如"订单确认 → 通知仓库 → 配货 → 发货 → 跟踪"。durable workflow（持久工作流）能在任意一步挂掉重启接着跑。</span></details></em>，但底层并非显式状态图——状态由用户在 Java 代码里维护。要在 JVM 上获得 LangGraph 那种"画状态图"的体验，需要用 <em>LangGraph4j</em>（独立项目，<a href="https://github.com/langgraph4j/langgraph4j" target="_blank">langgraph4j/langgraph4j</a>），它确实是 State Graph 范式。</p>
+      <p>不要因为名字像就把 LangChain4j 和 LangGraph4j 当兄弟——它们是<em>不同范式 + 不同维护团队</em>。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>② Embabel + GOAP：算独立范式还是规划范式的子集？</summary>
+    <div class="body">
+      <p><b>判定：放在"Planner / Goal-Driven"族里，不单独升顶层。</b></p>
+      <p>GOAP（Goal-Oriented Action Planning）本质是 Symbolic Planner 的一个子型，强调"从目标反推动作序列"。Embabel（<a href="https://github.com/embabel/embabel-agent" target="_blank">embabel/embabel-agent</a>）由 Spring 创始人 Rod Johnson 2025 创建，把 GOAP 思路落到 JVM Agent 上。把 GOAP 当独立顶层会过细化（同理 PDDL、HTN 都是规划范式子型）；归到"Planner / Goal-Driven"族里更符合学术界对规划范式的分类。</p>
+      <p>风控启示：<em>不一定上 Embabel</em>，但"调查—判罚—复核"的<em>动作目录 + 前置/后置条件</em>思想，可以照搬到自研的 Agent action catalog。</p>
+    </div>
+  </details>
+
+  <details class="expand">
+    <summary>③ LangChain（不是 LangGraph）应该作为独立"Chain/LCEL"范式吗？</summary>
+    <div class="body">
+      <p><b>判定：应该。补回独立一族。</b></p>
+      <p>用户问"为什么没有 LangChain，只有 LangGraph"——这就是第一版的缺漏。LangChain 自己（核心是 LCEL = LangChain Expression Language）代表"<em>声明式管道</em>"范式，和 State Graph 是两件事。LCEL 适合 RAG 这种"prompt → model → parser"线性场景；遇到分支、循环、人审就该升级到 LangGraph。把 LangChain 写成"已经被 LangGraph 取代"是夸张——LCEL 至今仍是 LangChain 生态的主流入口，只是 agentic 部分让位了。来源：<a href="https://www.langchain.com/blog/langchain-expression-language" target="_blank">LangChain 官方关于 LCEL 的博客</a>。</p>
+    </div>
+  </details>
+
+  <h3 class="sub"><span class="n">6.5</span>对快手风控的具体借鉴</h3>
+  <div class="callout ok">
+    <b>结论 1 · 选哪些范式叠加</b><br>
+    快手风控终态推荐：<em>State Graph + Durable Workflow + Framework Glue (Java)</em> 三件套。<br>
+    · State Graph（思想）：用 LangGraph4j 或自研最小状态机，把 case 调查的"取证 → 推断 → 建议 → 人审"画成显式状态图<br>
+    · Durable Workflow：Temporal Java SDK 包住长任务，保证跨日 case 调查不丢状态<br>
+    · Framework Glue：Spring AI 做底座，统一接模型 / 工具 / 向量库 / Advisor
+  </div>
+  <div class="callout warn">
+    <b>结论 2 · 不碰哪些范式</b><br>
+    · <em>不碰 Multi-Agent Team</em>：N 个 Agent 互相喊话的 token 开销和审计困难，对万级账号封禁的责任链是灾难<br>
+    · <em>不碰 Pure Handoff</em>：handoff 后的上下文 / 审计链路在多团队风控里很难管，宁可用 State Graph 的显式节点跳转<br>
+    · <em>慎用 GOAP</em>：值得借鉴动作目录思想，但 Embabel 生态太小，目前不建议上生产
+  </div>
+</section>
+
+<!-- ====================================== L5 Memory -->
+<hr class="sec-divider">
+<section id="l5">
+  <div class="layer l5"><div class="head"><span class="num">5</span><div><h3>L5 · 上下文与记忆 Context &amp; Memory</h3><div class="def">Agent 当前轮和长期任务里"知道什么、记住什么、如何取回"。</div></div></div></div>
+
+  <h3 class="sub"><span class="n">5.1</span>这一层的大图（图 5）</h3>
+  <div class="fig">
+    <img src="images/fig-5.png" alt="图 5 · L5 记忆生态 5 个主流框架对比" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 5 · 记忆框架 5 切片</b>。横轴 = 存储/写入路径（纯向量 / 上下文块+向量 / 服务化+关系 / Store 抽象+反思 / 知识图谱）；不同框架解决"同一个问题的不同切片"。<em>没有最好的</em>——只有最适合你层级的。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">5.2</span>5 个记忆框架 · 源码深读对比表</h3>
+  <p>本节所有 file:line 引用都基于<em>固定 commit</em>：<code>mem0@16a7702</code> · <code>letta@1131535</code> · <code>zep@faf2ace</code> · <code>langmem@dc1f1e1</code> · <code>cognee@0187fd8</code>（2026-05-23 clone）。</p>
+  <table class="tab">
+    <thead><tr><th style="width:13%">维度</th><th style="width:17.4%">mem0</th><th style="width:17.4%">Letta (MemGPT)</th><th style="width:17.4%">Zep</th><th style="width:17.4%">LangMem</th><th style="width:17.4%">Cognee</th></tr></thead>
+    <tbody>
+      <tr><td><b>核心抽象</b></td><td><code>Memory</code><br>main.py:331</td><td><code>Block</code><br>block.py:67</td><td><code>MemoryCommon</code><br>memory_common.go:86</td><td><code>BaseStore</code><br>(LangGraph store)</td><td><code>MemoryEntry</code> union<br>entries.py:20+</td></tr>
+      <tr><td><b>tier / 类别</b></td><td><em>显式 3 类</em>：<br>SEMANTIC<br>EPISODIC<br>PROCEDURAL</td><td><em>隐式 2 类</em>：<br>Core (in-ctx)<br>Archival (向量)<br>+ Recall (历史)</td><td><em>隐式 2 类</em>：<br>Messages<br>Facts</td><td><em>2 域</em>：<br>short_term (summary)<br>knowledge (semantic+graph)</td><td><em>4 entry 类</em>：<br>QA / Trace<br>Feedback / SkillRun</td></tr>
+      <tr><td><b>存储后端</b></td><td><em>15+ <details class="gloss"><summary>vector store</summary><span class="body">vector store = 向量数据库。把文本转成数百到几千维的向量，按"向量相似度"做语义检索。常见有 Pinecone / Milvus / Qdrant / PGVector / Weaviate / Chroma 等。RAG 的核心存储。</span></details></em><br>+ SQLite history</td><td>PostgreSQL + Vector</td><td>PostgreSQL（Go service）</td><td>LangGraph Store<br>(可插)</td><td>Kuzu / Neo4j 图谱</td></tr>
+      <tr><td><b>写入</b></td><td>LLM 抽取 → ADD/UPDATE/<br>DELETE/NONE 事件<br>+ 实体去重 0.95</td><td><em>不抽取</em>，agent 直接编辑 block.value<br>(agent.py:200)</td><td>服务端 LLM 抽取<br>messages + facts</td><td><details class="gloss"><summary>trustcall</summary><span class="body">trustcall = LangChain 团队出的"让 LLM 输出严格遵循 schema 的 JSON"工具。比直接 prompt 让 LLM 输出 JSON 更稳，遇到 schema 错误会自动重试纠正。LangMem 内部用它做结构化记忆抽取。</span></details> 结构化抽取<br>+ <details class="gloss"><summary>upsert</summary><span class="body">upsert = update + insert 的合体词。意思是"<em>有就更新、没有就插入</em>"。是数据库 / 记忆库的常见操作——你不用先查再决定写哪个 SQL。</span></details> by <details class="gloss"><summary>namespace</summary><span class="body">namespace = 命名空间。把记忆/工具/配置按"归属"切分。常见有 user_id / agent_id / session_id / 业务线 ID 等。是多租户隔离的基础——避免两个用户的记忆互相串。</span></details></td><td>type 决定去哪：<br>QA/Trace→session<br>SkillRun→图谱</td></tr>
+      <tr><td><b>取回</b></td><td><details class="gloss"><summary>BM25</summary><span class="body">BM25 = 一种经典的关键词检索算法（不是 LLM 时代发明的，但至今主流）。和"语义检索"互补：BM25 找"字面命中"，embedding 找"意思相近"。生产 RAG 常两路并查后融合。</span></details> + 语义 + 实体加权<br>+ 可选 <details class="gloss"><summary>reranker</summary><span class="body">reranker = "<em>重排器</em>"。检索阶段先粗筛出 50 条候选，<em>reranker</em> 用更精准（更慢）的模型把 50 条按真实相关性重排一次，最后只取前 5 条喂给 LLM。RAG 质量的关键提升点。</span></details><br>main.py:1227</td><td>archival vector top-k<br>+ recall 时间窗</td><td>图遍历<br>(Go service API)</td><td>语义检索 + Graph RAG</td><td>图谱实体中心度<br>+ 时间邻近</td></tr>
+      <tr><td><b>冲突 / 去重 / 衰减</b></td><td>✓ linked_memory_ids<br>✓ 实体相似度 ≥0.95<br>✗ 显式衰减</td><td>隐式（block 整体替换）<br>✗ 衰减</td><td>service 决定<br>✗ 衰减</td><td>store-level <details class="gloss"><summary>upsert</summary><span class="body">upsert = update + insert 的合体词。意思是"<em>有就更新、没有就插入</em>"。是数据库 / 记忆库的常见操作——你不用先查再决定写哪个 SQL。</span></details><br>✗ 衰减</td><td>图谱实体合并<br>✗ 显式衰减（但 SkillRunEntry 的 success_score 可被外部用作衰减/升级信号）</td></tr>
+      <tr><td><b>多租户隔离</b></td><td>3 级 hierarchical：<br>user_id / agent_id / run_id</td><td>agent-centric<br>(agent_id)</td><td>session-centric<br>(session_id [+user_id])</td><td>namespace = tuple<br>("chat",) etc</td><td>session_id (RecallScope)</td></tr>
+      <tr><td><b>API 主入口</b></td><td><code>add() · search() · get() · update() · delete() · get_all()</code></td><td><code>agent.step() · update_memory_if_changed() · get_context_window_overview()</code></td><td><code>client.memory.add/get/search · user.add/get</code></td><td><code>create_memory_manager · create_memory_searcher · ReflectionExecutor.run()</code></td><td><code>cognee.remember(entries) · cognee.recall(query, scope)</code></td></tr>
+      <tr><td><b>关键设计理念<br>(出彩点)</b></td>
+        <td><span class="design-pros">细粒度操作语义</span>：ADD/UPDATE/DELETE 是一等事件，每次记忆变更都可审计、可回放</td>
+        <td><span class="design-pros">直接占用 LLM 上下文</span>：记忆就是 LLM context 里的一块字符串，agent 用 tool 直接编辑；<code>read_only</code> 强约束防误改</td>
+        <td><span class="design-pros">服务化 + 关系抽取</span>：LLM 抽实体/关系放在服务端，业务侧只调 <details class="gloss"><summary>REST</summary><span class="body">REST = "用 HTTP 接口对外提供能力"的一种风格。客户端通过 URL + 方法（GET/POST/PUT/DELETE）调用服务端。是互联网上最普遍的接口形式之一。</span></details>，便于多语言客户端</td>
+        <td><span class="design-pros">反思循环</span>：<code>ReflectionExecutor</code> 异步反思已有记忆并精炼，自动数据清理</td>
+        <td><span class="design-pros">结构化结果追踪</span>：<code>SkillRunEntry</code> 带 [0,1] 成功分，跨次任务的"什么有效"可量化</td></tr>
+      <tr><td><b>核心问题<br>(真实限制)</b></td>
+        <td><span class="design-cons">依赖 LLM 抽取质量</span>：抽错事实直接写库；无显式衰减；reranker 选型分散</td>
+        <td><span class="design-cons">不抽取 = 信息密度低</span>：所有记忆都"占用"上下文窗，规模上来后整体性能受 LLM context 长度限制</td>
+        <td><span class="design-cons">服务化部署门槛高</span>：要起 Go service + <details class="gloss"><summary>Postgres</summary><span class="body">Postgres / PostgreSQL = 开源关系型数据库，被誉为"<em>能干企业级活的开源 DB</em>"。Letta / Zep 都用它存记忆，因为它<em>稳、有事务、支持向量扩展（pgvector）</em>，能同时承担传统行表和向量检索两种负载。</span></details> + GPU 嵌入服务，单机用户用不起；无显式衰减</td>
+        <td><span class="design-cons">强绑 LangGraph 生态</span>：脱离 LangGraph Store 后没有独立持久层抽象；反思有额外 LLM 调用成本</td>
+        <td><span class="design-cons">图谱建模门槛</span>：Kuzu/Neo4j 调优非通用技能；<details class="gloss"><summary>schema</summary><span class="body">schema = "数据结构契约"。规定了某个 JSON / 数据库表 / 接口请求<em>必须有哪些字段、字段是什么类型</em>。让通信双方对"长什么样"有共识。</span></details> 一旦定下迁移昂贵；社区规模较小</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="n">5.3</span>各框架"关键源码片段"</h3>
+
+  <details class="expand"><summary>mem0 · 细粒度 ADD/UPDATE/DELETE + 实体去重</summary><div class="body">
+    <p><span class="keyfile">mem0/memory/main.py:331</span> <code>class Memory(MemoryBase)</code> 构造：<details class="gloss"><summary>embedding</summary><span class="body">embedding = 嵌入向量。把文本（或图、音）通过一个模型转成固定长度的向量，让"语义相近的内容"在向量空间里距离近。是 RAG / 语义搜索 / 推荐系统的基础。</span></details>_model + vector_store + LLM + SQLite history + 可选 reranker</p>
+    <pre class="code">class MemoryType(Enum):              # configs/enums.py
+    SEMANTIC = "semantic_memory"
+    EPISODIC = "episodic_memory"
+    PROCEDURAL = "procedural_memory"</pre>
+    <p><span class="keyfile">mem0/memory/main.py:573</span> <code>add(messages, user_id/agent_id/run_id, infer=True)</code></p>
+    <p>核心写入逻辑：</p>
+    <ol>
+      <li>LLM 用 <code>ADDITIVE_EXTRACTION_PROMPT</code>（prompts.py:468）抽取事实</li>
+      <li>输出 JSON：<code>{"id": ..., "text": ..., "event": "ADD|UPDATE|DELETE|NONE", "linked_memory_ids": [...]}</code></li>
+      <li><code>_upsert_entity()</code>（main.py:413）若实体相似度 ≥ 0.95 → 不复制，把新 memory_id 加到老 entity 的 <code>linked_memory_ids</code></li>
+      <li>嵌入入 vector store · 事件入 SQLite history（含 old_memory/new_memory）</li>
+    </ol>
+    <p>多租户：<code>_build_filters_and_metadata</code>（main.py:239）要求至少传 user_id/agent_id/run_id 之一，否则报 ValidationError。</p>
+    <p><b>风控启示</b>：① <em>ADD/UPDATE/DELETE 事件 + SQLite history</em> = 天然审计 trail；② <em>linked_memory_ids</em> 是跨 Memory tier 的实体桥（Tier A Policy 实体 ↔ Tier B 处置事实 ↔ Tier C 单 case 证据）。</p>
+  </div></details>
+
+  <details class="expand"><summary>Letta · Block 直接占用 LLM 上下文 + read_only 强约束</summary><div class="body">
+    <p><span class="keyfile">letta/<details class="gloss"><summary>schema</summary><span class="body">schema = "数据结构契约"。规定了某个 JSON / 数据库表 / 接口请求<em>必须有哪些字段、字段是什么类型</em>。让通信双方对"长什么样"有共识。</span></details>s/block.py:67</span> Block 类</p>
+    <pre class="code">class Block(BaseBlock):
+    """A Block represents a reserved section of the LLM's context window."""
+    id: str
+    value: str        # 块内容（字符上限 CORE_MEMORY_BLOCK_CHAR_LIMIT）
+    limit: int
+    label: Optional[str]   # e.g., 'human', 'persona'
+    read_only: bool = False</pre>
+    <p><b>哲学差异</b>：Letta 不"抽取"记忆——<em>记忆就是 LLM 上下文里的一块字符串</em>，agent 通过 tool 直接编辑它。</p>
+    <p><span class="keyfile">letta/agent.py:200</span> <code>update_memory_if_changed()</code>：对比新旧 block.value，差异时调 <code>block_manager.update_block()</code>。</p>
+    <p><span class="keyfile">letta/schemas/memory.py:32-45</span> 隐式 3 类：核心 in-ctx blocks · archival (vector) · recall (recent messages)</p>
+    <p><b>风控启示</b>：① <em>read_only block</em> 完美映射快手"Policy 规则不可被 Agent 修改"——Tier A 全 read_only；② <code>block.limit</code> 防止 agent 把整个上下文塞爆，对应"Memory 卡片有最大尺寸"。</p>
+  </div></details>
+
+  <details class="expand"><summary>Zep · 服务化 + MemoryGraph 关系遍历</summary><div class="body">
+    <p><span class="keyfile">zep/legacy/src/models/memory_common.go:86</span> Go 服务后端：</p>
+    <pre class="code">type MemoryCommon struct {
+    Messages      []Message   // 短期对话
+    RelevantFacts []Fact      // LLM 抽出的实体/关系
+    Metadata      map[string]any
+}</pre>
+    <p>Zep 把 LLM 抽取放在<em>服务端</em>——Python/TS SDK 只调 <details class="gloss"><summary>REST</summary><span class="body">REST = "<em>按 HTTP 动词调资源</em>"的 API 风格（GET 读、POST 创建、PUT 改、DELETE 删）。是过去 15 年企业后端最主流的 API 范式，快手现有 Java 服务基本都是 REST。OpenAPI 协议描述的就是 REST API。</span></details> API。<br>对比 mem0：mem0 在客户端调 LLM 抽取；Zep 是服务化中央抽取。</p>
+    <p><b>风控启示</b>：服务化的优点 = <em>抽取 LLM 可以集中升级/审计/做 prompt 安全</em>。快手 Memory tier 写入路径建议走"服务化抽取 + 客户端只读"。</p>
+  </div></details>
+
+  <details class="expand"><summary>LangMem · ReflectionExecutor 持续精炼</summary><div class="body">
+    <p><span class="keyfile">langmem/knowledge/extraction.py</span> 用 <code>trustcall</code>（structured output）抽取记忆；<code>namespace=("chat",)</code> 做 scope。</p>
+    <p><span class="keyfile">langmem/reflection.py</span> <code>ReflectionExecutor</code> 异步循环：</p>
+    <ul>
+      <li>不在 hot path 抽取，避免阻塞 agent loop</li>
+      <li>后台跑反思 → 升级 / 合并 / 删除记忆</li>
+      <li>基于 LangGraph Store 抽象，可换 InMemory / Postgres / 自定义后端</li>
+    </ul>
+    <p><b>风控启示</b>：<em>异步反思 = Memory 状态机的写半部</em>——Tier C 进 Tier B 的"升级流程"完全可以借这个模式（后台离线判，不影响在线推理延迟）。</p>
+  </div></details>
+
+  <details class="expand"><summary>Cognee · 4 类 Entry + SkillRunEntry 成功分</summary><div class="body">
+    <p><span class="keyfile">cognee/memory/entries.py:20+</span> Discriminated Union：</p>
+    <pre class="code">QAEntry          # type="qa"        → SessionManager.add_qa()
+TraceEntry       # type="trace"     → SessionManager.add_agent_trace_step()
+FeedbackEntry    # type="feedback"  → SessionManager.add_feedback()
+SkillRunEntry    # type="skill_run" → 持久图谱
+    selected_skill_id: str
+    success_score: Optional[float]  # [0.0, 1.0]
+    feedback: float                  # [-1.0, 1.0]
+    latency_ms: int
+    candidate_skill_ids: list[str]
+    tool_trace: list[dict]</pre>
+    <p><b>核心创新</b>：把"skill 执行结果"作为一等公民写入图谱，<em>success_score 在 0~1</em>。后续 reranker 可以拿这个分做"工具选择优化"。</p>
+    <p><b>风控启示（自研推导，不是 Cognee 内置）</b>：可以<em>借鉴</em>这个数据模型，把 SkillRunEntry.success_score 当作快手 Memory tier 状态机的"Promote/Demote 候选信号"——新 Memory 的 success_score 累计跑到阈值 + 实体去重命中 → 进入"可升级 tier"候选，仍需管理员二次签发。这是<em>基于开源数据结构的自研逻辑</em>，不是开源能力本身。</p>
+  </div></details>
+
+  <h3 class="sub"><span class="n">5.4</span>对快手 Memory tier A/B/C/D 的映射</h3>
+  <table class="tab">
+    <thead><tr><th>快手 tier</th><th>语义</th><th>最接近的开源借鉴</th><th>关键属性</th></tr></thead>
+    <tbody>
+      <tr><td><b>Tier A 严格</b></td><td>Policy 规则 / 红线 / Procedural</td><td>mem0 PROCEDURAL + Letta read_only Block</td><td>不可由 Agent 编辑 · 高确认度（≥0.95 实体）· ADD-only · 双人 signoff</td></tr>
+      <tr><td><b>Tier B 中等</b></td><td>已确认事实 / Semantic</td><td>mem0 SEMANTIC + linked_memory_ids</td><td>UPDATE 留 audit trail · 实体去重 · 来源可追溯</td></tr>
+      <tr><td><b>Tier C 宽松</b></td><td>单 case 事件 / Episodic</td><td>mem0 EPISODIC + Cognee QAEntry</td><td>低阈值 · 允许接近重复 · run_id scope</td></tr>
+      <tr><td><b>Tier D 原始</b></td><td>raw 日志 / trace</td><td>Cognee TraceEntry + SQLite history</td><td>append-only · 跨租户审计存证 · 不参与召回</td></tr>
+    </tbody>
+  </table>
+  <div class="insight"><b>关键设计点（自研推导）：</b>Cognee 的 <code>SkillRunEntry.success_score</code> 本身是<em>结果追踪字段</em>，不是内置的"升级信号"。但可<em>借鉴为</em>跨 tier 升级信号——Tier C 事件累计 success_score &gt; 阈值 + 实体去重命中老 entity → 升级 Tier B；管理员签发后升 Tier A。这是<em>外部基于开源数据模型的自研逻辑</em>，不是 Cognee 自身能力。</div>
+</section>
+
+<!-- ====================================== L4 Tools/Protocols -->
+<hr class="sec-divider">
+<section id="l4">
+  <div class="layer l4"><div class="head"><span class="num">4</span><div><h3>L4 · 工具与协议连接 Tools &amp; Protocols</h3><div class="def">把 Agent 的意图翻译成可调用的外部能力接口。</div></div></div></div>
+
+  <h3 class="sub"><span class="n">4.1</span>这一层的大图（图 4）</h3>
+  <div class="fig">
+    <img src="images/fig-4.png" alt="图 4 · L4 工具与协议 4 圈同心" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 4 · 工具与协议同心圆</b>。中心 = Function Calling（同进程）；向外扩 = MCP（跨进程工具）→ OpenAPI Tools（包装现有 REST）→ A2A（跨 Agent）。每多跨一层，<em>解耦多一层，治理成本也多一层</em>。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">4.2</span>4 圈对比与定位</h3>
+  <table class="tab">
+    <thead><tr><th style="width:14%">圈</th><th>含义</th><th>代表</th><th>风控适配</th></tr></thead>
+    <tbody>
+      <tr><td><b>① Function Calling</b></td><td>同进程 JSON schema · 厂商各异</td><td>OpenAI tools / Anthropic tool_use / Gemini function / Spring AI @Tool</td><td>简单可控但跟模型耦合</td></tr>
+      <tr><td><b>② MCP</b><br>(Model Context Protocol)</td><td>跨进程工具协议 · 跨厂商<br>2024.11 Anthropic 发布</td><td>每个 tool 一个 MCP server 进程，通过 <details class="gloss"><summary>stdio</summary><span class="body">stdio = standard input/output 标准输入输出。两个进程通过<em>"管道喂数据"</em>通信的方式，<em>不要走网络</em>。MCP server 默认用 stdio 跑——主进程和 MCP server 像父子进程，速度快、无网络延迟。</span></details>/<details class="gloss"><summary>SSE</summary><span class="body">SSE = Server-Sent Events，<em>"服务端把数据流式推给浏览器"</em>的 HTTP 协议。LLM 流式回答（一个字一个字出来）就是 SSE。MCP server 远程模式也支持 SSE，让远程工具像本地工具一样实时响应。</span></details> 通信</td><td><em>极适合风控</em>：DLP / 合规 / 内容审 = 独立 MCP server，可单独升级/审计</td></tr>
+      <tr><td><b>③ OpenAPI tools</b></td><td>把 REST API 直接喂给 Agent</td><td>OpenAPI schema → tool 定义</td><td>已有 Java REST API 可零改造接入</td></tr>
+      <tr><td><b>④ A2A</b><br>(Agent-to-Agent)</td><td>跨 Agent 协议<br>2025.04 Google 发布</td><td>Agent Card · Task · Message · capability discovery</td><td>跨域协作必经路径（涉政 Agent ↔ 大 V Agent）</td></tr>
+    </tbody>
+  </table>
+  <div class="callout info"><b>快手选型</b>：v1 内用 Function Calling（Spring AI @Tool）。v2 引入 MCP（DLP / 合规扫描器作为外部 MCP server）。v3 跨域 Agent 协作时引入 A2A Agent Card。OpenAPI tools 全程可用，作为"接入老 Java 服务"的捷径。</div>
+</section>
+
+<!-- ====================================== L3 Execution -->
+<hr class="sec-divider">
+<section id="l3">
+  <div class="layer l3"><div class="head"><span class="num">3</span><div><h3>L3 · 执行环境与动作 Execution &amp; Environment</h3><div class="def">Agent 真正改文件、跑代码、点网页、调用系统的地方。</div></div></div></div>
+
+  <h3 class="sub"><span class="n">3.1</span>这一层的大图（图 3）</h3>
+  <div class="fig">
+    <img src="images/fig-3.png" alt="图 3 · L3 执行环境 6 类按动作力强弱排序" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 3 · 执行环境 6 类</b>。从①文件到⑤远程 API、⑥数据面执行 动作力递增；快手风控核心 = ⑤<em>远程 API + The Gate 必经</em> + ⑥<em><details class="gloss"><summary>URG</summary><span class="body">URG = Unified Risk Graph，统一风险图。把账号/内容/IP/设备/行为/处置都建成节点和边，Agent 和人审看的是同一份事实底座。避免多个数据源、口径不一导致的判断分歧。</span></details> 查询/写入</em>。①-④ 主要给开发场景；IDE/CI 归 L7 产品 / L1 治理（策略发布走 PR）。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">3.2</span>这一层的"风控级"治理</h3>
+  <div class="callout warn"><b>核心原则</b>：动作力越强 → 治理越重。<br>
+    · 文件 / 终端 / 浏览器：开发 Agent 必备，但生产风控 Agent <em>慎用</em>（除"读取证据"外）<br>
+    · 桌面 Computer Use：不进风控生产链路（无法审计 pixel/coord）<br>
+    · 远程 API：风控写动作的<em>唯一通道</em>——必经 The Gate + Permission Token + 双签 / Kill Switch<br>
+    · IDE / CI：策略变更走 PR + CI Gate（这是 PR-as-policy 模式）
+  </div>
+</section>
+
+<!-- ====================================== L2 Model -->
+<hr class="sec-divider">
+<section id="l2">
+  <div class="layer l2"><div class="head"><span class="num">2</span><div><h3>L2 · 模型与推理 Model &amp; Inference</h3><div class="def">提供语言理解、推理、代码生成的基础智能。</div></div></div></div>
+
+  <h3 class="sub"><span class="n">2.1</span>这一层的大图（图 2）</h3>
+  <div class="fig">
+    <img src="images/fig-2.png" alt="图 2 · L2 模型与推理 4 种部署形态决策矩阵" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 2 · 模型与推理 4 部署形态</b>。快手 v1 选 ②国内闭源 API（DeepSeek/Qwen/GLM 多路由），v2 引入 ④自部署 vLLM 跑微调过的小模型走"风控专用 LLM"路线。</div>
+  </div>
+</section>
+
+<!-- ====================================== L1 Infra/Gov -->
+<hr class="sec-divider">
+<section id="l1">
+  <div class="layer l1"><div class="head"><span class="num">1</span><div><h3>L1 · 基础设施与治理 Infra &amp; Governance</h3><div class="def">让 Agent 可上线、可控、可观测、可回滚、可合规。</div></div></div></div>
+
+  <h3 class="sub"><span class="n">1.1</span>这一层的大图（图 1）</h3>
+  <div class="fig">
+    <img src="images/fig-1.png" alt="图 1 · L1 生产治理基座 5 大支柱（同心向外）" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 1 · L1 基础设施与治理 5 圈</b>。Trace / Eval / 路由 / Policy / 部署。L1 是<em>生产治理基座</em>，向上层提供横切能力（被调用），与上层职责互斥，不破坏 7 层分层。</div>
+  </div>
+</section>
+
+<!-- ====================================== 纵向调用链 -->
+<hr class="sec-divider">
+<section id="vertical">
+  <h2 class="sec"><span class="n">9</span>纵向 build-your-agent · 端到端调用链（图 9）</h2>
+  <div class="tldr"><b>TL;DR</b><br>一个 case："用户上传一段视频，问是不是涉政"。下面这张图跟着这次调用，从 L7 用户入口下沉到 L2 模型推理，再回到用户。每跨一层标注经过哪个组件。</div>
+  <div class="fig">
+    <img src="images/fig-9.png" alt="图 9 · 端到端调用链 8 步" style="width:100%;border-radius:6px">
+    <div class="cap"><b>图 9 · 端到端调用链 8 步</b>。一个真实风控 case 跑通 L7→L1→L7。<em>每一步都对应一个开源借鉴点</em>——所以"自研"≠ 凭空发明，而是<em>站在 30+ 开源框架的肩膀上做对各层选型</em>。</div>
+  </div>
+
+  <h3 class="sub"><span class="n">9.1</span>这张图揭示的 4 个工程结论</h3>
+  <ol>
+    <li><b>没有"agent 框架"</b>——只有"L1-L7 每层各选 1-2 个"的组合。所有"Agent 框架"其实只覆盖 L4-L6 三层。</li>
+    <li><b>Java 主链路完全够用</b>——L4-L7 Spring AI / LangChain4j / LangGraph4j 全够；L5 用 Java 实现 mem0-like / Letta-like 思路即可（不引 Python 二进制）。</li>
+    <li><b>L1 是生产治理基座</b>——它向上层提供横切能力（观测/评估/策略/成本），但本身职责互斥不上层化；每一步都要 trace / eval / policy / cost；L1 选型早定不返工。</li>
+    <li><b>HITL 是治理也是产品</b>——回到 L7 不一定是"Agent 自动结案"，更多是"Agent 准好材料给人审"。这正是 LangGraph <details class="gloss"><summary>Interrupt</summary><span class="body">Interrupt = "停下来等人"。Agent 跑到某一步主动暂停、把当前状态写盘、退出，等人审通过把信号喂回来再继续。是<em>人在回路</em>的标准做法。</span></details> / OpenAI RunState 的设计哲学。</li>
+  </ol>
+</section>
+
+<!-- ====================================== References -->
+<hr class="sec-divider">
+<section id="ref">
+  <h2 class="sec"><span class="n">A</span>参考来源</h2>
+  <p>本文档每一条架构断言都对应一个开源代码 file:line 或官方文档。下方按层组织。</p>
+
+  <h3 class="sub"><span class="n">A.1</span>L7 产品（7 个开源仓库 + 闭源参考）</h3>
+  <ul class="ref">
+    <li><b>OpenHands</b> · <a href="https://github.com/All-Hands-AI/OpenHands/tree/0ddbd85" target="_blank">All-Hands-AI/OpenHands@0ddbd85</a>（depth=1 clone, 2026-05-23）
+      · 关键文件：<code>openhands/app_server/app.py</code> · <code>app_conversation/app_conversation_router.py:119+</code> · <code>event/event_service.py:16+</code> · <code>sandbox/docker_sandbox_service.py:1+</code></li>
+    <li><b>Aider</b> · <a href="https://github.com/Aider-AI/aider/tree/5dc9490" target="_blank">Aider-AI/aider@5dc9490</a>
+      · 关键文件：<code>aider/main.py</code> · <code>coders/base_coder.py:88,924,1419</code> · <code>history.py:7-96</code>（ChatSummary）· <code>prompts.py</code></li>
+    <li><b>Cline</b> · <a href="https://github.com/cline/cline/tree/0157ed9" target="_blank">cline/cline@0157ed9</a>
+      · 关键文件：<code>src/core/task/index.ts:1453</code>（initiateTaskLoop）· <code>TaskState.ts:6+</code> · <code>hooks/hook-executor.ts</code> · <code>prompts/system-prompt/index.ts:16+</code> · <code>core/storage/disk.ts</code></li>
+    <li><b>Continue</b> · <a href="https://github.com/continuedev/continue/tree/cb27309" target="_blank">continuedev/continue@cb27309</a>
+      · 关键文件：<code>core/core.ts:92+</code> · <code>core/tools/callTool.ts:50+</code> · <code>core/util/history.ts:186+</code> · <code>core/llm/defaultSystemMessages.ts</code></li>
+    <li><b>pi</b> (earendil-works) · <a href="https://github.com/earendil-works/pi" target="_blank">earendil-works/pi</a>（badlogicgames 出品）
+      · 关键文件：<code>packages/agent/src/agent-loop.ts:30+</code>（agentLoop）· <code>agent.ts:1-50</code>（convertToLlm 边界）· <code>proxy.ts</code> · <code>types.ts</code>（AgentContext/State/Tool/Event 全域类型）· <a href="https://pi.dev/docs/latest" target="_blank">pi.dev/docs</a></li>
+    <li><b>OpenClaw</b> (Peter Steinberger) · <a href="https://github.com/openclaw/openclaw/tree/7f05be04" target="_blank">openclaw/openclaw@7f05be04</a> · <a href="https://openclaw.ai" target="_blank">openclaw.ai</a> · <a href="https://docs.openclaw.ai" target="_blank">docs.openclaw.ai</a>
+      · 关键路径：<code>packages/plugin-sdk</code> · <code>packages/memory-host-sdk</code> · <code>packages/plugin-package-contract</code> · <code>apps/macos · ios · android</code> · <code>VISION.md</code> · <code>openclaw onboard</code> CLI 入口</li>
+    <li><b>Hermes Agent</b> (NousResearch) · <a href="https://github.com/NousResearch/hermes-agent/tree/729a778" target="_blank">NousResearch/hermes-agent@729a778</a> · <a href="https://hermes-agent.nousresearch.com/docs/" target="_blank">官方文档</a>
+      · 关键文件：<code>agent/conversation_loop.py</code>（4191 行主循环）· <code>agent/curator.py</code>（1781 行背景技能审查 orchestrator）· <code>tools/skill_provenance.py</code>（ContextVar 区分"背景 fork" vs "前台用户"写入来源 · 自我演进的工程关键）· <code>tools/skills_hub.py</code> · <code>agentskills.io</code> 开放标准</li>
+    <li>Claude Code 官方：<a href="https://docs.claude.com/en/docs/agents-and-tools/claude-code/overview" target="_blank">Anthropic Claude Code docs</a> · <a href="https://github.com/anthropics/claude-code" target="_blank">github.com/anthropics/claude-code</a> · <a href="https://www.anthropic.com/research/building-effective-agents" target="_blank">Building Effective Agents 白皮书</a></li>
+    <li>Cursor Agent：<a href="https://docs.cursor.com/agent" target="_blank">cursor.com/agent</a></li>
+    <li>Devin (Cognition AI)：<a href="https://www.cognition.ai/blog/introducing-devin" target="_blank">cognition.ai/blog/introducing-devin</a></li>
+    <li>Hermes (NousResearch · 开源指令微调 LLM 系列)：<a href="https://nousresearch.com/" target="_blank">nousresearch.com</a> · <a href="https://huggingface.co/NousResearch" target="_blank">HuggingFace 模型库</a>（提示：与 "Hermes Agent" 在不同社区有不同指代，本文档不将其作为 L6 编排范式纳入比较）</li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.2</span>L6 编排运行时</h3>
+  <ul class="ref">
+    <li>LangGraph：<a href="https://docs.langchain.com/oss/python/langgraph/overview" target="_blank">docs.langchain.com</a> · <a href="https://github.com/langchain-ai/langgraph" target="_blank">GitHub</a></li>
+    <li>OpenAI Agents SDK：<a href="https://openai.github.io/openai-agents-python/" target="_blank">openai-agents-python</a> · GA 2025-03-11</li>
+    <li>Spring AI：<a href="https://spring.io/blog/2025/05/20/spring-ai-1-0-GA-released" target="_blank">1.0 GA 2025-05-20</a> · <a href="https://spring.io/blog/2026/05/08/spring-ai-1-0-7-1-1-6-2-0-0-M6-available-now" target="_blank">1.1.6 发布</a></li>
+    <li>LangChain4j：<a href="https://docs.langchain4j.dev/" target="_blank">docs.langchain4j.dev</a></li>
+    <li>LangGraph4j：<a href="https://github.com/langgraph4j/langgraph4j" target="_blank">GitHub</a></li>
+    <li>Embabel：<a href="https://github.com/embabel/embabel-agent" target="_blank">GitHub</a> · <a href="https://medium.com/@springrod/embabel-a-new-agent-platform-for-the-jvm-1c83402e0014" target="_blank">Rod Johnson 博客</a></li>
+    <li>CrewAI · AutoGen · Semantic Kernel：见 <code>agent-frameworks-deep-dive.html</code> 附录 C</li>
+    <li>Temporal：<a href="https://docs.temporal.io/" target="_blank">temporal.io 文档</a></li>
+    <li><b>DSPy</b> (Stanford NLP · Omar Khattab / Chris Potts / Matei Zaharia) · <a href="https://github.com/stanfordnlp/dspy/tree/efb7fee" target="_blank">stanfordnlp/dspy@efb7fee</a> · <a href="https://dspy.ai" target="_blank">dspy.ai</a>
+      · 关键文件：<code>dspy/primitives/module.py</code>（Module / ProgramMeta · 用户写程序的基类）· <code>dspy/signatures/signature.py</code>（声明式 IO 签名）· <code>dspy/teleprompt/</code>（12+ 优化器：BootstrapFewShot / COPRO / BetterTogether / GRPO / bootstrap_finetune / gepa ...）· <code>dspy/predict/chain_of_thought.py</code></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.3</span>L5 记忆（5 个开源仓库）</h3>
+  <ul class="ref">
+    <li><b>mem0</b> · <a href="https://github.com/mem0ai/mem0/tree/16a7702" target="_blank">mem0ai/mem0@16a7702</a> · <a href="https://docs.mem0.ai/" target="_blank">docs.mem0.ai</a>
+      · 关键文件：<code>mem0/memory/main.py:331</code>（Memory class）· <code>:573</code>（add）· <code>:1126,1227</code>（search/_search_vector_store）· <code>:413</code>（_upsert_entity 0.95 阈值）· <code>configs/prompts.py:468</code>（ADDITIVE_EXTRACTION_PROMPT）· <code>configs/enums.py</code>（MemoryType）</li>
+    <li><b>Letta (MemGPT)</b> · <a href="https://github.com/letta-ai/letta/tree/1131535" target="_blank">letta-ai/letta@1131535</a> · <a href="https://docs.letta.com/concepts/memory-management" target="_blank">memory-management docs</a>
+      · 关键文件：<code>letta/schemas/block.py:67</code>（Block）· <code>schemas/memory.py:32-45</code>（tier）· <code>agent.py:200</code>（update_memory_if_changed）· <code>agent.py:1209</code>（compile）</li>
+    <li><b>Zep</b> · <a href="https://github.com/getzep/zep/tree/faf2ace" target="_blank">getzep/zep@faf2ace</a> · <a href="https://www.getzep.com/" target="_blank">getzep.com</a>
+      · 关键文件：<code>legacy/src/models/memory_common.go:86</code>（MemoryCommon Go struct）</li>
+    <li><b>LangMem</b> · <a href="https://github.com/langchain-ai/langmem/tree/dc1f1e1" target="_blank">langchain-ai/langmem@dc1f1e1</a>
+      · 关键文件：<code>src/langmem/knowledge/extraction.py</code> · <code>short_term/summarization.py</code> · <code>reflection.py</code>（ReflectionExecutor）· <code>graphs/semantic.py</code></li>
+    <li><b>Cognee</b> · <a href="https://github.com/topoteretes/cognee/tree/0187fd8" target="_blank">topoteretes/cognee@0187fd8</a>
+      · 关键文件：<code>cognee/memory/entries.py:20+</code>（MemoryEntry union）· <code>:69</code>（SkillRunEntry · success_score [0,1]）</li>
+    <li>A-MEM：<a href="https://arxiv.org/abs/2502.12110" target="_blank">arXiv:2502.12110</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.4</span>L4 工具与协议</h3>
+  <ul class="ref">
+    <li>MCP：<a href="https://modelcontextprotocol.io/" target="_blank">modelcontextprotocol.io</a> · <a href="https://github.com/modelcontextprotocol" target="_blank">GitHub</a></li>
+    <li>A2A：<a href="https://google.github.io/adk-docs/a2a/" target="_blank">A2A 文档</a> · <a href="https://google-a2a.github.io/A2A/specification/" target="_blank">规范</a></li>
+    <li>OpenAI Function Calling：<a href="https://platform.openai.com/docs/guides/function-calling" target="_blank">platform.openai.com</a></li>
+    <li>Anthropic Tool Use：<a href="https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview" target="_blank">docs.claude.com tool-use</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.5</span>L3 执行环境</h3>
+  <ul class="ref">
+    <li>Playwright：<a href="https://playwright.dev/" target="_blank">playwright.dev</a></li>
+    <li>browser_use：<a href="https://github.com/browser-use/browser-use" target="_blank">browser-use/browser-use</a></li>
+    <li>Anthropic Computer Use：<a href="https://docs.claude.com/en/docs/agents-and-tools/computer-use" target="_blank">computer-use docs</a></li>
+    <li>OpenAI CUA：<a href="https://platform.openai.com/docs/guides/tools-computer-use" target="_blank">platform.openai.com</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.6</span>L2 模型与推理</h3>
+  <ul class="ref">
+    <li>vLLM：<a href="https://docs.vllm.ai/" target="_blank">docs.vllm.ai</a></li>
+    <li>SGLang：<a href="https://github.com/sgl-project/sglang" target="_blank">sgl-project/sglang</a></li>
+    <li>LiteLLM：<a href="https://docs.litellm.ai/" target="_blank">docs.litellm.ai</a></li>
+    <li>Ollama：<a href="https://ollama.com/" target="_blank">ollama.com</a></li>
+    <li>DeepSeek：<a href="https://api-docs.deepseek.com/" target="_blank">api-docs.deepseek.com</a> · Qwen：<a href="https://help.aliyun.com/document_detail/2400395.html" target="_blank">阿里云百炼</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.7</span>L1 基础设施与治理</h3>
+  <ul class="ref">
+    <li>Langfuse：<a href="https://langfuse.com/docs" target="_blank">langfuse.com/docs</a></li>
+    <li>Arize Phoenix：<a href="https://docs.arize.com/phoenix" target="_blank">arize.com/phoenix</a></li>
+    <li>Ragas：<a href="https://docs.ragas.io/" target="_blank">docs.ragas.io</a> · DeepEval：<a href="https://docs.confident-ai.com/" target="_blank">deepeval</a></li>
+    <li>OPA：<a href="https://www.openpolicyagent.org/docs" target="_blank">openpolicyagent.org</a></li>
+    <li>Guardrails AI：<a href="https://www.guardrailsai.com/docs" target="_blank">guardrailsai.com</a> · NeMo Guardrails：<a href="https://docs.nvidia.com/nemo/guardrails/" target="_blank">nvidia.com</a></li>
+  </ul>
+
+  <h3 class="sub"><span class="n">A.8</span>顶层框架（codex 多轮协助推演）</h3>
+  <ul class="ref">
+    <li>本文 7 层 stack 由 codex 多轮 review 校验过；过程见 <code>/tmp/h1_codex_answer.md</code></li>
+    <li>OpenHands 定位：<a href="https://www.openhands.dev/blog/openhands-enterprise-agent-control-plane" target="_blank">openhands-enterprise-agent-control-plane</a></li>
+    <li>Letta 定位：<a href="https://docs.letta.com/letta-platform" target="_blank">letta-platform</a></li>
+  </ul>
+</section>
+
+</div>
+<script>
+(function(){
+  const toc = document.getElementById('toc');
+  const wrap = document.querySelector('.wrap');
+  const toggleBtn = document.getElementById('tocToggle');
+  const tocItems = Array.from(document.querySelectorAll('#toc li[data-target]'));
+  const sections = tocItems.map(li => document.getElementById(li.dataset.target)).filter(Boolean);
+
+  // -------- Collapse/expand with localStorage persistence
+  function applyCollapsed(collapsed){
+    toc.classList.toggle('collapsed', collapsed);
+    wrap.classList.toggle('toc-collapsed', collapsed);
+    toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+    toggleBtn.title = collapsed ? '展开目录' : '收起目录';
+  }
+  const stored = localStorage.getItem('tocCollapsed') === '1';
+  applyCollapsed(stored);
+  toggleBtn.addEventListener('click', () => {
+    const now = !toc.classList.contains('collapsed');
+    applyCollapsed(now);
+    localStorage.setItem('tocCollapsed', now ? '1' : '0');
+  });
+
+  if (!sections.length) return;
+
+  // -------- Active section tracking via scroll position
+  function setActive(id){
+    let changed = false;
+    tocItems.forEach(li => {
+      const isActive = li.dataset.target === id;
+      if (isActive !== li.classList.contains('active')) changed = true;
+      li.classList.toggle('active', isActive);
+    });
+    // Auto-scroll TOC to keep active item in view
+    if (changed && !toc.classList.contains('collapsed')){
+      const active = toc.querySelector('li.active');
+      if (active){
+        const r = active.getBoundingClientRect();
+        const tr = toc.getBoundingClientRect();
+        if (r.top < tr.top + 40 || r.bottom > tr.bottom - 40){
+          active.scrollIntoView({block:'center',behavior:'smooth'});
+        }
+      }
+    }
+  }
+
+  // Recompute on scroll: pick the section whose top is closest above the 25% viewport line
+  let raf = 0;
+  function update(){
+    raf = 0;
+    const marker = window.innerHeight * 0.25;
+    let current = sections[0].id;
+    for (const sec of sections){
+      const r = sec.getBoundingClientRect();
+      if (r.top - marker <= 0) current = sec.id;
+      else break;
+    }
+    setActive(current);
+  }
+  function onScroll(){ if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  update();
+
+  // -------- Smooth scroll on TOC click
+  document.querySelectorAll('#toc a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const t = document.getElementById(id);
+      if (t) { e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); history.replaceState(null,'','#'+id); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
