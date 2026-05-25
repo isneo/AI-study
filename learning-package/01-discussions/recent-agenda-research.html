@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Native 风控 Agent：Memory 调研、评估飞轮与落地架构</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f3;
+      --paper: #fff;
+      --panel: #fbfcfa;
+      --ink: #16201b;
+      --ink-2: #2e3f37;
+      --muted: #627067;
+      --faint: #8a948e;
+      --line: #d9e0da;
+      --line-2: #bdcac1;
+      --green: #17644d;
+      --green-soft: #e3f0ea;
+      --blue: #245985;
+      --blue-soft: #e4edf6;
+      --amber: #8a611d;
+      --amber-soft: #f4ead3;
+      --red: #9d3a31;
+      --red-soft: #f6e5e1;
+      --teal: #237171;
+      --teal-soft: #e0f0ee;
+      --violet: #654b8c;
+      --violet-soft: #eee8f5;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .shell {
+      display: grid;
+      grid-template-columns: 286px minmax(0, 1fr);
+      gap: 28px;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 28px 28px 84px;
+    }
+    aside {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.9);
+    }
+    .toc-title {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .toc a {
+      display: block;
+      padding: 5px 7px;
+      border-radius: 5px;
+      color: var(--ink-2);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .toc a:hover { background: var(--green-soft); color: var(--green); }
+    .toc .group {
+      margin: 13px 0 4px;
+      padding: 0 7px;
+      color: var(--faint);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    main { min-width: 0; }
+    header {
+      padding: 28px 0 24px;
+      border-bottom: 1px solid var(--line-2);
+    }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 850;
+    }
+    h1, h2, h3, h4 { letter-spacing: 0; }
+    h1 {
+      max-width: 1040px;
+      margin: 0;
+      font-size: 36px;
+      line-height: 1.2;
+    }
+    .subtitle {
+      max-width: 1000px;
+      margin: 12px 0 0;
+      color: var(--ink-2);
+      font-size: 17px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    section { margin: 44px 0 0; }
+    h2 {
+      margin: 0 0 15px;
+      padding-bottom: 9px;
+      border-bottom: 2px solid var(--line);
+      font-size: 23px;
+      line-height: 1.3;
+    }
+    h3 {
+      margin: 26px 0 9px;
+      font-size: 17px;
+      line-height: 1.4;
+    }
+    h4 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    p { margin: 8px 0; color: var(--ink-2); }
+    .part {
+      margin-top: 42px;
+      padding: 12px 14px;
+      border: 1px solid var(--line-2);
+      border-radius: 8px;
+      background: #eef3ef;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .lead {
+      margin: 18px 0 0;
+      padding: 16px 18px;
+      border-left: 4px solid var(--green);
+      border-radius: 0 8px 8px 0;
+      background: var(--green-soft);
+    }
+    .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .grid-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .grid-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .card {
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .card p { font-size: 13.5px; }
+    .metric {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--green);
+      font-size: 23px;
+      font-weight: 850;
+      line-height: 1.15;
+    }
+    .tag {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #edf1ee;
+      color: var(--muted);
+      font-size: 11.5px;
+      white-space: nowrap;
+    }
+    .tag.green { background: var(--green-soft); color: var(--green); }
+    .tag.blue { background: var(--blue-soft); color: var(--blue); }
+    .tag.amber { background: var(--amber-soft); color: var(--amber); }
+    .tag.red { background: var(--red-soft); color: var(--red); }
+    .tag.teal { background: var(--teal-soft); color: var(--teal); }
+    .tag.violet { background: var(--violet-soft); color: var(--violet); }
+    .callout {
+      margin: 14px 0;
+      padding: 13px 15px;
+      border-radius: 0 8px 8px 0;
+      color: var(--ink-2);
+    }
+    .callout.green { border-left: 4px solid var(--green); background: var(--green-soft); }
+    .callout.blue { border-left: 4px solid var(--blue); background: var(--blue-soft); }
+    .callout.amber { border-left: 4px solid var(--amber); background: var(--amber-soft); }
+    .callout.red { border-left: 4px solid var(--red); background: var(--red-soft); }
+    .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    table {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #edf2ee;
+      color: var(--ink);
+      font-weight: 780;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .diagram {
+      overflow-x: auto;
+      margin: 16px 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .diagram svg {
+      display: block;
+      width: 100%;
+      min-width: 920px;
+      height: auto;
+    }
+    .diagram.compact svg { min-width: 760px; }
+    .quote {
+      padding: 12px 14px;
+      border-left: 4px solid var(--line-2);
+      border-radius: 0 8px 8px 0;
+      background: #fbfcfb;
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+    .source-list {
+      columns: 2;
+      column-gap: 24px;
+      margin: 8px 0;
+      padding-left: 18px;
+    }
+    .source-list li { break-inside: avoid; margin: 4px 0; }
+    .small { color: var(--muted); font-size: 12.5px; }
+
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 1fr; padding: 18px; }
+      aside { position: static; max-height: none; }
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+      .source-list { columns: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="toc" aria-label="目录">
+      <div class="toc-title">Memory 调研与风控落地</div>
+      <a href="#summary">0. 结论先行</a>
+      <div class="group">第一部分 · 深度调研</div>
+      <a href="#memory-research">1. Memory 行业调研</a>
+      <a href="#why-fast">2. 为什么跑得快</a>
+      <div class="group">第二部分 · 架构与落地</div>
+      <a href="#four-blocks">3. 四块总体架构</a>
+      <a href="#runtime">4. 编排与运行时</a>
+      <a href="#domain-top">5. 上层领域能力</a>
+      <a href="#workflows">6. 业务链路落地</a>
+      <a href="#implementation">7. V1 实施计划</a>
+      <a href="#narrative">8. 对外表达</a>
+      <a href="#sources">资料来源</a>
+    </aside>
+
+    <main>
+      <header>
+        <span class="eyebrow">AI Native / Memory Scaling / Risk Control Agent</span>
+        <h1>AI Native 风控 Agent：Memory 调研、评估飞轮与落地架构</h1>
+        <p class="subtitle">文档分两大部分：第一部分先做 Memory 和“为什么跑得快”的深度调研，体现行业认知和横向迁移能力；第二部分围绕四块普适架构展开风控整体设计和落地方案。生命周期、飞轮和业务流程均用图示表达。</p>
+        <div class="meta">
+          <span class="pill">版本：框架重排版</span>
+          <span class="pill">更新时间：2026-05-25</span>
+          <span class="pill">重点：Memory 行业认知 + 评估数据飞轮 + 风控架构落地</span>
+        </div>
+      </header>
+
+      <section id="summary">
+        <h2>0. 结论先行</h2>
+        <div class="lead">
+          <p><strong>总判断：</strong>风控 Agent 的落地不应该从“套哪个 Agent 框架”开始，而应该从两个能力底座开始：一是 Memory，让系统能跨任务复用领域知识、案例经验和策略口径；二是评估与数据飞轮，让系统把每次运行、人工修正和申诉后验变成下一轮迭代资产。</p>
+          <p><strong>推荐架构：</strong>第二部分采用四块普适架构：底层是可观测、评估和数据飞轮，负责让系统持续变好；中间层是编排和运行时，负责让系统跑起来；顶层左侧是 Memory &amp; Context，负责让系统跑得好；顶层右侧是约束和验证，负责让系统别出错。</p>
+        </div>
+
+        <div class="grid-4">
+          <div class="card">
+            <span class="metric">Memory</span>
+            <h4>先建立行业认知</h4>
+            <p>从 context、RAG、state 的边界讲起，再到 semantic / episodic / procedural / reflective memory。</p>
+          </div>
+          <div class="card">
+            <span class="metric">Flywheel</span>
+            <h4>跑得快靠评估闭环</h4>
+            <p>每个 case 都能变成 trace、反馈、归因、评估样本、候选 memory 或策略 backlog。</p>
+          </div>
+          <div class="card">
+            <span class="metric">Runtime</span>
+            <h4>中间层是工程底座</h4>
+            <p>技术框架、工具调用、模型调用、状态、停止条件、HITL 和系统执行链路都落在这里。</p>
+          </div>
+          <div class="card">
+            <span class="metric">Domain</span>
+            <h4>上层是业务技术交界</h4>
+            <p>Memory/Context 与约束/验证同时包含业务领域知识、策略逻辑和技术实现。</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="part">第一部分 · 深度调研：Memory 与“为什么跑得快”</div>
+
+      <section id="memory-research">
+        <h2>1. Memory 行业调研</h2>
+        <p>Memory 的行业价值在于：让 Agent 不再是每次从零开始的模型调用，而是能跨任务保留状态、复用经验、吸收反馈、继承组织知识的长期系统。风控只是这套能力迁移到 B 端高风险场景后的一个应用。</p>
+
+        <h3>1.1 Memory 的边界</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>概念</th>
+                <th>解决的问题</th>
+                <th>生命周期</th>
+                <th>典型实现</th>
+                <th>边界</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Context</td>
+                <td>本次推理看什么。</td>
+                <td>一次调用或任务内。</td>
+                <td>Prompt、工具返回、检索片段、短期摘要。</td>
+                <td>多塞上下文不是长期记忆。</td>
+              </tr>
+              <tr>
+                <td>State</td>
+                <td>任务走到哪，已有变量是什么。</td>
+                <td>一次 workflow / thread。</td>
+                <td>状态机、checkpoint、任务表。</td>
+                <td>状态持久化主要服务恢复和回放。</td>
+              </tr>
+              <tr>
+                <td>RAG</td>
+                <td>从外部知识源取资料。</td>
+                <td>知识源长期存在，检索片段短期进入上下文。</td>
+                <td>向量库、BM25、GraphRAG、Rerank。</td>
+                <td>RAG 是检索机制，不天然包含经验写入和治理。</td>
+              </tr>
+              <tr>
+                <td>Memory</td>
+                <td>跨任务保留会影响未来行为的事实、经验和流程。</td>
+                <td>跨会话、跨任务、跨时间。</td>
+                <td>Memory store、case memory、profile、procedural skill、graph memory。</td>
+                <td>关键在抽取、治理、检索、更新、评估。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>1.2 行业演进图</h3>
+        <div class="diagram" aria-label="Memory 行业演进图">
+          <svg viewBox="0 0 1120 430" role="img">
+            <defs>
+              <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#17644d"/>
+              </marker>
+              <style>
+                .svg-title{font:800 24px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .svg-sub{font:600 13px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .svg-h{font:800 16px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .svg-t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .box{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="1120" height="430" rx="12" fill="#fbfcfa"/>
+            <text class="svg-title" x="36" y="42">Memory 行业演进：从短期上下文到外部长期状态层</text>
+            <text class="svg-sub" x="36" y="66">趋势不是“记更多历史”，而是把经验变成可检索、可治理、可评估、可回滚的生产资产。</text>
+            <g transform="translate(36 110)">
+              <rect class="box" x="0" y="0" width="230" height="150" rx="10"/>
+              <text class="svg-h" x="18" y="32">1. 短期上下文</text>
+              <text class="svg-t" x="18" y="62">聊天历史 / 滑动窗口</text>
+              <text class="svg-t" x="18" y="86">摘要压缩 / prompt stuffing</text>
+              <text class="svg-t" x="18" y="116">问题：贵、噪声大、跨任务弱</text>
+              <path d="M238 75 H286" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-green)"/>
+            </g>
+            <g transform="translate(322 110)">
+              <rect class="box" x="0" y="0" width="230" height="150" rx="10"/>
+              <text class="svg-h" x="18" y="32">2. RAG 化记忆</text>
+              <text class="svg-t" x="18" y="62">历史对话 / 文档向量化</text>
+              <text class="svg-t" x="18" y="86">按相似度检索</text>
+              <text class="svg-t" x="18" y="116">问题：会找资料，不会治理经验</text>
+              <path d="M238 75 H286" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-green)"/>
+            </g>
+            <g transform="translate(608 110)">
+              <rect class="box" x="0" y="0" width="230" height="150" rx="10"/>
+              <text class="svg-h" x="18" y="32">3. Agentic Memory</text>
+              <text class="svg-t" x="18" y="62">Agent 主动读写 / 更新 / 删除</text>
+              <text class="svg-t" x="18" y="86">语义、情节、程序、反思记忆</text>
+              <text class="svg-t" x="18" y="116">问题：自动写入会污染</text>
+              <path d="M238 75 H286" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-green)"/>
+            </g>
+            <g transform="translate(894 110)">
+              <rect class="box" x="0" y="0" width="190" height="150" rx="10"/>
+              <text class="svg-h" x="18" y="32">4. Memory Scaling</text>
+              <text class="svg-t" x="18" y="62">外部记忆增长</text>
+              <text class="svg-t" x="18" y="86">Agent 表现持续提升</text>
+              <text class="svg-t" x="18" y="116">关键：评估收益与副作用</text>
+            </g>
+            <g transform="translate(116 312)">
+              <rect x="0" y="0" width="888" height="64" rx="10" fill="#e3f0ea" stroke="#17644d" stroke-width="2"/>
+              <text class="svg-h" x="24" y="28" fill="#17644d">行业结论</text>
+              <text class="svg-t" x="24" y="50">企业 Agent 的差异化会越来越来自组织专属 memory：流程、案例、反馈、策略口径、成功/失败经验，而不是只来自基础模型权重。</text>
+            </g>
+          </svg>
+        </div>
+
+        <h3>1.3 主流项目与研究路线</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>项目/研究</th>
+                <th>代表思想</th>
+                <th>对横向迁移的价值</th>
+                <th>迁移到风控的启发</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CoALA</td>
+                <td>把 Agent 拆成 memory、action、decision-making 等认知部件。</td>
+                <td>提供跨业务分析框架，不被具体工具名绑住。</td>
+                <td>风控要区分语义事实、案例经验、审核流程和反思记忆。</td>
+              </tr>
+              <tr>
+                <td>Generative Agents / Reflexion</td>
+                <td>从观察、反馈和失败中形成反思，再影响后续行为。</td>
+                <td>说明不改模型参数，也能通过外部经验改进行为。</td>
+                <td>申诉成功、人工驳回、误判归因可形成候选 reflective memory。</td>
+              </tr>
+              <tr>
+                <td>Letta / MemGPT</td>
+                <td>把上下文窗口视为稀缺工作记忆，外部存储视为长期记忆。</td>
+                <td>强调 core memory 与 archival memory 的层级。</td>
+                <td>风控核心记忆应是边界和约束，历史 case 按需召回。</td>
+              </tr>
+              <tr>
+                <td>LangMem</td>
+                <td>面向 long-term memory 的抽取、管理、检索、版本历史。</td>
+                <td>把 memory 从聊天组件提升为工程模块。</td>
+                <td>适合借鉴候选记忆抽取、store、版本和管理机制。</td>
+              </tr>
+              <tr>
+                <td>Mem0</td>
+                <td>强调 memory layer 与 memory evaluation。</td>
+                <td>提醒 memory 要按任务收益评估，不是召回越多越好。</td>
+                <td>风控要看 memory 命中后的人工接受率、误引用率和处理时长。</td>
+              </tr>
+              <tr>
+                <td>Zep / Graphiti</td>
+                <td>用 temporal knowledge graph 组织实体关系和时间变化。</td>
+                <td>适合事实会演化、关系强的企业场景。</td>
+                <td>账号、设备、内容、举报、处罚、申诉天然适合时序图谱。</td>
+              </tr>
+              <tr>
+                <td>Databricks Memory Scaling</td>
+                <td>把 memory 视为新的 scaling 轴。</td>
+                <td>关注外部记忆增长后 Agent 是否更准、更快。</td>
+                <td>风控可用 case、trace、复核和申诉后验证明 memory scaling。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>1.4 Memory 生产能力闭环</h3>
+        <div class="diagram" aria-label="Memory 生产能力闭环">
+          <svg viewBox="0 0 1120 500" role="img">
+            <defs>
+              <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#245985"/>
+              </marker>
+              <style>
+                .h{font:800 16px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .b{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="1120" height="500" rx="12" fill="#fbfcfa"/>
+            <text class="h" x="36" y="42">Memory 不是存储组件，而是一条生产能力闭环</text>
+            <g transform="translate(92 100)">
+              <circle cx="460" cy="180" r="118" fill="#e4edf6" stroke="#245985" stroke-width="2"/>
+              <text class="h" x="402" y="168">Memory</text>
+              <text class="t" x="375" y="194">长期状态与经验资产</text>
+              <g>
+                <rect class="b" x="350" y="-42" width="220" height="72" rx="10"/>
+                <text class="h" x="378" y="-14">Capture</text>
+                <text class="t" x="378" y="10">捕获候选事件和反馈</text>
+              </g>
+              <g>
+                <rect class="b" x="650" y="54" width="220" height="72" rx="10"/>
+                <text class="h" x="678" y="82">Distill</text>
+                <text class="t" x="678" y="106">压缩成可复用经验</text>
+              </g>
+              <g>
+                <rect class="b" x="650" y="246" width="220" height="72" rx="10"/>
+                <text class="h" x="678" y="274">Index</text>
+                <text class="t" x="678" y="298">结构化、向量、图谱索引</text>
+              </g>
+              <g>
+                <rect class="b" x="350" y="342" width="220" height="72" rx="10"/>
+                <text class="h" x="378" y="370">Retrieve</text>
+                <text class="t" x="378" y="394">按任务检索并控制预算</text>
+              </g>
+              <g>
+                <rect class="b" x="50" y="246" width="220" height="72" rx="10"/>
+                <text class="h" x="78" y="274">Evaluate</text>
+                <text class="t" x="78" y="298">证明收益和副作用</text>
+              </g>
+              <g>
+                <rect class="b" x="50" y="54" width="220" height="72" rx="10"/>
+                <text class="h" x="78" y="82">Govern</text>
+                <text class="t" x="78" y="106">权限、审批、过期、回滚</text>
+              </g>
+              <path d="M460 34 C574 34 640 58 650 82" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"/>
+              <path d="M760 130 C820 180 820 238 760 246" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"/>
+              <path d="M650 310 C608 360 560 374 570 374" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"/>
+              <path d="M350 374 C250 368 205 330 270 296" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"/>
+              <path d="M160 246 C105 194 105 136 160 126" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"/>
+              <path d="M270 82 C320 34 384 28 350 0" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"/>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section id="why-fast">
+        <h2>2. 为什么跑得快：评估体系与数据飞轮</h2>
+        <p>“跑得快”不是说模型一次性就能审得更准，而是团队把反馈周期、错误归因和版本验证做短了。每个 case 都能产生可回放 trace、人工修正、申诉后验和业务结果；失败后能定位到知识、上下文、工具、Runtime、约束或评估缺口，再进入下一轮改进。</p>
+
+        <h3>2.1 数据飞轮图</h3>
+        <div class="diagram" aria-label="风控评估与数据飞轮">
+          <svg viewBox="0 0 1120 560" role="img">
+            <defs>
+              <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#8a611d"/>
+              </marker>
+              <style>
+                .h{font:800 16px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .box{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="1120" height="560" rx="12" fill="#fbfcfa"/>
+            <text class="h" x="36" y="42">评估与数据飞轮：为什么风控 Agent 能跑得快</text>
+            <text class="t" x="36" y="66">每个 case 都不是一次性结果，而是可回放、可归因、可复用的迭代素材。</text>
+            <g transform="translate(100 100)">
+              <circle cx="460" cy="205" r="135" fill="#f4ead3" stroke="#8a611d" stroke-width="2"/>
+              <text class="h" x="403" y="196">Eval Flywheel</text>
+              <text class="t" x="376" y="220">反馈越干净，系统越会审</text>
+
+              <g transform="translate(340 -40)">
+                <rect class="box" width="240" height="76" rx="10"/>
+                <text class="h" x="20" y="30">1. Agent 处理</text>
+                <text class="t" x="20" y="54">证据链 / 风险建议 / trace</text>
+              </g>
+              <g transform="translate(680 68)">
+                <rect class="box" width="240" height="76" rx="10"/>
+                <text class="h" x="20" y="30">2. 人工复核</text>
+                <text class="t" x="20" y="54">接受 / 修改 / 驳回 / 补证据</text>
+              </g>
+              <g transform="translate(680 286)">
+                <rect class="box" width="240" height="76" rx="10"/>
+                <text class="h" x="20" y="30">3. 申诉与后验</text>
+                <text class="t" x="20" y="54">误伤 / 漏召 / 规则争议</text>
+              </g>
+              <g transform="translate(340 394)">
+                <rect class="box" width="240" height="76" rx="10"/>
+                <text class="h" x="20" y="30">4. 错误归因</text>
+                <text class="t" x="20" y="54">模型 / 工具 / Memory / 流程</text>
+              </g>
+              <g transform="translate(0 286)">
+                <rect class="box" width="240" height="76" rx="10"/>
+                <text class="h" x="20" y="30">5. 资产沉淀</text>
+                <text class="t" x="20" y="54">Eval / Case Memory / SOP / Backlog</text>
+              </g>
+              <g transform="translate(0 68)">
+                <rect class="box" width="240" height="76" rx="10"/>
+                <text class="h" x="20" y="30">6. 灰度发布</text>
+                <text class="t" x="20" y="54">Shadow → Canary → Full / 回滚</text>
+              </g>
+              <path d="M580 0 C660 4 704 44 704 68" stroke="#8a611d" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>
+              <path d="M800 144 C860 190 860 256 800 286" stroke="#8a611d" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>
+              <path d="M680 348 C640 410 590 430 580 430" stroke="#8a611d" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>
+              <path d="M340 430 C250 430 242 348 240 348" stroke="#8a611d" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>
+              <path d="M120 286 C60 220 60 160 120 144" stroke="#8a611d" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>
+              <path d="M240 92 C290 20 338 0 340 0" stroke="#8a611d" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>
+            </g>
+          </svg>
+        </div>
+
+        <h3>2.2 六层评估体系</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>评估层</th>
+                <th>回答的问题</th>
+                <th>典型指标</th>
+                <th>为什么提速</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>业务效果</td>
+                <td>风险有没有真变少，用户权益有没有受伤。</td>
+                <td>拦截率、漏放率、误杀率、申诉成功率、复核一致性。</td>
+                <td>让系统优化业务结果，而不是只优化模型输出观感。</td>
+              </tr>
+              <tr>
+                <td>Agent 判断</td>
+                <td>单个 case 判得准不准。</td>
+                <td>precision、recall、风险等级准确率、人工接受率、人审推翻率。</td>
+                <td>快速判断新模型、prompt、memory 是否值得灰度。</td>
+              </tr>
+              <tr>
+                <td>证据质量</td>
+                <td>证据是否取全，引用是否正确。</td>
+                <td>必要证据覆盖率、规则引用正确率、案例引用正确率、证据冲突率。</td>
+                <td>定位问题是证据缺失、工具缺失、规则解释错还是模型判断错。</td>
+              </tr>
+              <tr>
+                <td>放权治理</td>
+                <td>能不能扩大自治。</td>
+                <td>各风险档自决率、升级率、高风险转人工覆盖率。</td>
+                <td>放权用指标争取：先 shadow-run，再 canary，再自动化。</td>
+              </tr>
+              <tr>
+                <td>策略迭代</td>
+                <td>飞轮有没有真的转。</td>
+                <td>发现到上线耗时、回归集通过率、memory 命中收益、backlog 关闭率。</td>
+                <td>每次修复沉淀为 eval、memory、SOP、工具或策略改进。</td>
+              </tr>
+              <tr>
+                <td>工程审计</td>
+                <td>线上是否扛得住，出事能不能查清。</td>
+                <td>P95/P99 延迟、成本、工具成功率、case replay 覆盖率、回滚耗时。</td>
+                <td>让系统具备生产可信度，不停留在 demo。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>2.3 评估集与反馈治理</h3>
+        <div class="grid-3">
+          <div class="card">
+            <h3>分桶评估集</h3>
+            <p>Golden Set 覆盖稳定规则，Boundary Set 覆盖灰区，Regression Set 防止重犯，Adversarial Set 防对抗，Fresh Sample 防分布漂移，Memory Eval Set 验证记忆收益。</p>
+            <span class="tag blue">Eval Asset</span>
+          </div>
+          <div class="card">
+            <h3>反馈先治理</h3>
+            <p>资深审核员仲裁可信度高，申诉成功要先区分真误伤和规则变化，集中申诉和新账号批量反馈默认隔离，防止脏反馈带歪飞轮。</p>
+            <span class="tag red">Anti Poisoning</span>
+          </div>
+          <div class="card">
+            <h3>版本可回滚</h3>
+            <p>模型、prompt、memory、工具、规则和评估集版本绑定。任何改动都要能看到指标变化、影响样本、回滚路径和负责人。</p>
+            <span class="tag green">Versioned Ops</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="part">第二部分 · 风控整体架构设计与方案落地</div>
+
+      <section id="four-blocks">
+        <h2>3. 四块总体架构</h2>
+        <p>这套架构不是技术名词堆栈，而是一个生产系统的功能分层：底层让系统持续变好，中间层让系统跑起来，上层左侧让系统跑得好，上层右侧让系统别出错。</p>
+
+        <div class="diagram" aria-label="四块总体架构图">
+          <svg viewBox="0 0 1120 620" role="img">
+            <defs>
+              <style>
+                .title{font:800 22px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .h{font:800 17px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .chip{font:700 11px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#17644d}
+              </style>
+            </defs>
+            <rect width="1120" height="620" rx="12" fill="#fbfcfa"/>
+            <text class="title" x="40" y="44">风控 Agent 普适架构：四块能力</text>
+
+            <rect x="80" y="92" width="450" height="168" rx="14" fill="#e3f0ea" stroke="#17644d" stroke-width="2"/>
+            <text class="h" x="110" y="128">Memory &amp; Context</text>
+            <text class="t" x="110" y="156">让系统跑得好：知道业务、知道案例、知道当前任务该看什么</text>
+            <text class="chip" x="110" y="190">领域认知层 · 业务元素 + 技术元素</text>
+            <text class="t" x="110" y="218">规则口径 / 案例经验 / 当前证据 / 用户行为 / 图谱关系 / SOP</text>
+
+            <rect x="590" y="92" width="450" height="168" rx="14" fill="#f6e5e1" stroke="#9d3a31" stroke-width="2"/>
+            <text class="h" x="620" y="128">约束 &amp; 验证</text>
+            <text class="t" x="620" y="156">让系统别出错：规则、权限、证据、人工复核、输出校验</text>
+            <text class="chip" x="620" y="190" fill="#9d3a31">治理安全层 · 业务元素 + 技术元素</text>
+            <text class="t" x="620" y="218">Policy / Guardrail / Citation / Schema / HITL / Stop Reason</text>
+
+            <rect x="140" y="306" width="840" height="130" rx="14" fill="#e4edf6" stroke="#245985" stroke-width="2"/>
+            <text class="h" x="180" y="342">编排 &amp; 运行时</text>
+            <text class="t" x="180" y="370">让系统跑起来：任务生命周期、工具调用、模型调用、状态管理、停止条件、人机协同</text>
+            <text class="chip" x="180" y="402" fill="#245985">工程底座 · 技术框架和系统执行链路主要落在这一层</text>
+            <text class="t" x="580" y="402">Spring AI / LangGraph 思路 / MCP-style Tool Gateway / Model Gateway / Trace</text>
+
+            <rect x="80" y="482" width="960" height="96" rx="14" fill="#f4ead3" stroke="#8a611d" stroke-width="2"/>
+            <text class="h" x="120" y="518">可观测 / 评估 / 数据飞轮底座</text>
+            <text class="t" x="120" y="546">让系统持续变好：Trace、Eval、Feedback、错误归因、分桶评估集、灰度、版本、回滚</text>
+
+            <line x1="305" y1="260" x2="430" y2="306" stroke="#17644d" stroke-width="3"/>
+            <line x1="815" y1="260" x2="690" y2="306" stroke="#9d3a31" stroke-width="3"/>
+            <line x1="560" y1="436" x2="560" y2="482" stroke="#8a611d" stroke-width="3"/>
+          </svg>
+        </div>
+
+        <div class="callout blue">
+          <strong>层级解释：</strong>中间层是工程底座，技术框架、工具协议、模型调用、状态、执行链路主要落在这里；上层两块是业务和技术的交界层，既包含风控领域知识、策略逻辑和证据规则，也包含 context building、memory retrieval、guardrail、validator 等技术机制。
+        </div>
+      </section>
+
+      <section id="runtime">
+        <h2>4. 编排与运行时：让系统跑起来</h2>
+        <p>运行时层负责把一个风控任务从进入系统到反馈回流跑通。它承载技术选型和系统执行链路：Spring AI 适合作为 Java 应用集成层，MCP 风格工具网关统一内部工具，LangGraph 的 state/checkpoint/HITL 思路可借鉴，OpenAI Agents SDK 可用于原型验证。</p>
+
+        <h3>4.1 Runtime 生命周期图</h3>
+        <div class="diagram" aria-label="Runtime 生命周期图">
+          <svg viewBox="0 0 1120 520" role="img">
+            <defs>
+              <marker id="arrow-run" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#245985"/>
+              </marker>
+              <style>
+                .h{font:800 15px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .box{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="1120" height="520" rx="12" fill="#fbfcfa"/>
+            <text class="h" x="40" y="44">Runtime 生命周期：从任务进入到反馈回流</text>
+            <g transform="translate(50 100)">
+              <rect class="box" x="0" y="0" width="150" height="80" rx="10"/>
+              <text class="h" x="18" y="30">Task Intake</text>
+              <text class="t" x="18" y="54">场景 / 权限 / 预算</text>
+              <path d="M154 40 H192" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="200" y="0" width="150" height="80" rx="10"/>
+              <text class="h" x="218" y="30">Plan</text>
+              <text class="t" x="218" y="54">证据缺口 / 工具计划</text>
+              <path d="M354 40 H392" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="400" y="0" width="150" height="80" rx="10"/>
+              <text class="h" x="418" y="30">Tool Calls</text>
+              <text class="t" x="418" y="54">规则 / 案例 / 图谱</text>
+              <path d="M554 40 H592" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="600" y="0" width="150" height="80" rx="10"/>
+              <text class="h" x="618" y="30">Context Build</text>
+              <text class="t" x="618" y="54">当前证据 + Memory</text>
+              <path d="M754 40 H792" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="800" y="0" width="150" height="80" rx="10"/>
+              <text class="h" x="818" y="30">Decision Draft</text>
+              <text class="t" x="818" y="54">结论 / 证据 / 建议</text>
+            </g>
+            <g transform="translate(150 250)">
+              <rect class="box" x="0" y="0" width="170" height="80" rx="10"/>
+              <text class="h" x="20" y="30">Validate</text>
+              <text class="t" x="20" y="54">Schema / 引用 / 权限</text>
+              <path d="M174 40 H232" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="240" y="0" width="170" height="80" rx="10"/>
+              <text class="h" x="260" y="30">Stop / Handoff</text>
+              <text class="t" x="260" y="54">完成 / 转人工 / 降级</text>
+              <path d="M414 40 H472" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="480" y="0" width="170" height="80" rx="10"/>
+              <text class="h" x="500" y="30">Human Review</text>
+              <text class="t" x="500" y="54">接受 / 修改 / 驳回</text>
+              <path d="M654 40 H712" stroke="#245985" stroke-width="3" marker-end="url(#arrow-run)"/>
+
+              <rect class="box" x="720" y="0" width="170" height="80" rx="10"/>
+              <text class="h" x="740" y="30">Feedback</text>
+              <text class="t" x="740" y="54">trace / eval / memory</text>
+            </g>
+            <path d="M925 180 C1030 228 1015 314 875 290" stroke="#245985" stroke-width="3" fill="none" marker-end="url(#arrow-run)"/>
+            <path d="M560 330 C500 410 340 410 258 330" stroke="#245985" stroke-width="2.5" fill="none" stroke-dasharray="7 6" marker-end="url(#arrow-run)"/>
+            <text class="t" x="350" y="432">验证失败 / 证据不足 / 规则冲突时回到 Plan 或 Tool Calls，不能让模型无限循环。</text>
+          </svg>
+        </div>
+
+        <h3>4.2 运行时层选型</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>能力</th>
+                <th>推荐</th>
+                <th>落位</th>
+                <th>理由</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>应用集成</td>
+                <td>Spring AI / 现有 Java LLM Adapter</td>
+                <td>中间层</td>
+                <td>如果风控后台是 Java/Spring，优先降低接入成本。</td>
+              </tr>
+              <tr>
+                <td>工具协议</td>
+                <td>MCP-style Tool Gateway</td>
+                <td>中间层连接业务工具</td>
+                <td>统一 schema、权限、审计、限流和结构化输出。</td>
+              </tr>
+              <tr>
+                <td>复杂编排</td>
+                <td>自研 Runtime，借鉴 LangGraph</td>
+                <td>中间层核心</td>
+                <td>state、checkpoint、HITL 思路很适合，但业务状态不能完全外包。</td>
+              </tr>
+              <tr>
+                <td>原型验证</td>
+                <td>OpenAI Agents SDK</td>
+                <td>旁路 PoC</td>
+                <td>快速验证工具调用、guardrail、handoff、tracing。</td>
+              </tr>
+              <tr>
+                <td>观测评估</td>
+                <td>Langfuse 自托管 / 内部 Trace &amp; Eval</td>
+                <td>底层贯穿</td>
+                <td>生产必需，所有任务和改动都要可回放、可评分、可比较。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="domain-top">
+        <h2>5. 上层领域能力：Memory &amp; Context 与约束 &amp; 验证</h2>
+        <p>顶层左右两块不是纯技术层，而是业务与技术的交界层。左边负责把领域知识、当前案件和历史经验组织成可用上下文；右边负责把风控规则、权限、证据要求和人工责任链变成系统约束。</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Memory &amp; Context：让系统跑得好</h3>
+            <p>包含策略口径、灰区解释、典型案例、申诉后验、审核 SOP、当前证据、用户画像、行为历史、设备关系和相似案例。技术上对应 context builder、memory retrieval、case retrieval、rerank、context budget。</p>
+            <span class="tag green">领域认知层</span>
+          </div>
+          <div class="card">
+            <h3>约束 &amp; 验证：让系统别出错</h3>
+            <p>包含规则版本、证据引用、权限边界、高风险动作、转人工条件、输出 schema、停止条件和审计要求。技术上对应 guardrail、validator、policy engine、citation checker、HITL。</p>
+            <span class="tag red">治理安全层</span>
+          </div>
+        </div>
+
+        <h3>5.1 Memory 生命周期图</h3>
+        <div class="diagram compact" aria-label="Memory 生命周期图">
+          <svg viewBox="0 0 980 360" role="img">
+            <defs>
+              <marker id="arrow-memory" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#17644d"/>
+              </marker>
+              <style>
+                .h{font:800 15px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .box{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="980" height="360" rx="12" fill="#fbfcfa"/>
+            <text class="h" x="36" y="42">风控 Memory 生命周期：候选到正式，必须可评估、可灰度、可回滚</text>
+            <g transform="translate(34 100)">
+              <rect class="box" x="0" y="0" width="130" height="72" rx="10"/>
+              <text class="h" x="18" y="29">Candidate</text>
+              <text class="t" x="18" y="52">trace / 反馈抽取</text>
+              <path d="M134 36 H168" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-memory)"/>
+              <rect class="box" x="176" y="0" width="130" height="72" rx="10"/>
+              <text class="h" x="194" y="29">Reviewed</text>
+              <text class="t" x="194" y="52">owner 审核</text>
+              <path d="M310 36 H344" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-memory)"/>
+              <rect class="box" x="352" y="0" width="130" height="72" rx="10"/>
+              <text class="h" x="370" y="29">Evaluated</text>
+              <text class="t" x="370" y="52">回归集验证</text>
+              <path d="M486 36 H520" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-memory)"/>
+              <rect class="box" x="528" y="0" width="130" height="72" rx="10"/>
+              <text class="h" x="546" y="29">Gray</text>
+              <text class="t" x="546" y="52">小流量只读</text>
+              <path d="M662 36 H696" stroke="#17644d" stroke-width="3" marker-end="url(#arrow-memory)"/>
+              <rect class="box" x="704" y="0" width="150" height="72" rx="10" fill="#e3f0ea" stroke="#17644d" stroke-width="2"/>
+              <text class="h" x="722" y="29">Active</text>
+              <text class="t" x="722" y="52">正式检索使用</text>
+
+              <path d="M780 76 C780 150 600 174 488 174" stroke="#17644d" stroke-width="3" fill="none" marker-end="url(#arrow-memory)"/>
+              <rect class="box" x="352" y="140" width="130" height="72" rx="10" fill="#f6e5e1" stroke="#9d3a31" stroke-width="2"/>
+              <text class="h" x="370" y="169">Deprecated</text>
+              <text class="t" x="370" y="192">过期 / 冲突 / 失效</text>
+              <path d="M352 176 C220 176 180 110 176 72" stroke="#9d3a31" stroke-width="3" fill="none" stroke-dasharray="7 6" marker-end="url(#arrow-memory)"/>
+              <text class="t" x="224" y="250">任何误用或指标回退都要能回滚，并补进回归集。</text>
+            </g>
+          </svg>
+        </div>
+
+        <h3>5.2 风控 Memory 分层</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>行业类型</th>
+                <th>风控映射</th>
+                <th>使用价值</th>
+                <th>治理边界</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Semantic Memory</td>
+                <td>策略口径、灰区解释、业务线差异、质检标准。</td>
+                <td>减少口径漂移。</td>
+                <td>正式规则仍由策略系统发布。</td>
+              </tr>
+              <tr>
+                <td>Episodic Memory</td>
+                <td>举报 case、申诉成功、误伤/漏召、团伙处置轨迹。</td>
+                <td>支持相似案例召回和处置一致性。</td>
+                <td>单个案例不能直接泛化成规则。</td>
+              </tr>
+              <tr>
+                <td>Procedural Memory</td>
+                <td>审核 SOP、取证顺序、转人工条件、复核摘要模板。</td>
+                <td>让 Agent 按流程查证据。</td>
+                <td>不能绕过 runtime 的权限、预算和停止条件。</td>
+              </tr>
+              <tr>
+                <td>Reflective Memory</td>
+                <td>常见误判模式、工具缺口、规则冲突、评估回归结论。</td>
+                <td>让系统少犯重复错误。</td>
+                <td>必须先归因、评估、审批。</td>
+              </tr>
+              <tr>
+                <td>Graph / Temporal Memory</td>
+                <td>账号、设备、内容、举报、处罚、申诉的时序关系。</td>
+                <td>支持团伙、累犯、传播链和事实变化判断。</td>
+                <td>图谱是证据工具，不等同于全部 memory。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="workflows">
+        <h2>6. 业务链路落地</h2>
+        <p>V1 建议围绕举报受理和申诉复盘做闭环，图片审核作为多模态证据工具接入样例。下面用一张业务链路图展示三类场景如何进入同一套四块架构。</p>
+
+        <div class="diagram" aria-label="业务链路落地图">
+          <svg viewBox="0 0 1120 660" role="img">
+            <defs>
+              <marker id="arrow-flow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#17644d"/>
+              </marker>
+              <style>
+                .h{font:800 15px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .lane{fill:#fff;stroke:#d9e0da;stroke-width:2}
+                .node{fill:#fbfcfa;stroke:#bdcac1;stroke-width:1.6}
+              </style>
+            </defs>
+            <rect width="1120" height="660" rx="12" fill="#fbfcfa"/>
+            <text class="h" x="36" y="42">三条业务链路：同一套 Runtime、Memory、约束和评估底座</text>
+
+            <g transform="translate(40 82)">
+              <rect class="lane" width="1040" height="150" rx="12"/>
+              <text class="h" x="24" y="32">举报受理</text>
+              <g transform="translate(130 38)">
+                <rect class="node" x="0" y="0" width="120" height="66" rx="8"/><text class="t" x="18" y="28">举报分类</text><text class="t" x="18" y="48">对象识别</text>
+                <path d="M124 33 H160" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="166" y="0" width="120" height="66" rx="8"/><text class="t" x="184" y="28">内容理解</text><text class="t" x="184" y="48">OCR / 视觉</text>
+                <path d="M290 33 H326" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="332" y="0" width="120" height="66" rx="8"/><text class="t" x="350" y="28">规则匹配</text><text class="t" x="350" y="48">策略版本</text>
+                <path d="M456 33 H492" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="498" y="0" width="120" height="66" rx="8"/><text class="t" x="516" y="28">双方核验</text><text class="t" x="516" y="48">画像 / 图谱</text>
+                <path d="M622 33 H658" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="664" y="0" width="120" height="66" rx="8"/><text class="t" x="682" y="28">建议复核</text><text class="t" x="682" y="48">反馈回流</text>
+              </g>
+            </g>
+
+            <g transform="translate(40 262)">
+              <rect class="lane" width="1040" height="150" rx="12"/>
+              <text class="h" x="24" y="32">申诉复盘</text>
+              <g transform="translate(130 38)">
+                <rect class="node" x="0" y="0" width="120" height="66" rx="8"/><text class="t" x="18" y="28">申诉受理</text><text class="t" x="18" y="48">原处罚</text>
+                <path d="M124 33 H160" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="166" y="0" width="120" height="66" rx="8"/><text class="t" x="184" y="28">原判回放</text><text class="t" x="184" y="48">Trace Replay</text>
+                <path d="M290 33 H326" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="332" y="0" width="120" height="66" rx="8"/><text class="t" x="350" y="28">新证据</text><text class="t" x="350" y="48">材料核验</text>
+                <path d="M456 33 H492" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="498" y="0" width="120" height="66" rx="8"/><text class="t" x="516" y="28">规则对照</text><text class="t" x="516" y="48">Policy Diff</text>
+                <path d="M622 33 H658" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="664" y="0" width="120" height="66" rx="8"/><text class="t" x="682" y="28">误伤归因</text><text class="t" x="682" y="48">反哺飞轮</text>
+              </g>
+            </g>
+
+            <g transform="translate(40 442)">
+              <rect class="lane" width="1040" height="150" rx="12"/>
+              <text class="h" x="24" y="32">图片内容审核</text>
+              <g transform="translate(130 38)">
+                <rect class="node" x="0" y="0" width="120" height="66" rx="8"/><text class="t" x="18" y="28">内容入队</text><text class="t" x="18" y="48">业务场景</text>
+                <path d="M124 33 H160" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="166" y="0" width="120" height="66" rx="8"/><text class="t" x="184" y="28">多模态识别</text><text class="t" x="184" y="48">OCR / NSFW</text>
+                <path d="M290 33 H326" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="332" y="0" width="120" height="66" rx="8"/><text class="t" x="350" y="28">风险补证</text><text class="t" x="350" y="48">历史 / 图谱</text>
+                <path d="M456 33 H492" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="498" y="0" width="120" height="66" rx="8"/><text class="t" x="516" y="28">规则验证</text><text class="t" x="516" y="48">底线风险</text>
+                <path d="M622 33 H658" stroke="#17644d" stroke-width="2.5" marker-end="url(#arrow-flow)"/>
+                <rect class="node" x="664" y="0" width="120" height="66" rx="8"/><text class="t" x="682" y="28">处置建议</text><text class="t" x="682" y="48">人工确认</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section id="implementation">
+        <h2>7. V1 实施计划</h2>
+        <p>实施策略是先读后写、先辅助后自动、先评估后扩量。下面用路线图表达阶段推进，不用文字替代流程。</p>
+
+        <div class="diagram" aria-label="V1 实施路线图">
+          <svg viewBox="0 0 1120 360" role="img">
+            <defs>
+              <marker id="arrow-road" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#245985"/>
+              </marker>
+              <style>
+                .h{font:800 15px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .box{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="1120" height="360" rx="12" fill="#fbfcfa"/>
+            <text class="h" x="40" y="42">V1 实施路线：从评估底座到低风险半自动</text>
+            <g transform="translate(60 100)">
+              <rect class="box" x="0" y="0" width="210" height="130" rx="12"/>
+              <text class="h" x="20" y="32">Phase 0 / 1 周</text>
+              <text class="t" x="20" y="62">定义 schema</text>
+              <text class="t" x="20" y="84">整理 seed eval set</text>
+              <text class="t" x="20" y="106">接入 policy_version</text>
+              <path d="M216 65 H260" stroke="#245985" stroke-width="3" marker-end="url(#arrow-road)"/>
+
+              <rect class="box" x="270" y="0" width="210" height="130" rx="12"/>
+              <text class="h" x="290" y="32">Phase 1 / 2-3 周</text>
+              <text class="t" x="290" y="62">只读辅助 Agent</text>
+              <text class="t" x="290" y="84">规则 / 案例 / 证据工具</text>
+              <text class="t" x="290" y="106">离线 eval + 盲评</text>
+              <path d="M486 65 H530" stroke="#245985" stroke-width="3" marker-end="url(#arrow-road)"/>
+
+              <rect class="box" x="540" y="0" width="210" height="130" rx="12"/>
+              <text class="h" x="560" y="32">Phase 2 / 4-6 周</text>
+              <text class="t" x="560" y="62">灰度工作台</text>
+              <text class="t" x="560" y="84">trace / score / feedback</text>
+              <text class="t" x="560" y="106">shadow-run / canary</text>
+              <path d="M756 65 H800" stroke="#245985" stroke-width="3" marker-end="url(#arrow-road)"/>
+
+              <rect class="box" x="810" y="0" width="210" height="130" rx="12" fill="#e3f0ea" stroke="#17644d" stroke-width="2"/>
+              <text class="h" x="830" y="32">Phase 3 / 8-12 周</text>
+              <text class="t" x="830" y="62">低风险半自动</text>
+              <text class="t" x="830" y="84">候选 memory 审批流</text>
+              <text class="t" x="830" y="106">版本灰度与回滚</text>
+            </g>
+          </svg>
+        </div>
+
+        <h3>V1 验收标准</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>类别</th>
+                <th>标准</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>功能</td>
+                <td>举报/申诉 case 能输出结构化证据链、规则引用、相似案例、建议结论、人工确认点。</td>
+                <td>结果必须可进入工作台，而不是聊天式回答。</td>
+              </tr>
+              <tr>
+                <td>可追溯</td>
+                <td>每条结论能追到工具返回、规则版本、案例来源和模型版本。</td>
+                <td>无来源结论不得进入正式建议。</td>
+              </tr>
+              <tr>
+                <td>可评估</td>
+                <td>每次改动能在固定 eval set 上跑回归，并产生 score 报告。</td>
+                <td>prompt、memory、工具、模型都必须版本化。</td>
+              </tr>
+              <tr>
+                <td>可控</td>
+                <td>高风险动作 100% 转人工；工具失败、证据冲突、预算上限均能停止。</td>
+                <td>不能出现无限循环或无记录降级。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="narrative">
+        <h2>8. 对外表达</h2>
+        <h3>5 分钟版本</h3>
+        <div class="quote">我对这个项目的理解不是“给风控接一个 LLM”，而是把 Agent Memory、工具调用、Runtime、评估飞轮这些行业能力迁移到风控这样的高风险 B 端业务里。行业上 Memory 正从聊天历史和 RAG 组件，演进成 Agent 的长期状态层：它保存事实、案例、流程和反馈经验，并通过评估证明这些记忆真的让系统变好。</div>
+        <div class="quote">迁移到风控时，优势非常明显：风控天然有规则、case、证据、人工复核、申诉后验和策略版本，所以它不仅适合用 Agent 做跨系统取证和证据链整理，也适合验证 memory scaling 和 eval flywheel。我们的 V1 不做全自动处罚，而是从举报受理和申诉复盘切入，让 Agent 输出结构化证据链、风险解释、相似案例、处置建议和待人工确认点。</div>
+        <div class="quote">架构上我用四块来讲：底层是可观测、评估和数据飞轮，让系统持续变好；中间是编排和运行时，让系统跑起来；上层左边是 Memory &amp; Context，让系统跑得好；上层右边是约束和验证，让系统别出错。中间层是工程底座，上层两块是业务和技术的交界层。</div>
+        <div class="quote">这个系统跑得快，不是因为模型一次性很强，而是第一天就设计了评估和数据飞轮。每个 case 都记录输入、工具调用、证据、规则版本、模型输出、人工修改和后续申诉结果。失败后能归因到模型、工具、规则、memory、Runtime 边界或评估缺口，再进入评估集、case memory、SOP、工具 backlog 或策略 backlog。</div>
+      </section>
+
+      <section id="sources">
+        <h2>资料来源</h2>
+        <p>本页结合本地学习包内容和官方文档。外部技术事实优先使用官方来源。</p>
+        <ul class="source-list">
+          <li>本地：<a href="near-term-todos.html">近期代办</a></li>
+          <li>本地：<a href="2026-05-24-ai-agent-architecture-meeting.html">2026-05-24 AI Agent 技术架构讨论纪要</a></li>
+          <li>本地：<a href="history-synthesis.html">历史综合整理</a></li>
+          <li>本地：<a href="../assets/html/AI_Native风控审核Agent_训练手册.html">AI Native 风控审核 Agent 训练手册</a></li>
+          <li>本地：<a href="../assets/html/ai-native-问题深挖.html">AI Native 问题深挖</a></li>
+          <li>本地：<a href="../assets/html/ai-native-risk-control-v1-minimal.html">AI Native 风控平台建设</a></li>
+          <li>论文：<a href="https://arxiv.org/abs/2309.02427">CoALA</a></li>
+          <li>论文：<a href="https://arxiv.org/abs/2304.03442">Generative Agents</a></li>
+          <li>论文：<a href="https://arxiv.org/abs/2303.11366">Reflexion</a></li>
+          <li>Databricks：<a href="https://www.databricks.com/blog/memory-scaling-ai-agents">Memory Scaling for AI Agents</a></li>
+          <li>LangChain：<a href="https://docs.langchain.com/oss/python/concepts/memory">Memory Concepts</a></li>
+          <li>LangMem：<a href="https://langchain-ai.github.io/langmem/concepts/conceptual_guide/">Core Concepts</a></li>
+          <li>Letta：<a href="https://docs.letta.com/guides/agents/architectures/memgpt">Agent Memory &amp; Architecture</a></li>
+          <li>Mem0：<a href="https://docs.mem0.ai/core-concepts/memory-evaluation">Memory Evaluation</a></li>
+          <li>Zep：<a href="https://help.getzep.com/v2/understanding-the-graph">Temporal Knowledge Graph</a></li>
+          <li>OpenAI：<a href="https://developers.openai.com/cookbook/examples/evaluation/building_resilient_prompts_using_an_evaluation_flywheel">Evaluation Flywheel</a></li>
+          <li>OpenAI：<a href="https://openai.github.io/openai-agents-python/">Agents SDK</a></li>
+          <li>Spring AI：<a href="https://docs.spring.io/spring-ai/reference/api/tools.html">Tool Calling</a></li>
+          <li>MCP：<a href="https://modelcontextprotocol.io/docs/getting-started/intro">Model Context Protocol Intro</a></li>
+          <li>Langfuse：<a href="https://langfuse.com/docs/evaluation/overview">Evaluation</a></li>
+        </ul>
+        <p class="small">说明：本页是面向调研与落地的方案文档，不包含完整聊天原文、私人信息或与学习主题无关内容。</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
