@@ -18,11 +18,16 @@
 | Agent Stack Map | [agent-stack-map-v4.html](assets/html/agent-stack-map-v4.html) |
 | Claude Code 踩坑 | [claude-code-踩坑.html](assets/html/claude-code-踩坑.html) |
 | GitHub 项目调研摘要 | [github-projects-summary.html](assets/html/github-projects-summary.html) |
+| 近期议题调研总览 | [recent-agenda-research.html](01-discussions/recent-agenda-research.html) |
+| Agent Memory 机制与企业场景地图 | [memory-agent-architecture.html](../memory-agent-architecture.html) |
+| AI Native 风控 Artifact 与 Memory 演进 | [ai-native-risk-artifact-memory-evolution.html](assets/html/ai-native-risk-artifact-memory-evolution.html) |
+| OpenTelemetry × LangSmith × LoongSuite 简易教程 | [observability-frameworks-tutorial.html](assets/html/observability-frameworks-tutorial.html) |
 
 ## Markdown
 
 | 主题 | 文件 |
 |---|---|
+| 12Factor.me AI 协作方法论 | [12factor-me-methodology.md](../12factor-me-methodology.md) |
 | Claude 配置和协作规则 | [claude.md](assets/markdown/claude.md) |
 | Claude / Codex 三层协作 | [Claude-Codex三层协作框架.md](assets/markdown/Claude-Codex三层协作框架.md) |
 | Actor-Critic 修复模式 | [Actor-Critic_反转模式Codex_修复_+.md](assets/markdown/Actor-Critic_反转模式Codex_修复_+.md) |

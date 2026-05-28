@@ -1,0 +1,1523 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent Memory 机制与企业场景地图</title>
+  <style>
+    :root {
+      --paper: #f7f3ea;
+      --paper-2: #fffaf0;
+      --ink: #1d2433;
+      --muted: #657083;
+      --line: #d8d0bf;
+      --teal: #147c82;
+      --coral: #c94e2f;
+      --violet: #6357a6;
+      --olive: #5d7d36;
+      --amber: #b87516;
+      --blue: #285e9f;
+      --white: #ffffff;
+      --shadow: 0 18px 44px rgba(29, 36, 51, 0.08);
+      --radius: 8px;
+      --mono: "SFMono-Regular", "Menlo", "Consolas", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(20, 124, 130, 0.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(201, 78, 47, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: start;
+      padding: 26px 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--coral);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin: 0;
+      font-size: 40px;
+      line-height: 1.08;
+      font-weight: 820;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 920px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .action-btn,
+    .tab,
+    .scenario-filter {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper-2);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .action-btn {
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .action-btn:hover,
+    .tab:hover,
+    .scenario-filter:hover {
+      transform: translateY(-1px);
+      border-color: rgba(20, 124, 130, 0.55);
+      background: #fffdf8;
+    }
+
+    .action-btn.primary {
+      background: var(--ink);
+      color: var(--white);
+      border-color: var(--ink);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 26px;
+      margin-top: 24px;
+    }
+
+    .nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 240, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav a {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 36px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      background: rgba(20, 124, 130, 0.08);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .dot.coral { background: var(--coral); }
+    .dot.violet { background: var(--violet); }
+    .dot.olive { background: var(--olive); }
+    .dot.amber { background: var(--amber); }
+    .dot.blue { background: var(--blue); }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 26px;
+      min-width: 0;
+    }
+
+    section {
+      width: 100%;
+      min-width: 0;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 240, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .section-note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .definition {
+      min-height: 300px;
+      padding: 24px;
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--white);
+      display: grid;
+      align-content: center;
+    }
+
+    .definition h2 {
+      color: var(--white);
+      font-size: 31px;
+    }
+
+    .definition p {
+      margin: 14px 0 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 17px;
+    }
+
+    .equation {
+      display: grid;
+      gap: 10px;
+    }
+
+    .equation-row {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      min-height: 56px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+    }
+
+    .equation-row strong {
+      color: var(--teal);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .equation-row span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .contrast-grid,
+    .memory-type-grid,
+    .quality-grid,
+    .boundary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card,
+    .type-card,
+    .quality-card,
+    .scenario-card,
+    .decision-card,
+    .argument-card,
+    .verdict-panel,
+    .source-node {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+    }
+
+    .mini-card {
+      min-height: 132px;
+      padding: 16px;
+    }
+
+    .mini-card h3,
+    .type-card h3,
+    .quality-card h3,
+    .scenario-card h3,
+    .decision-card h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.24;
+    }
+
+    .mini-card p,
+    .type-card p,
+    .quality-card p,
+    .decision-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      margin-bottom: 10px;
+      padding: 3px 7px;
+      border-radius: 5px;
+      background: rgba(20, 124, 130, 0.1);
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .tag.coral { background: rgba(201, 78, 47, 0.1); color: var(--coral); }
+    .tag.violet { background: rgba(99, 87, 166, 0.1); color: var(--violet); }
+    .tag.olive { background: rgba(93, 125, 54, 0.12); color: var(--olive); }
+    .tag.amber { background: rgba(184, 117, 22, 0.13); color: var(--amber); }
+    .tag.blue { background: rgba(40, 94, 159, 0.1); color: var(--blue); }
+
+    .system-map {
+      display: grid;
+      gap: 14px;
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 160px repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .lane-label {
+      min-height: 82px;
+      padding: 14px;
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--white);
+      font-weight: 850;
+      display: flex;
+      align-items: center;
+    }
+
+    .lane-box {
+      min-height: 82px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+      position: relative;
+    }
+
+    .lane-box::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -9px;
+      width: 8px;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .lane-box:last-child::after {
+      content: none;
+    }
+
+    .lane-box strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .lane-box span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      counter-reset: step;
+    }
+
+    .step {
+      min-height: 152px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+      counter-increment: step;
+      position: relative;
+    }
+
+    .step::before {
+      content: counter(step);
+      display: inline-flex;
+      width: 24px;
+      height: 24px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      border-radius: 50%;
+      background: var(--coral);
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .step h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .step p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      padding: 7px 10px;
+      font-size: 14px;
+      font-weight: 780;
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--teal);
+      color: var(--white);
+      border-color: var(--teal);
+    }
+
+    .claude-panel {
+      display: none;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .claude-panel.active {
+      display: grid;
+    }
+
+    .fact-box {
+      padding: 18px;
+      border-radius: var(--radius);
+      background: var(--white);
+      border: 1px solid var(--line);
+    }
+
+    .fact-box h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .fact-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .fact-list li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .fact-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.68em;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .code-block {
+      display: block;
+      overflow: auto;
+      max-width: 100%;
+      min-width: 0;
+      min-height: 100%;
+      margin: 0;
+      padding: 18px;
+      border-radius: var(--radius);
+      background: #18202e;
+      color: #e7edf7;
+      font-family: var(--mono);
+      font-size: 13px;
+      white-space: pre;
+    }
+
+    .scenario-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .scenario-filter {
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .scenario-filter.active {
+      background: var(--ink);
+      color: var(--white);
+      border-color: var(--ink);
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .scenario-card {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      min-height: 230px;
+      overflow: hidden;
+    }
+
+    .scenario-label {
+      padding: 18px;
+      color: var(--white);
+      background: var(--teal);
+      display: grid;
+      align-content: space-between;
+      gap: 20px;
+    }
+
+    .scenario-label.sales { background: var(--violet); }
+    .scenario-label.risk { background: var(--coral); }
+    .scenario-label.reco { background: var(--olive); }
+    .scenario-label.backend { background: var(--blue); }
+    .scenario-label.personal { background: var(--amber); }
+
+    .scenario-label h3 {
+      color: var(--white);
+      font-size: 20px;
+    }
+
+    .scenario-label span {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .scenario-body {
+      padding: 18px;
+      background: var(--white);
+    }
+
+    .scenario-body dl {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 8px 12px;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .scenario-body dt {
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .scenario-body dd {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .debate-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .argument-card {
+      min-height: 270px;
+      padding: 18px;
+      border-top: 5px solid var(--teal);
+    }
+
+    .argument-card.negative {
+      border-top-color: var(--coral);
+    }
+
+    .argument-card h3 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .argument-card p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .argument-card ul {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .essence-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .source-node {
+      min-height: 122px;
+      padding: 15px;
+      position: relative;
+    }
+
+    .source-node::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      width: 10px;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .source-node:last-child::after {
+      content: none;
+    }
+
+    .source-node strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .source-node span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .verdict-panel {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      padding: 20px;
+      background: var(--ink);
+      color: var(--white);
+    }
+
+    .verdict-panel h3 {
+      margin: 0;
+      color: var(--white);
+      font-size: 21px;
+    }
+
+    .verdict-panel p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 15px;
+    }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .decision-card {
+      min-height: 230px;
+      padding: 18px;
+    }
+
+    .decision-card ul {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .quality-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .quality-card {
+      min-height: 152px;
+      padding: 15px;
+    }
+
+    .export-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .export-box {
+      display: grid;
+      grid-template-rows: auto minmax(240px, 1fr);
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .export-box h3 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 240px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--white);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 20;
+      max-width: min(340px, calc(100vw - 44px));
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--white);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1180px) {
+      .layout,
+      .hero-grid,
+      .claude-panel,
+      .export-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .lane,
+      .pipeline,
+      .quality-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .contrast-grid,
+      .memory-type-grid,
+      .boundary-grid,
+      .debate-grid,
+      .essence-strip,
+      .decision-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        padding: 18px;
+      }
+
+      .topbar,
+      .section-head,
+      .scenario-card {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 31px;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      section {
+        padding: 18px;
+      }
+
+      .nav,
+      .lane,
+      .pipeline,
+      .contrast-grid,
+      .memory-type-grid,
+      .boundary-grid,
+      .scenario-grid,
+      .debate-grid,
+      .essence-strip,
+      .verdict-panel,
+      .decision-grid,
+      .quality-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .scenario-label {
+        min-height: 118px;
+      }
+
+      .source-node::after {
+        content: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Agent Memory Architecture Brief</p>
+        <h1>Memory 是 Agent 的外部上下文管理系统</h1>
+        <p class="subtitle">
+          本页把本次对话整理成一个结构化地图：从 Claude Code Auto Memory、Dream、Mem0，到企业级客服、风控、销售、推荐和工程后端里的记忆设计。
+        </p>
+      </div>
+      <div class="actions">
+        <button class="action-btn primary" data-copy="json">复制 JSON</button>
+        <button class="action-btn" data-copy="prompt">复制 Prompt</button>
+        <button class="action-btn" onclick="window.print()">打印</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="nav" aria-label="页面导航">
+        <a href="#definition"><span class="dot"></span><span>总定义</span></a>
+        <a href="#types"><span class="dot coral"></span><span>记忆类型</span></a>
+        <a href="#claude"><span class="dot violet"></span><span>Claude 边界</span></a>
+        <a href="#mechanism"><span class="dot olive"></span><span>算法管线</span></a>
+        <a href="#enterprise"><span class="dot amber"></span><span>企业场景</span></a>
+        <a href="#risk-libraries"><span class="dot coral"></span><span>风控库判断</span></a>
+        <a href="#strategy"><span class="dot blue"></span><span>架构选型</span></a>
+        <a href="#quality"><span class="dot"></span><span>质量评估</span></a>
+        <a href="#export"><span class="dot coral"></span><span>结构化输出</span></a>
+      </nav>
+
+      <main>
+        <section id="definition">
+          <div class="hero-grid">
+            <div class="definition">
+              <h2>Memory = 为未来任务准备的可召回上下文</h2>
+              <p>
+                它不是模型权重，也不是第二套业务数据库。它是 agent runtime 围绕 LLM 搭建的一层外部系统：记录、整理、检索、注入、治理过去有用的信息。
+              </p>
+            </div>
+            <div class="equation" aria-label="Memory 组成公式">
+              <div class="equation-row">
+                <strong>Store</strong>
+                <span>markdown、SQL、向量库、图数据库、memory store；负责持久化。</span>
+              </div>
+              <div class="equation-row">
+                <strong>Curator</strong>
+                <span>通常由 LLM 执行抽取、总结、冲突判断、合并和重写。</span>
+              </div>
+              <div class="equation-row">
+                <strong>Runtime</strong>
+                <span>决定何时写入、何时召回、召回多少、放进哪段上下文。</span>
+              </div>
+              <div class="equation-row">
+                <strong>Governance</strong>
+                <span>版本、来源、权限、审计、过期、回滚、敏感信息过滤。</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="types">
+          <div class="section-head">
+            <div>
+              <h2>四类记忆</h2>
+              <p class="section-note">个人助手和企业 Agent 都可以用这四层来拆，只是可信度、权限和来源要求不同。</p>
+            </div>
+            <span class="pill">taxonomy</span>
+          </div>
+          <div class="memory-type-grid">
+            <article class="type-card">
+              <div class="mini-card">
+                <span class="tag">Working</span>
+                <h3>当前桌面</h3>
+                <p>当前任务状态、刚跑过的命令、刚确认的事实、待执行步骤。生命周期最短。</p>
+              </div>
+            </article>
+            <article class="type-card">
+              <div class="mini-card">
+                <span class="tag coral">Semantic</span>
+                <h3>事实与偏好</h3>
+                <p>用户偏好、客户画像、服务拓扑、账户关系、产品事实。要求可追溯。</p>
+              </div>
+            </article>
+            <article class="type-card">
+              <div class="mini-card">
+                <span class="tag violet">Episodic</span>
+                <h3>经历与证据</h3>
+                <p>过去的对话、工单、案件、事故、会议、工具轨迹。最好保留 raw source。</p>
+              </div>
+            </article>
+            <article class="type-card">
+              <div class="mini-card">
+                <span class="tag olive">Procedural</span>
+                <h3>做事方法</h3>
+                <p>SOP、代码规范、销售 playbook、排障步骤、合规流程。写入要最克制。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="claude">
+          <div class="section-head">
+            <div>
+              <h2>Claude 相关机制边界</h2>
+              <p class="section-note">对话里几个容易混的概念：Claude Code Auto Memory、Managed Agents Memory Store、Dream、claude.ai。</p>
+            </div>
+            <span class="pill">product boundary</span>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="Claude 机制">
+            <button class="tab" role="tab" aria-selected="true" data-tab="auto">Auto Memory</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="store">Memory Store</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="dream">Dream</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="ai">claude.ai</button>
+          </div>
+
+          <div class="claude-panel active" data-panel="auto">
+            <div class="fact-box">
+              <h3>Claude Code Auto Memory</h3>
+              <ul class="fact-list">
+                <li>本地、项目级、文件化记忆，典型路径是 <code>~/.claude/projects/&lt;repo&gt;/memory/</code>。</li>
+                <li><code>MEMORY.md</code> 是入口索引；topic 文件保存更细内容。</li>
+                <li>agent runtime 让 LLM 通过工具读写文件，不是 LLM 本体有持久记忆。</li>
+                <li>适合构建命令、调试经验、项目约定、用户偏好、工作流习惯。</li>
+              </ul>
+            </div>
+            <pre class="code-block">Claude Code runtime
+  -> 给 LLM 提供上下文和工具
+LLM
+  -> 判断什么值得记、如何总结
+file tools
+  -> 读写本地 markdown
+memory/
+  MEMORY.md
+  debugging.md
+  conventions.md</pre>
+          </div>
+
+          <div class="claude-panel" data-panel="store">
+            <div class="fact-box">
+              <h3>Managed Agents Memory Store</h3>
+              <ul class="fact-list">
+                <li>属于 Claude Platform Managed Agents API，不是 Claude Code 本地目录。</li>
+                <li>它是 workspace 级记忆容器，ID 形如 <code>memstore_...</code>。</li>
+                <li>挂载到 agent session 后，agent 像访问文件系统一样读写。</li>
+                <li>概念上对应“一个记忆容器”，而 <code>MEMORY.md</code> 更像容器里的索引页。</li>
+              </ul>
+            </div>
+            <pre class="code-block">memory_store
+  /preferences/style.md
+  /projects/foo/debugging.md
+  /sales/account-alpha.md
+
+Claude Code MEMORY.md
+  = local auto memory index
+  != Managed Agents memory_store</pre>
+          </div>
+
+          <div class="claude-panel" data-panel="dream">
+            <div class="fact-box">
+              <h3>Dream / Dreaming</h3>
+              <ul class="fact-list">
+                <li>可以理解为受控的 memory manager agent：夜间整理、合并、去重、纠错。</li>
+                <li>官方 Managed Agents Dreams 输入 memory store + 1 到 100 个 sessions，输出新的 memory store。</li>
+                <li>它不是每轮写一点，而是 batch consolidation。</li>
+                <li>Claude Code 内部若出现 dream-like 机制，可类比为整理本地 memory 文件；官方公开细节有限。</li>
+              </ul>
+            </div>
+            <pre class="code-block">old memory store
++ historical sessions
++ developer instructions
+        |
+        v
+dream process
+        |
+        v
+new memory store
+
+目标：去重、去旧、重组、发现跨 session pattern</pre>
+          </div>
+
+          <div class="claude-panel" data-panel="ai">
+            <div class="fact-box">
+              <h3>claude.ai 与 Managed Agents</h3>
+              <ul class="fact-list">
+                <li>claude.ai 是 Anthropic 面向用户的成品应用。</li>
+                <li>Managed Agents 是面向开发者的托管 agent runtime。</li>
+                <li>普通网页聊天不等于你直接在调用 Managed Agents API。</li>
+                <li>底层可能共享设计思想，但产品边界和可控对象不同。</li>
+              </ul>
+            </div>
+            <pre class="code-block">claude.ai
+  成品应用
+  用户直接使用
+
+Managed Agents
+  API / runtime
+  开发者定义 agent、environment、session、memory
+
+相似理念 != 同一入口</pre>
+          </div>
+        </section>
+
+        <section id="mechanism">
+          <div class="section-head">
+            <div>
+              <h2>Memory 系统的常见算法管线</h2>
+              <p class="section-note">主流系统通常是 LLM 做语义判断，工程系统做约束、索引、权限、版本和评估。</p>
+            </div>
+            <span class="pill">pipeline</span>
+          </div>
+          <div class="pipeline">
+            <article class="step">
+              <h3>捕获</h3>
+              <p>收集消息、工具轨迹、工单、日志、CRM 记录、代码变更、会议纪要。</p>
+            </article>
+            <article class="step">
+              <h3>候选筛选</h3>
+              <p>过滤寒暄、一次性格式要求、敏感信息、明显无长期价值的内容。</p>
+            </article>
+            <article class="step">
+              <h3>检索旧记忆</h3>
+              <p>用关键词、向量、实体、时间范围召回可能相关的已有记忆。</p>
+            </article>
+            <article class="step">
+              <h3>LLM 抽取合并</h3>
+              <p>输出事实、episode、规则；判断 ADD、UPDATE、DELETE、NOOP。</p>
+            </article>
+            <article class="step">
+              <h3>工程校验</h3>
+              <p>schema、source id、hash、去重、权限、版本、时间有效性、回滚。</p>
+            </article>
+            <article class="step">
+              <h3>召回注入</h3>
+              <p>任务开始或执行中检索、重排，把最有用的几条放入 context。</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="enterprise">
+          <div class="section-head">
+            <div>
+              <h2>企业级 Agent 场景地图</h2>
+              <p class="section-note">企业里 source of truth 仍然是业务系统；memory 是 Agent 的工作上下文层。</p>
+            </div>
+            <span class="pill">scenarios</span>
+          </div>
+
+          <div class="scenario-toolbar" aria-label="场景筛选">
+            <button class="scenario-filter active" data-filter="all">全部</button>
+            <button class="scenario-filter" data-filter="customer">客服</button>
+            <button class="scenario-filter" data-filter="sales">销售</button>
+            <button class="scenario-filter" data-filter="risk">风控</button>
+            <button class="scenario-filter" data-filter="reco">推荐</button>
+            <button class="scenario-filter" data-filter="backend">后端</button>
+            <button class="scenario-filter" data-filter="personal">个人</button>
+          </div>
+
+          <div class="scenario-grid">
+            <article class="scenario-card" data-scenario="personal">
+              <div class="scenario-label personal">
+                <h3>个人助手</h3>
+                <span>私人笔记本</span>
+              </div>
+              <div class="scenario-body">
+                <dl>
+                  <dt>Agent</dt><dd>个人助理、学习助理、代码助理、日程助理。</dd>
+                  <dt>Semantic</dt><dd>偏好、背景、常用工具、隐私边界。</dd>
+                  <dt>Episodic</dt><dd>上次聊到哪里、任务失败原因、旅行计划进度。</dd>
+                  <dt>Procedural</dt><dd>回答风格、写作流程、编码前置检查。</dd>
+                  <dt>边界</dt><dd>用户明确不想记的东西必须排除。</dd>
+                </dl>
+              </div>
+            </article>
+
+            <article class="scenario-card" data-scenario="customer">
+              <div class="scenario-label">
+                <h3>客服</h3>
+                <span>客户服务档案</span>
+              </div>
+              <div class="scenario-body">
+                <dl>
+                  <dt>Agent</dt><dd>一线客服、工单总结、质检、升级分流、客户成功。</dd>
+                  <dt>Semantic</dt><dd>套餐、设备型号、合同状态、语言偏好。</dd>
+                  <dt>Episodic</dt><dd>历史投诉、处理动作、退款记录、升级记录。</dd>
+                  <dt>Procedural</dt><dd>退款政策、SLA、合规话术、升级规则。</dd>
+                  <dt>边界</dt><dd>订单和退款状态必须回源查 CRM / ERP。</dd>
+                </dl>
+              </div>
+            </article>
+
+            <article class="scenario-card" data-scenario="sales">
+              <div class="scenario-label sales">
+                <h3>销售</h3>
+                <span>账户作战地图</span>
+              </div>
+              <div class="scenario-body">
+                <dl>
+                  <dt>Agent</dt><dd>Account research、会议准备、CRM 更新、Deal coach。</dd>
+                  <dt>Semantic</dt><dd>公司规模、预算周期、联系人、组织关系。</dd>
+                  <dt>Episodic</dt><dd>会议纪要、异议、承诺、支持者和反对者。</dd>
+                  <dt>Procedural</dt><dd>行业打法、跟进节奏、异议处理 playbook。</dd>
+                  <dt>边界</dt><dd>不要把销售猜测写成事实。</dd>
+                </dl>
+              </div>
+            </article>
+
+            <article class="scenario-card" data-scenario="risk">
+              <div class="scenario-label risk">
+                <h3>风控</h3>
+                <span>案件证据夹</span>
+              </div>
+              <div class="scenario-body">
+                <dl>
+                  <dt>Agent</dt><dd>风险调查、交易审查、规则分析、合规报告。</dd>
+                  <dt>Semantic</dt><dd>实体画像、设备、账户、关联关系、风险标签。</dd>
+                  <dt>Episodic</dt><dd>历史案件、调查过程、人工审核结论。</dd>
+                  <dt>Procedural</dt><dd>审查 SOP、监管要求、证据链格式。</dd>
+                  <dt>边界</dt><dd>不应无审计地直接决定封号、拒付、冻结。</dd>
+                </dl>
+              </div>
+            </article>
+
+            <article class="scenario-card" data-scenario="reco">
+              <div class="scenario-label reco">
+                <h3>推荐系统</h3>
+                <span>兴趣画像 + 最近行为</span>
+              </div>
+              <div class="scenario-body">
+                <dl>
+                  <dt>Agent</dt><dd>对话式推荐、推荐解释、冷启动问答、内容运营。</dd>
+                  <dt>Semantic</dt><dd>长期兴趣、禁忌、价格带、品牌偏好。</dd>
+                  <dt>Episodic</dt><dd>最近浏览、点击、购买、跳过、对话反馈。</dd>
+                  <dt>Procedural</dt><dd>探索/收敛策略、避免重复、场景优先级。</dd>
+                  <dt>边界</dt><dd>大规模召回和排序仍由推荐系统本体负责。</dd>
+                </dl>
+              </div>
+            </article>
+
+            <article class="scenario-card" data-scenario="backend">
+              <div class="scenario-label backend">
+                <h3>Web 后端</h3>
+                <span>Runbook + Incident History</span>
+              </div>
+              <div class="scenario-body">
+                <dl>
+                  <dt>Agent</dt><dd>代码维护、SRE 排障、发布、日志分析、测试修复。</dd>
+                  <dt>Semantic</dt><dd>服务拓扑、API 契约、schema、owner、依赖关系。</dd>
+                  <dt>Episodic</dt><dd>事故复盘、bug 修复轨迹、发布回滚原因。</dd>
+                  <dt>Procedural</dt><dd>部署步骤、回滚流程、测试命令、代码规范。</dd>
+                  <dt>边界</dt><dd>强制门禁要靠 CI、权限、hook，不靠 memory。</dd>
+                </dl>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="risk-libraries">
+          <div class="section-head">
+            <div>
+              <h2>风控规则库 / 案例库：是不是 Memory？</h2>
+              <p class="section-note">这个判断的关键不是“它是否存了过去的信息”，而是它是否被转化成未来任务里的可召回上下文。</p>
+            </div>
+            <span class="pill">risk memory</span>
+          </div>
+
+          <div class="debate-grid">
+            <article class="argument-card">
+              <span class="tag">正方假设</span>
+              <h3>它们是广义 Memory</h3>
+              <p>如果 Memory 的本质是“过去沉淀的信息在未来任务中被召回并影响行动”，规则库和案例库都符合。</p>
+              <ul>
+                <li>规则库记录风险策略、阈值、处置流程，像 procedural / semantic memory。</li>
+                <li>案例库记录历史欺诈、调查过程、审核结论，像 episodic memory。</li>
+                <li>Agent 调查当前案件时召回相似规则和相似案例，这就是记忆在工作。</li>
+              </ul>
+            </article>
+            <article class="argument-card negative">
+              <span class="tag coral">反方假设</span>
+              <h3>它们不是 Agent Memory 本身</h3>
+              <p>如果把 Agent memory 定义为“agent runtime 专门维护的上下文层”，规则库和案例库还差一层转化。</p>
+              <ul>
+                <li>规则库通常是权威策略源和控制平面，不能由 Agent 随意总结覆盖。</li>
+                <li>案例库通常是证据库和事实库，核心价值是可审计、可追溯、不可被压缩改写。</li>
+                <li>只有被检索、过滤、摘要、重排并注入上下文后，才成为 Agent 可用记忆。</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="essence-strip" aria-label="本质判断步骤">
+            <div class="source-node">
+              <strong>1. 存了过去</strong>
+              <span>规则、案例、日志、数据库都存过去信息；这只是必要条件。</span>
+            </div>
+            <div class="source-node">
+              <strong>2. 服务未来任务</strong>
+              <span>被用来解释、调查、建议、升级、生成证据链，才进入 memory 语义。</span>
+            </div>
+            <div class="source-node">
+              <strong>3. 经过上下文化</strong>
+              <span>权限过滤、检索、摘要、冲突处理、时间归因、source 绑定。</span>
+            </div>
+            <div class="source-node">
+              <strong>4. 注入 Agent 工作区</strong>
+              <span>变成当前案件可理解、可引用、可行动的上下文片段。</span>
+            </div>
+          </div>
+
+          <div class="verdict-panel">
+            <h3>最终结论</h3>
+            <p>
+              规则库和案例库不是天然意义上的 Agent memory；它们是风控系统的权威知识资产和事实资产。
+              在 Agent 架构里，它们应作为 memory 的上游来源：规则库提供 procedural / semantic source of truth，案例库提供 episodic source of truth；
+              memory layer 负责从中检索、摘要、重排、注入上下文。
+            </p>
+          </div>
+        </section>
+
+        <section id="strategy">
+          <div class="section-head">
+            <div>
+              <h2>企业级架构选型</h2>
+              <p class="section-note">Managed Agents 省的是 agent 基础设施，不是业务控制平面。自研 harness 适合把 agent runtime 当成核心能力的团队。</p>
+            </div>
+            <span class="pill">architecture</span>
+          </div>
+          <div class="decision-grid">
+            <article class="decision-card">
+              <span class="tag">Managed Agents</span>
+              <h3>快速验证业务价值</h3>
+              <p>适合长任务、异步任务、工具调用多、团队不想先造 agent loop 的场景。</p>
+              <ul>
+                <li>现成 runtime、session、工具、文件和 memory。</li>
+                <li>业务 prompt、权限、数据源、验收标准仍要配置。</li>
+                <li>要关注 beta、数据留存、合规和平台边界。</li>
+              </ul>
+            </article>
+            <article class="decision-card">
+              <span class="tag violet">自研 Harness</span>
+              <h3>掌握核心控制权</h3>
+              <p>适合多模型路由、强审计、强合规、深度可观测、成本治理、平台化 agent。</p>
+              <ul>
+                <li>可以自定义 agent loop、工具策略、状态机、回放和评估。</li>
+                <li>工程成本高，容易在还没验证业务价值前过度建设。</li>
+                <li>长期适合核心产品型 agent。</li>
+              </ul>
+            </article>
+            <article class="decision-card">
+              <span class="tag olive">混合架构</span>
+              <h3>自控平面 + 可替换 Runtime</h3>
+              <p>大多数企业更稳的路径：自己管权限、审批、审计、任务队列和 eval。</p>
+              <ul>
+                <li>底层可接 Managed Agents、自研 harness 或其他 SDK。</li>
+                <li>避免被单个平台锁死。</li>
+                <li>先验证，再把高价值能力内化。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section id="quality">
+          <div class="section-head">
+            <div>
+              <h2>什么是好的 Memory</h2>
+              <p class="section-note">不要只看“这条记忆像不像对的”，要看它是否提升未来任务，并且不会污染上下文。</p>
+            </div>
+            <span class="pill">evaluation</span>
+          </div>
+          <div class="quality-grid">
+            <article class="quality-card">
+              <span class="tag">Grounded</span>
+              <h3>可追溯</h3>
+              <p>每条记忆能追到原始消息、工具输出、工单、日志或人工结论。</p>
+            </article>
+            <article class="quality-card">
+              <span class="tag coral">Useful</span>
+              <h3>有下游收益</h3>
+              <p>减少追问、提高成功率、降低返工，而不是只是“总结得漂亮”。</p>
+            </article>
+            <article class="quality-card">
+              <span class="tag violet">Specific</span>
+              <h3>具体</h3>
+              <p>保留专名、数字、日期、条件，不写“用户喜欢高质量服务”这类空话。</p>
+            </article>
+            <article class="quality-card">
+              <span class="tag olive">Temporal</span>
+              <h3>有时间边界</h3>
+              <p>区分现在如此、曾经如此、试用期间如此、已被新事实否定。</p>
+            </article>
+            <article class="quality-card">
+              <span class="tag amber">Safe</span>
+              <h3>可治理</h3>
+              <p>权限、审计、版本、删除、回滚、敏感信息过滤都在系统层有安排。</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="export">
+          <div class="section-head">
+            <div>
+              <h2>结构化输出</h2>
+              <p class="section-note">这一段可直接作为后续设计企业 Agent memory 架构时的输入。</p>
+            </div>
+            <span class="pill">portable</span>
+          </div>
+          <div class="export-panel">
+            <div class="export-box">
+              <h3>JSON 摘要</h3>
+              <textarea id="jsonOutput" spellcheck="false"></textarea>
+            </div>
+            <div class="export-box">
+              <h3>后续讨论 Prompt</h3>
+              <textarea id="promptOutput" spellcheck="false"></textarea>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const summary = {
+      thesis: "Memory 是 Agent 的外部上下文管理系统，不是模型本体记忆，也不是业务数据库。",
+      formula: ["store", "curator", "runtime", "governance"],
+      memoryTypes: {
+        working: "当前任务临时状态。",
+        semantic: "稳定事实、偏好、画像、关系。",
+        episodic: "过去事件、处理过程、证据和结果。",
+        procedural: "未来应该怎么做的规则、SOP、playbook。"
+      },
+      claudeBoundary: {
+        autoMemory: "Claude Code 本地项目级 markdown memory，MEMORY.md 是索引。",
+        managedMemoryStore: "Claude Platform Managed Agents API 的远端/工作区级记忆容器。",
+        dream: "读取历史 sessions 与 memory store，做批量整理、去重、纠错、重组。",
+        claudeAi: "面向用户的成品应用，不等同于直接调用 Managed Agents API。"
+      },
+      algorithmPattern: [
+        "捕获原始消息、工具轨迹、业务记录",
+        "过滤无长期价值和敏感内容",
+        "检索相关旧记忆",
+        "LLM 抽取、合并、冲突判断",
+        "schema、source、版本、权限、时间校验",
+        "未来任务检索、重排、注入上下文"
+      ],
+      enterpriseScenarios: {
+        personal: "个人偏好、跨会话连续性、学习和日程上下文。",
+        customerSupport: "客户服务档案：套餐、历史工单、处理动作、SLA 和升级规则。",
+        sales: "账户作战地图：组织关系、会议历史、异议、承诺、跟进 playbook。",
+        risk: "案件证据夹：实体关系、交易链路、调查过程、审核结论、监管 SOP。",
+        recommendation: "兴趣画像 + 最近行为：长期偏好、点击购买反馈、对话式解释。",
+        backend: "runbook + incident history：服务拓扑、事故复盘、部署回滚、测试命令。"
+      },
+      riskLibraryJudgment: {
+        question: "风控规则库、案例库是不是 memory？",
+        affirmative: "从广义上看，它们沉淀过去信息并可在未来任务中被召回，规则库像 procedural/semantic memory，案例库像 episodic memory。",
+        negative: "从 Agent 架构上看，它们首先是权威知识资产和事实资产，不应被 Agent 随意总结覆盖；只有被检索、摘要、重排、注入后才成为可用上下文。",
+        reasoning: [
+          "是否存了过去的信息只是必要条件，不是充分条件。",
+          "是否服务未来任务、影响判断和行动，决定它是否以 memory 方式工作。",
+          "是否经过权限、时间、source、检索、摘要和冲突处理，决定它能否成为 Agent memory layer。",
+          "风控场景必须区分 source of truth 与 working context。"
+        ],
+        conclusion: "规则库和案例库不是天然意义上的 Agent memory；它们是 Agent memory 的上游来源。规则库提供 procedural/semantic source of truth，案例库提供 episodic source of truth，memory layer 负责把它们转化为当前案件可用的上下文。"
+      },
+      architectureChoice: {
+        managedAgents: "适合快速验证长任务和多工具 agent。",
+        selfBuiltHarness: "适合多模型、强审计、强合规、平台化和核心产品能力。",
+        hybrid: "企业控制平面自建，底层 runtime 可替换。"
+      },
+      qualityBar: ["grounded", "useful", "specific", "temporal", "safe", "retrieval-friendly", "low-cost"]
+    };
+
+    const followupPrompt = `基于以下共识，帮我继续设计一个企业级 Agent Memory 架构：
+
+1. Memory 不是模型权重，也不是业务数据库，而是 Agent 的外部上下文管理系统。
+2. 记忆分为 working、semantic、episodic、procedural 四类。
+3. 企业 source of truth 仍然是 CRM、工单、风控库、推荐特征库、日志、代码库等业务系统；memory 是 Agent 的工作上下文层。
+4. 主流机制是 LLM 做抽取、总结、合并和冲突判断，工程系统做 schema、权限、版本、source、时间、回滚和评估。
+5. 我关心的场景包括客服、销售、风控、推荐系统和 Web 后端。
+6. 风控规则库和案例库不是天然的 Agent memory；它们是上游权威资产。规则库提供 procedural / semantic source of truth，案例库提供 episodic source of truth，memory layer 负责检索、摘要、重排、注入上下文。
+
+请输出：
+- 目标场景的 Agent 划分
+- 每个 Agent 的 semantic / episodic / procedural memory
+- memory store schema
+- 写入、整理、召回、删除策略
+- 对规则库、案例库、memory layer、source of truth 的边界设计
+- 质量评估指标
+- Managed Agents、自研 harness、混合架构的取舍建议`;
+
+    const jsonOutput = document.getElementById("jsonOutput");
+    const promptOutput = document.getElementById("promptOutput");
+    jsonOutput.value = JSON.stringify(summary, null, 2);
+    promptOutput.value = followupPrompt;
+
+    const toast = document.getElementById("toast");
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    async function copyText(text, label) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(label + "已复制");
+      } catch (error) {
+        showToast("复制失败，请选中文本复制");
+      }
+    }
+
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const type = button.getAttribute("data-copy");
+        if (type === "json") copyText(jsonOutput.value, "JSON");
+        if (type === "prompt") copyText(promptOutput.value, "Prompt");
+      });
+    });
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const id = tab.getAttribute("data-tab");
+        document.querySelectorAll(".tab").forEach((item) => {
+          item.setAttribute("aria-selected", String(item === tab));
+        });
+        document.querySelectorAll(".claude-panel").forEach((panel) => {
+          panel.classList.toggle("active", panel.getAttribute("data-panel") === id);
+        });
+      });
+    });
+
+    document.querySelectorAll(".scenario-filter").forEach((button) => {
+      button.addEventListener("click", () => {
+        const filter = button.getAttribute("data-filter");
+        document.querySelectorAll(".scenario-filter").forEach((item) => {
+          item.classList.toggle("active", item === button);
+        });
+        document.querySelectorAll(".scenario-card").forEach((card) => {
+          const visible = filter === "all" || card.getAttribute("data-scenario") === filter;
+          card.style.display = visible ? "grid" : "none";
+        });
+      });
+    });
+  </script>
+</body>
+</html>

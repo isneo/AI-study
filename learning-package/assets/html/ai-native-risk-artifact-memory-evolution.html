@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Native 风控审核：Artifact-first、Memory 边界与评估闭环</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f3;
+      --paper: #fff;
+      --panel: #fbfcfa;
+      --ink: #16201b;
+      --ink-2: #2e3f37;
+      --muted: #627067;
+      --faint: #8a948e;
+      --line: #d9e0da;
+      --line-2: #bdcac1;
+      --green: #17644d;
+      --green-soft: #e3f0ea;
+      --blue: #245985;
+      --blue-soft: #e4edf6;
+      --amber: #8a611d;
+      --amber-soft: #f4ead3;
+      --red: #9d3a31;
+      --red-soft: #f6e5e1;
+      --teal: #237171;
+      --teal-soft: #e0f0ee;
+      --violet: #654b8c;
+      --violet-soft: #eee8f5;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 18px; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .shell {
+      display: grid;
+      grid-template-columns: 294px minmax(0, 1fr);
+      gap: 28px;
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 28px 28px 84px;
+    }
+    aside {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.92);
+    }
+    .toc-title {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .toc a {
+      display: block;
+      padding: 5px 7px;
+      border-radius: 5px;
+      color: var(--ink-2);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .toc a:hover { background: var(--green-soft); color: var(--green); }
+    .toc a.sub {
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .toc .group {
+      margin: 13px 0 4px;
+      padding: 0 7px;
+      color: var(--faint);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    main { min-width: 0; }
+    header {
+      padding: 28px 0 24px;
+      border-bottom: 1px solid var(--line-2);
+    }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 850;
+    }
+    h1, h2, h3, h4 { letter-spacing: 0; }
+    h1 {
+      max-width: 1050px;
+      margin: 0;
+      font-size: 36px;
+      line-height: 1.2;
+    }
+    .subtitle {
+      max-width: 1040px;
+      margin: 12px 0 0;
+      color: var(--ink-2);
+      font-size: 17px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    section { margin: 44px 0 0; }
+    h2 {
+      margin: 0 0 15px;
+      padding-bottom: 9px;
+      border-bottom: 2px solid var(--line);
+      font-size: 23px;
+      line-height: 1.3;
+    }
+    h3 {
+      margin: 26px 0 9px;
+      font-size: 17px;
+      line-height: 1.4;
+    }
+    h4 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    p { margin: 8px 0; color: var(--ink-2); }
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #f2f5f1;
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .part {
+      margin-top: 42px;
+      padding: 12px 14px;
+      border: 1px solid var(--line-2);
+      border-radius: 8px;
+      background: #eef3ef;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .lead {
+      margin: 18px 0 0;
+      padding: 16px 18px;
+      border-left: 4px solid var(--green);
+      border-radius: 0 8px 8px 0;
+      background: var(--green-soft);
+    }
+    .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .grid-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .grid-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .card {
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .card p { font-size: 13.5px; }
+    .metric {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--green);
+      font-size: 23px;
+      font-weight: 850;
+      line-height: 1.15;
+    }
+    .tag {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #edf1ee;
+      color: var(--muted);
+      font-size: 11.5px;
+      white-space: nowrap;
+    }
+    .tag.green { background: var(--green-soft); color: var(--green); }
+    .tag.blue { background: var(--blue-soft); color: var(--blue); }
+    .tag.amber { background: var(--amber-soft); color: var(--amber); }
+    .tag.red { background: var(--red-soft); color: var(--red); }
+    .tag.teal { background: var(--teal-soft); color: var(--teal); }
+    .tag.violet { background: var(--violet-soft); color: var(--violet); }
+    .callout {
+      margin: 14px 0;
+      padding: 13px 15px;
+      border-radius: 0 8px 8px 0;
+      color: var(--ink-2);
+    }
+    .callout.green { border-left: 4px solid var(--green); background: var(--green-soft); }
+    .callout.blue { border-left: 4px solid var(--blue); background: var(--blue-soft); }
+    .callout.amber { border-left: 4px solid var(--amber); background: var(--amber-soft); }
+    .callout.red { border-left: 4px solid var(--red); background: var(--red-soft); }
+    .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #edf2ee;
+      color: var(--ink);
+      font-weight: 780;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .diagram {
+      overflow-x: auto;
+      margin: 16px 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .diagram svg {
+      display: block;
+      width: 100%;
+      min-width: 920px;
+      height: auto;
+    }
+    .diagram.compact svg { min-width: 760px; }
+    .quote {
+      padding: 12px 14px;
+      border-left: 4px solid var(--line-2);
+      border-radius: 0 8px 8px 0;
+      background: #fbfcfb;
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+    .small { color: var(--muted); font-size: 12.5px; }
+    .code-block {
+      overflow-x: auto;
+      margin: 14px 0;
+      padding: 14px 16px;
+      border: 1px solid #25352d;
+      border-radius: 8px;
+      background: #1f2924;
+      color: #edf5ef;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.68;
+      white-space: pre;
+    }
+    .source-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .source {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .source strong { color: var(--ink); }
+    .source p { margin: 4px 0 0; font-size: 13px; }
+
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 1fr; padding: 18px; }
+      aside { position: static; max-height: none; }
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+      .diagram svg { min-width: 780px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="toc" aria-label="目录">
+      <div class="toc-title">Artifact-first 风控审核</div>
+      <a href="#summary">0. 结论先行</a>
+      <div class="group">第一部分 · 概念与原则</div>
+      <a href="#artifact-first">1. 什么是 Artifact-first</a>
+      <a class="sub" href="#artifact-definition">1.1 定义与类比</a>
+      <a class="sub" href="#artifact-criteria">1.2 不是所有产物都是 artifact</a>
+      <a href="#risk-meaning">2. 对风控审核的指导意义</a>
+      <a class="sub" href="#two-agents">2.1 两类 Agent 与治理层</a>
+      <a class="sub" href="#design-principles">2.2 设计原则</a>
+      <a href="#concept-boundary">3. 相关概念的区别、关系、边界</a>
+      <a class="sub" href="#boundary-table">3.1 Artifact / Memory / RAG / Tool / Trace</a>
+      <a class="sub" href="#why-design">3.2 为什么必须这么分</a>
+      <div class="group">第二部分 · 运行机制</div>
+      <a href="#long-memory">4. 长期记忆系统为什么仍是核心</a>
+      <a class="sub" href="#memory-role">4.1 Memory 是能力层，不是事实源</a>
+      <a class="sub" href="#memory-types">4.2 风控里的四类长期记忆</a>
+      <a class="sub" href="#memory-loop">4.3 Memory 生产、检索与评估闭环</a>
+      <a href="#memory-runtime">5. Runtime 与旁路 Agent 的记忆边界</a>
+      <a class="sub" href="#old-judgement">5.1 对原判断的修正</a>
+      <a class="sub" href="#new-model">5.2 新模型：artifact-first memory</a>
+      <a href="#example">6. 详实示例：短视频审核</a>
+      <a class="sub" href="#runtime-flow">6.1 审核执行链路</a>
+      <a class="sub" href="#sidecar-flow">6.2 旁路提炼与策略候选</a>
+      <a class="sub" href="#evolution-flow">6.3 评估、验收、发布、影响下次审核</a>
+      <div class="group">第三部分 · 公开证据</div>
+      <a href="#industry">7. 行业先进经验与论证</a>
+    </aside>
+
+    <main>
+      <header>
+        <span class="eyebrow">AI Native / Trust &amp; Safety / Artifact-first / Memory Boundary / Evaluation Loop</span>
+        <h1>AI Native 风控审核系统：Artifact-first、Memory 边界与评估闭环</h1>
+        <p class="subtitle">这份文档把今天的讨论重新整理成一套可落地的架构认知：先解释 artifact-first，再落到风控审核的产品与系统原则，最后用一个短视频审核案例串起 runtime、旁路 Agent、memory、artifact、RAG、tool、trace、评估与自进化闭环。</p>
+        <div class="meta">
+          <span class="pill">风格：recent-agenda-research 式目录文档</span>
+          <span class="pill">日期：2026-05-27</span>
+          <span class="pill">核心：正式资产是事实源，评估是进化闸门</span>
+        </div>
+      </header>
+
+      <section id="summary">
+        <h2>0. 结论先行</h2>
+        <div class="lead">
+          <p><strong>Artifact-first：</strong>AI Native 产品不应以“聊天消息”为核心，而应以可保存、可编辑、可验证、可复用、可追责的业务产物为核心。对风控审核而言，这些产物不是漂亮页面，而是审核案卷、证据链、规则集、策略变更包、评估报告、发布记录和申诉记录。</p>
+          <p><strong>风控指导意义：</strong>审核执行 Agent 的核心不是“给一个风险判断”，而是生成可复核的 <code>RiskCase</code>；策略运营 Agent 的核心不是“提一个建议”，而是生成可回测、可审批、可灰度、可回滚的 <code>StrategyChange</code>。两者通过评估和发布闭环连接。</p>
+          <p><strong>Memory 边界：</strong>长期记忆系统仍然是 Agent 变强的核心，但它解决的是学习、适应和经验复用，不解决正式追责。昨天讨论的“runtime 生产情景记忆、消费语义记忆；旁路 Agent 负责情景到语义转化”大方向成立，但要修正：风控里的情景记录大多应落成 case-level artifact；正式语义知识如果会影响生产决策，也必须 artifact 化。Memory 负责沉淀偏好、经验摘要、候选洞察、工具使用经验和工作上下文。</p>
+          <p><strong>自进化闭环：</strong>自进化不能是 memory 自动改规则，而应是：case artifacts → observations → candidate strategy artifacts → evaluation artifacts → acceptance/release artifacts → runtime consumption。评估层是进化闸门，不通过评估不能影响下一次生产审核。</p>
+        </div>
+
+        <div class="grid-4">
+          <div class="card"><span class="metric">Artifact</span><h4>正式资产</h4><p>有 owner、状态、版本、验收、审计、追责价值。例：<code>RiskCase</code>、<code>RuleSet</code>。</p></div>
+          <div class="card"><span class="metric">Memory</span><h4>能力飞轮</h4><p>帮助 Agent 复用经验、适应业务、减少重复探索，但不能直接作为封禁、限流、策略发布依据。</p></div>
+          <div class="card"><span class="metric">Runtime</span><h4>处理当前案子</h4><p>读取正式策略、调用工具、生成案卷和证据，不直接改生产规则。</p></div>
+          <div class="card"><span class="metric">Eval</span><h4>进化闸门</h4><p>所有候选策略必须经过黄金集、困难样本、回测、灰度和线上监控。</p></div>
+        </div>
+      </section>
+
+      <div class="part">第一部分 · 概念与原则：为什么风控系统要 artifact-first</div>
+
+      <section id="artifact-first">
+        <h2>1. 什么是 Artifact-first</h2>
+        <h3 id="artifact-definition">1.1 定义与类比</h3>
+        <p><strong>一句话定义：</strong>Artifact-first 是一种 AI Native 产品和系统设计原则：把“AI 与用户共同维护的正式产物”放在中心，而不是把聊天记录放在中心。</p>
+        <p>传统软件是 UI-first：用户通过按钮、表单、流程操作软件。早期 AI 产品多是 chat-first：用户问一句，AI 回一句。Artifact-first 则是：对话只是控制层，真正的价值沉淀在能持续演化的产物里。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>形态</th><th>核心对象</th><th>用户感受</th><th>风控审核里的对应物</th></tr></thead>
+            <tbody>
+              <tr><td>UI-first</td><td>页面、表单、按钮</td><td>我操作系统</td><td>传统审核后台、规则配置台</td></tr>
+              <tr><td>Chat-first</td><td>对话消息</td><td>我向 AI 问问题</td><td>问“这个内容违规吗”，AI 回复一段解释</td></tr>
+              <tr><td>Artifact-first</td><td>可演化业务产物</td><td>我和 AI 一起推进一个可交付对象</td><td>审核案卷、证据链、策略变更包、评估报告</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout green">
+          <strong>类比：</strong>chat-first 像请教顾问，顾问答得再好，价值也散落在谈话里；artifact-first 像和同事共用一份卷宗、一张白板、一个代码仓库，最终沉淀的是可继续工作、可被别人接手、可被审计的东西。
+        </div>
+
+        <h3 id="artifact-criteria">1.2 不是所有产物都是 artifact</h3>
+        <p>Artifact 概念必须收窄，否则“所有被存下来的东西”都会被叫作 artifact，边界就失效。一个对象适合升级为 artifact，通常要满足多数条件：会被正式消费、有生命周期、需要验收、需要版本/追溯、会影响业务决策。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>对象</th><th>是否建议作为 artifact</th><th>原因</th><th>例子</th></tr></thead>
+            <tbody>
+              <tr><td>审核案卷</td><td><span class="tag green">是</span></td><td>要复核、申诉、质检、追责、沉淀。</td><td><code>RiskCase@case_10086</code></td></tr>
+              <tr><td>规则集 / 策略包</td><td><span class="tag green">是</span></td><td>影响生产决策，必须版本化、审批、回滚。</td><td><code>RuleSet.sexual@v18</code>、<code>StrategyPack@v32</code></td></tr>
+              <tr><td>评估报告</td><td><span class="tag green">是</span></td><td>决定候选策略能否上线，是发布依据。</td><td><code>EvalReport@2026_0527_01</code></td></tr>
+              <tr><td>工具原始返回</td><td><span class="tag amber">通常不是</span></td><td>只是过程材料；被采纳进证据链后才成为案卷的一部分。</td><td>OCR raw output、模型 raw score</td></tr>
+              <tr><td>Trace / Log</td><td><span class="tag amber">通常不是</span></td><td>服务复现、排查、性能分析，不是业务判罚理由。</td><td><code>run_abc.tool_calls</code></td></tr>
+              <tr><td>Memory insight</td><td><span class="tag amber">通常不是</span></td><td>是候选洞察；要影响策略必须先转成候选 artifact 并评估。</td><td>“政治背景 OCR 误伤偏高”</td></tr>
+              <tr><td>RAG index</td><td><span class="tag red">不是</span></td><td>是可重建的检索索引，不是事实源。</td><td>规则向量库、案例向量库</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="risk-meaning">
+        <h2>2. 在风控审核领域的指导意义</h2>
+        <p>风控审核有一个天然特点：每次判断都可能影响用户权益、业务损失、平台合规和舆情风险。因此它不能只追求“AI 判断得快”，还必须能回答：为什么这么判、依据哪版策略、证据是什么、谁复核过、后来申诉是否成立、是否能复现当时决策。</p>
+
+        <h3 id="two-agents">2.1 两类 Agent 与治理层</h3>
+        <div class="diagram compact" aria-label="两类 Agent 与治理层">
+          <svg viewBox="0 0 980 360" role="img">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#17644d"></path>
+              </marker>
+              <style>
+                .h{font:800 18px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}
+                .t{font:600 13px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}
+                .b{fill:#fff;stroke:#d9e0da;stroke-width:2}
+              </style>
+            </defs>
+            <rect width="980" height="360" rx="12" fill="#fbfcfa"></rect>
+            <rect class="b" x="44" y="60" width="250" height="116" rx="10"></rect>
+            <text class="h" x="169" y="93" text-anchor="middle">审核执行 Agent</text>
+            <text class="t" x="169" y="124" text-anchor="middle">处理单个内容/行为</text>
+            <text class="t" x="169" y="148" text-anchor="middle">生成 RiskCase / Evidence / Decision</text>
+            <rect class="b" x="366" y="60" width="250" height="116" rx="10" fill="#e3f0ea"></rect>
+            <text class="h" x="491" y="93" text-anchor="middle">正式资产层</text>
+            <text class="t" x="491" y="124" text-anchor="middle">案卷、规则、策略、评估、发布</text>
+            <text class="t" x="491" y="148" text-anchor="middle">系统事实源与审计对象</text>
+            <rect class="b" x="688" y="60" width="250" height="116" rx="10"></rect>
+            <text class="h" x="813" y="93" text-anchor="middle">策略运营 Agent</text>
+            <text class="t" x="813" y="124" text-anchor="middle">分析风险模式、制定候选策略</text>
+            <text class="t" x="813" y="148" text-anchor="middle">生成 StrategyChange / EvalPlan</text>
+            <path d="M294 118 H356" stroke="#17644d" stroke-width="3" marker-end="url(#arrow)"></path>
+            <path d="M616 118 H678" stroke="#17644d" stroke-width="3" marker-end="url(#arrow)"></path>
+            <rect x="170" y="230" width="640" height="72" rx="10" fill="#e4edf6" stroke="#245985" stroke-width="2"></rect>
+            <text class="h" x="490" y="258" text-anchor="middle">治理与评估层</text>
+            <text class="t" x="490" y="284" text-anchor="middle">分类体系、版本、权限、人工复核、评估集、验收、灰度、回滚、监控</text>
+            <path d="M491 176 V224" stroke="#245985" stroke-width="3" marker-end="url(#arrow)"></path>
+          </svg>
+        </div>
+
+        <div class="grid-3">
+          <div class="card"><span class="tag green">执行面</span><h4>审核执行 Agent</h4><p>像一线审查员 + 办案卷宗。它处理当前内容，收集证据，引用规则，形成可复核决策草案。</p></div>
+          <div class="card"><span class="tag blue">控制面</span><h4>策略运营 Agent</h4><p>像策略分析师 + 作战地图。它看大量案卷，发现模式，提出候选策略，推动评估和发布。</p></div>
+          <div class="card"><span class="tag amber">治理面</span><h4>评估与验收体系</h4><p>像质检、法务、发布委员会。它决定候选变化能否进入生产，并保留回滚和审计依据。</p></div>
+        </div>
+
+        <h3 id="design-principles">2.2 设计原则</h3>
+        <div class="grid-2">
+          <div class="card"><h4>原则 1：不要 agent-first，要 artifact-first</h4><p>不要先问“我要几个 Agent”，先问“哪些业务产物必须被复核、追责、复用”。风控里通常是案卷、证据链、规则集、策略变更包、评估报告、发布记录。</p></div>
+          <div class="card"><h4>原则 2：AI 给结论必须给证据结构</h4><p>“高风险，建议封禁”不是合格输出。合格输出必须有风险类型、证据、规则版本、模型版本、处置矩阵、人工复核状态。</p></div>
+          <div class="card"><h4>原则 3：建议与执行分离</h4><p>AI 可以建议拦截、限流或复核，但高损害动作应经过策略引擎、权限系统、审批流或人工复核。</p></div>
+          <div class="card"><h4>原则 4：所有生产依据都要版本化</h4><p>每个判断都要能追溯：当时用了哪个规则、模型、阈值、prompt、策略包、评估报告。</p></div>
+          <div class="card"><h4>原则 5：策略上线前必须评估</h4><p>没有 backtest、golden set、slice analysis、灰度监控的策略建议只是观点，不是生产资产。</p></div>
+          <div class="card"><h4>原则 6：人工反馈是一等信号</h4><p>人工改判、申诉成功、质检失败、投诉、真实损失都不是附属备注，而是旁路 Agent 发现模式和构建评估集的关键输入。</p></div>
+        </div>
+      </section>
+
+      <section id="concept-boundary">
+        <h2>3. 为什么这么设计：相关概念的区别、关系、边界</h2>
+        <p>行业里常把“知识库、RAG、memory、案例库、规则库”混着说，是因为它们可以重叠在同一份资料上，但它们描述的是不同维度：对象是什么、怎么检索、是否记住、能否执行、是否正式依据。</p>
+
+        <h3 id="boundary-table">3.1 概念边界表：带具体例子</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>概念</th><th>它回答的问题</th><th>风控例子</th><th>和其他概念的关系</th><th>边界判断</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Artifact</strong></td>
+                <td>这个东西是否要被业务正式消费、验收、版本化、追责？</td>
+                <td><code>RiskCase</code>、<code>RuleSet</code>、<code>StrategyChange</code>、<code>EvalReport</code>。</td>
+                <td>是事实源；RAG 可以检索它，tool 可以读写它，memory 可以从它派生摘要。</td>
+                <td>正式依据必须 artifact 化。</td>
+              </tr>
+              <tr>
+                <td><strong>Memory</strong></td>
+                <td>系统长期记住什么以便未来更懂上下文？</td>
+                <td>“社区业务线更重视召回率”“最近软色情+私域引流上升”“上次评审要求政治背景误伤单独看”。</td>
+                <td>是派生层。可以由 artifact/trace/反馈总结而来，也可提示 Agent 关注重点。</td>
+                <td>不能单独作为处罚或发布依据。</td>
+              </tr>
+              <tr>
+                <td><strong>RAG</strong></td>
+                <td>运行时怎么把相关资料找出来？</td>
+                <td>相似案例检索、规则片段检索、政策说明检索、历史申诉检索。</td>
+                <td>是方法，不是资产类型。RAG corpus 里的对象可能是 artifact，也可能是 memory。</td>
+                <td>检索结果必须回指 source artifact / version。</td>
+              </tr>
+              <tr>
+                <td><strong>Tool</strong></td>
+                <td>系统能查询、计算、判断、执行什么？</td>
+                <td>OCR、ASR、安全分类模型、规则引擎、画像查询、回测引擎、策略发布工具。</td>
+                <td>工具输出是过程材料；写入案卷证据链后，才成为 artifact 的一部分。</td>
+                <td>会产生副作用的 tool 必须受权限和 gate 控制。</td>
+              </tr>
+              <tr>
+                <td><strong>Trace</strong></td>
+                <td>系统当时怎么跑的？</td>
+                <td>调用了哪个模型、上下文灌入了哪些片段、耗时、重试、原始返回。</td>
+                <td>服务可观测和复现；可被旁路 Agent 分析，但默认不是业务理由。</td>
+                <td>trace 支持审计，不等于案卷证据。</td>
+              </tr>
+              <tr>
+                <td><strong>Observation</strong></td>
+                <td>系统观察到什么候选信号？</td>
+                <td>“政治敏感 OCR 背景误伤偏高”“某规则命中后人工驳回率上升”。</td>
+                <td>可能从 case、trace、quality review 中提取；经过验证后可升级为 <code>RiskPattern</code> 或 <code>RuleProposal</code>。</td>
+                <td>未评估前不是正式知识。</td>
+              </tr>
+              <tr>
+                <td><strong>Evaluation</strong></td>
+                <td>候选变化是否真的更好？</td>
+                <td><code>EvalSpec</code>、<code>EvalDataset</code>、<code>EvalRun</code>、<code>EvalReport</code>、<code>AcceptanceRecord</code>。</td>
+                <td>连接 observation 与正式策略发布，是自进化的闸门。</td>
+                <td>没有评估的进化只是自信，不是治理。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="why-design">3.2 为什么必须这么分</h3>
+        <div class="callout amber">
+          <strong>核心风险：</strong>如果把规则、案例、经验、索引、trace 都塞进一个“memory”，短期看系统简单，长期会在审计、申诉、误杀追责、策略回滚时还债。风控系统需要的是单一事实源 + 可重建索引 + 派生记忆 + 受控工具。
+        </div>
+        <div class="diagram compact" aria-label="事实源与派生层关系">
+          <svg viewBox="0 0 980 420" role="img">
+            <defs>
+              <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#245985"></path>
+              </marker>
+              <style>.hh{font:800 17px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}.tt{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}.bb{fill:#fff;stroke:#d9e0da;stroke-width:2}</style>
+            </defs>
+            <rect width="980" height="420" rx="12" fill="#fbfcfa"></rect>
+            <rect x="350" y="42" width="280" height="96" rx="10" fill="#e3f0ea" stroke="#17644d" stroke-width="2"></rect>
+            <text class="hh" x="490" y="79" text-anchor="middle">Artifact Store</text>
+            <text class="tt" x="490" y="107" text-anchor="middle">正式事实源：规则、案卷、评估、发布</text>
+            <rect class="bb" x="80" y="206" width="230" height="92" rx="10" fill="#e4edf6"></rect>
+            <text class="hh" x="195" y="240" text-anchor="middle">Memory Store</text>
+            <text class="tt" x="195" y="266" text-anchor="middle">派生摘要、偏好、洞察</text>
+            <rect class="bb" x="375" y="206" width="230" height="92" rx="10" fill="#f4ead3"></rect>
+            <text class="hh" x="490" y="240" text-anchor="middle">RAG Index</text>
+            <text class="tt" x="490" y="266" text-anchor="middle">可重建的检索层</text>
+            <rect class="bb" x="670" y="206" width="230" height="92" rx="10" fill="#eee8f5"></rect>
+            <text class="hh" x="785" y="240" text-anchor="middle">Tool Layer</text>
+            <text class="tt" x="785" y="266" text-anchor="middle">读写、计算、发布、处置</text>
+            <path d="M430 138 C350 166 262 178 205 206" fill="none" stroke="#245985" stroke-width="3" marker-end="url(#arrow2)"></path>
+            <path d="M490 138 V202" fill="none" stroke="#245985" stroke-width="3" marker-end="url(#arrow2)"></path>
+            <path d="M550 138 C630 166 724 178 780 206" fill="none" stroke="#245985" stroke-width="3" marker-end="url(#arrow2)"></path>
+            <text class="tt" x="490" y="352" text-anchor="middle">规则库、案例库：本体是 artifact；检索它们是 RAG；从中总结出的经验可进入 memory；执行规则的引擎是 tool。</text>
+          </svg>
+        </div>
+      </section>
+
+      <div class="part">第二部分 · 运行机制：长期记忆、Runtime、旁路 Agent、评估闭环怎么串起来</div>
+
+      <section id="long-memory">
+        <h2>4. 长期记忆系统为什么仍是核心</h2>
+        <p>前面强调 artifact，是为了避免风控系统把正式规则、案例和策略放进一个不可追责的“记忆黑箱”。但这不等于 memory 不重要。恰恰相反：长期记忆系统是 Agent 能持续变强的核心，它让 Agent 不再每次从零推理，而是能复用历史经验、团队偏好、风险模式、工具路径和失败教训。</p>
+        <div class="callout blue">
+          <strong>修正后的判断：</strong>Artifact 是可信运行的核心，Memory 是能力进化的核心。Artifact 解决“正式依据是什么、能不能追责”；Memory 解决“Agent 如何从历史中学习、下次更快更准、更少重复犯错”。
+        </div>
+
+        <h3 id="memory-role">4.1 Memory 是能力层，不是事实源</h3>
+        <p>长期记忆系统在风控里不应该被设计成“另一个规则库”或“另一个案例库”。它更像一层经验操作系统：从正式 artifact、trace、人工反馈和申诉后验中提炼出可复用信号，再在下一次任务中按需召回。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>问题</th><th>应该由谁回答</th><th>例子</th><th>原因</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>这个内容为什么被限流？</td>
+                <td><span class="tag green">Artifact</span></td>
+                <td><code>RiskCase@case_10086</code> 引用 <code>RuleSet.sexual@v18</code> 和证据包。</td>
+                <td>这是正式解释、申诉和审计问题。</td>
+              </tr>
+              <tr>
+                <td>下次遇到类似内容，Agent 应该更注意什么？</td>
+                <td><span class="tag blue">Memory</span></td>
+                <td>“近期软色情+私域引流误放上升，重点检查加群、福利、私聊话术。”</td>
+                <td>这是经验复用和注意力引导问题。</td>
+              </tr>
+              <tr>
+                <td>这个策略能不能上线？</td>
+                <td><span class="tag amber">Evaluation Artifact</span></td>
+                <td><code>EvalReport</code> 比较 baseline 与 candidate 的召回、误杀、申诉、人工压力。</td>
+                <td>这是验证与验收问题。</td>
+              </tr>
+              <tr>
+                <td>Agent 应该怎么查证更高效？</td>
+                <td><span class="tag violet">Procedural Memory</span></td>
+                <td>“政治背景类先跑主体性检测，再检索误伤样本，再进专项复核。”</td>
+                <td>这是工具路径和流程经验问题。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="memory-types">4.2 风控里的四类长期记忆</h3>
+        <div class="grid-2">
+          <div class="card">
+            <span class="tag blue">Episodic Memory</span>
+            <h4>情景记忆：发生过什么</h4>
+            <p>不是完整案卷本体，而是对历史案卷的可召回摘要。例如：“上周政治背景误伤集中在低清视频 OCR 片段，源案卷为 case_9032、case_10086、case_10112。”它必须回指 case artifact。</p>
+          </div>
+          <div class="card">
+            <span class="tag green">Semantic Memory</span>
+            <h4>语义记忆：一般性风险模式</h4>
+            <p>例如：“软色情+私域引流常见链路是低风险互动 -> 暗示福利 -> 加群/私聊转化。”它能指导 Agent 关注模式，但要影响生产策略，必须转成 <code>RiskPattern</code>、<code>RuleProposal</code> 或 <code>RuleSet</code>。</p>
+          </div>
+          <div class="card">
+            <span class="tag violet">Procedural Memory</span>
+            <h4>程序记忆：怎么做事</h4>
+            <p>例如：“多风险叠加内容先拆分证据，再分别跑色情/政治/引流规则，最后由 ActionMatrix 合并处置。”这类记忆提升 Agent 执行效率；正式 SOP 仍应 artifact 化。</p>
+          </div>
+          <div class="card">
+            <span class="tag amber">Preference / Policy Context</span>
+            <h4>组织偏好：业务怎么取舍</h4>
+            <p>例如：“社区业务线边界内容优先限流+人审，不直接删除；政治背景类误伤要单独看新用户和低清 OCR slice。”它影响排序、解释和升级策略，但不能替代规则。</p>
+          </div>
+        </div>
+
+        <h3 id="memory-loop">4.3 Memory 生产、检索与评估闭环</h3>
+        <div class="diagram" aria-label="长期记忆系统闭环">
+          <svg viewBox="0 0 1120 520" role="img">
+            <defs>
+              <marker id="arrow-memory" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#245985"></path>
+              </marker>
+              <style>.mh{font:800 16px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}.mt{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}.mb{fill:#fff;stroke:#d9e0da;stroke-width:2}</style>
+            </defs>
+            <rect width="1120" height="520" rx="12" fill="#fbfcfa"></rect>
+            <text class="mh" x="40" y="44">长期记忆系统：从正式资产与运行反馈中提炼经验，再用评估证明它有用</text>
+            <g transform="translate(62 100)">
+              <rect class="mb" x="0" y="0" width="210" height="92" rx="10" fill="#e3f0ea"></rect>
+              <text class="mh" x="105" y="34" text-anchor="middle">Sources</text>
+              <text class="mt" x="105" y="58" text-anchor="middle">RiskCase / Trace / Appeal</text>
+              <text class="mt" x="105" y="78" text-anchor="middle">HumanReview / EvalReport</text>
+              <path d="M212 46 H272" stroke="#245985" stroke-width="3" marker-end="url(#arrow-memory)"></path>
+            </g>
+            <g transform="translate(334 100)">
+              <rect class="mb" x="0" y="0" width="210" height="92" rx="10" fill="#e4edf6"></rect>
+              <text class="mh" x="105" y="34" text-anchor="middle">Extract</text>
+              <text class="mt" x="105" y="58" text-anchor="middle">候选记忆抽取</text>
+              <text class="mt" x="105" y="78" text-anchor="middle">source / confidence / TTL</text>
+              <path d="M212 46 H272" stroke="#245985" stroke-width="3" marker-end="url(#arrow-memory)"></path>
+            </g>
+            <g transform="translate(606 100)">
+              <rect class="mb" x="0" y="0" width="210" height="92" rx="10" fill="#eee8f5"></rect>
+              <text class="mh" x="105" y="34" text-anchor="middle">Consolidate</text>
+              <text class="mt" x="105" y="58" text-anchor="middle">冲突消解 / 去重 / 过期</text>
+              <text class="mt" x="105" y="78" text-anchor="middle">episodic / semantic / procedural</text>
+              <path d="M212 46 H272" stroke="#245985" stroke-width="3" marker-end="url(#arrow-memory)"></path>
+            </g>
+            <g transform="translate(878 100)">
+              <rect class="mb" x="0" y="0" width="180" height="92" rx="10" fill="#f4ead3"></rect>
+              <text class="mh" x="90" y="34" text-anchor="middle">Memory Store</text>
+              <text class="mt" x="90" y="58" text-anchor="middle">可检索经验层</text>
+              <text class="mt" x="90" y="78" text-anchor="middle">不是事实源</text>
+            </g>
+            <g transform="translate(160 320)">
+              <rect class="mb" x="0" y="0" width="210" height="92" rx="10" fill="#fff"></rect>
+              <text class="mh" x="105" y="34" text-anchor="middle">Retrieve</text>
+              <text class="mt" x="105" y="58" text-anchor="middle">按任务召回相关记忆</text>
+              <text class="mt" x="105" y="78" text-anchor="middle">控制预算与引用来源</text>
+            </g>
+            <g transform="translate(455 320)">
+              <rect class="mb" x="0" y="0" width="210" height="92" rx="10" fill="#fff"></rect>
+              <text class="mh" x="105" y="34" text-anchor="middle">Use in Runtime</text>
+              <text class="mt" x="105" y="58" text-anchor="middle">提醒、排序、工具路径</text>
+              <text class="mt" x="105" y="78" text-anchor="middle">正式依据仍回到 artifact</text>
+            </g>
+            <g transform="translate(750 320)">
+              <rect class="mb" x="0" y="0" width="210" height="92" rx="10" fill="#f6e5e1"></rect>
+              <text class="mh" x="105" y="34" text-anchor="middle">Evaluate Memory</text>
+              <text class="mt" x="105" y="58" text-anchor="middle">接受率 / 误引用 / 时长</text>
+              <text class="mt" x="105" y="78" text-anchor="middle">无收益则降权或删除</text>
+            </g>
+            <path d="M968 192 C960 250 910 290 858 318" fill="none" stroke="#245985" stroke-width="3" marker-end="url(#arrow-memory)"></path>
+            <path d="M750 366 H668" stroke="#245985" stroke-width="3" marker-end="url(#arrow-memory)"></path>
+            <path d="M455 366 H372" stroke="#245985" stroke-width="3" marker-end="url(#arrow-memory)"></path>
+            <path d="M160 366 C90 350 58 260 98 194" fill="none" stroke="#245985" stroke-width="3" stroke-dasharray="6 6" marker-end="url(#arrow-memory)"></path>
+          </svg>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Memory 机制</th><th>风控设计要求</th><th>否则会出什么问题</th></tr></thead>
+            <tbody>
+              <tr><td>写入过滤</td><td>只有来自案卷、trace、人审、申诉、评估报告的候选记忆才能进入提炼；单个 case 的猜测不能直接持久化。</td><td>一次误判被写成长期经验，后续持续污染判断。</td></tr>
+              <tr><td>来源引用</td><td>每条 memory 必须有 <code>source_artifacts</code>、生成时间、置信度、适用范围和 TTL。</td><td>Agent 引用了“看似熟悉”的经验，却无法解释来自哪里。</td></tr>
+              <tr><td>冲突消解</td><td>新旧经验冲突时，按评估结果、时间、业务线、风险类型降权或失效。</td><td>过期策略和新策略同时被召回，导致输出摇摆。</td></tr>
+              <tr><td>检索策略</td><td>根据任务类型召回不同 memory：审核 runtime 召回风险模式和工具路径；策略旁路召回误杀/漏杀经验；评估 Agent 召回历史退化点。</td><td>无关记忆挤占上下文，带来噪声。</td></tr>
+              <tr><td>Memory 评估</td><td>比较开启/关闭 memory 后的人工接受率、误杀/漏杀、处理时长、误引用率、升级人审准确率。</td><td>系统只是在“记更多”，但不知道是否真的变好。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="memory-runtime">
+        <h2>5. Runtime 与旁路 Agent 的记忆边界：判断与修正</h2>
+        <h3 id="old-judgement">5.1 对原判断的修正</h3>
+        <p>你昨天的三点判断大方向是对的，但纳入 artifact 后需要收窄“memory”的职责。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>原判断</th><th>是否成立</th><th>修正后说法</th><th>原因</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Agent runtime 做两件事：情景记忆生产、语义记忆消费。</td>
+                <td><span class="tag green">基本成立</span></td>
+                <td>Runtime 生产 case-level artifacts 与 episodic traces，消费正式 artifacts 与 semantic context。</td>
+                <td>风控的“情景记忆”很多是正式案卷、证据、处置结果，不能只放 memory。</td>
+              </tr>
+              <tr>
+                <td>Agent runtime 不负责语义记忆生产。</td>
+                <td><span class="tag green">成立，但需补充</span></td>
+                <td>Runtime 可产生 observation candidate，但不能直接写入正式语义规则或生产策略。</td>
+                <td>运行时面对的是单个 case，容易过拟合；正式知识需要跨样本、评估、验收。</td>
+              </tr>
+              <tr>
+                <td>旁路 Agent 负责情景记忆提炼转化和语义记忆。</td>
+                <td><span class="tag green">成立，但要加 gate</span></td>
+                <td>旁路 Agent 从案卷/trace/反馈中提炼 insight，生成候选 artifact，经评估和审批后才发布。</td>
+                <td>旁路 Agent 不是“总结后自动改规则”，而是候选变化生产者。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="new-model">5.2 新模型：Artifact-first Memory</h3>
+        <div class="diagram" aria-label="Runtime 与旁路 Agent 新模型">
+          <svg viewBox="0 0 1120 520" role="img">
+            <defs>
+              <marker id="arrow3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#17644d"></path>
+              </marker>
+              <style>.h{font:800 16px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}.t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}.b{fill:#fff;stroke:#d9e0da;stroke-width:2}</style>
+            </defs>
+            <rect width="1120" height="520" rx="12" fill="#fbfcfa"></rect>
+            <rect class="b" x="50" y="74" width="270" height="140" rx="10" fill="#e3f0ea"></rect>
+            <text class="h" x="185" y="108" text-anchor="middle">审核执行 Runtime</text>
+            <text class="t" x="185" y="136" text-anchor="middle">读取 StrategyPack / RuleSet</text>
+            <text class="t" x="185" y="160" text-anchor="middle">调用 tools / RAG / memory</text>
+            <text class="t" x="185" y="184" text-anchor="middle">写 RiskCase / Evidence / Trace</text>
+            <rect class="b" x="430" y="60" width="270" height="168" rx="10" fill="#fff"></rect>
+            <text class="h" x="565" y="96" text-anchor="middle">Formal Artifacts</text>
+            <text class="t" x="565" y="126" text-anchor="middle">RiskCase · EvidenceBundle</text>
+            <text class="t" x="565" y="150" text-anchor="middle">RuleSet · StrategyChange</text>
+            <text class="t" x="565" y="174" text-anchor="middle">EvalReport · ReleaseRecord</text>
+            <text class="t" x="565" y="198" text-anchor="middle">事实源 / 验收 / 版本 / 追责</text>
+            <rect class="b" x="800" y="74" width="270" height="140" rx="10" fill="#e4edf6"></rect>
+            <text class="h" x="935" y="108" text-anchor="middle">Memory</text>
+            <text class="t" x="935" y="136" text-anchor="middle">偏好、经验摘要、候选洞察</text>
+            <text class="t" x="935" y="160" text-anchor="middle">带 source、confidence、TTL</text>
+            <text class="t" x="935" y="184" text-anchor="middle">不能直接作为处罚依据</text>
+            <rect class="b" x="120" y="330" width="300" height="116" rx="10" fill="#eee8f5"></rect>
+            <text class="h" x="270" y="364" text-anchor="middle">旁路 Agent</text>
+            <text class="t" x="270" y="392" text-anchor="middle">聚类、归因、提炼 observation</text>
+            <text class="t" x="270" y="416" text-anchor="middle">生成 RuleProposal / EvalPlan</text>
+            <rect class="b" x="620" y="330" width="300" height="116" rx="10" fill="#f4ead3"></rect>
+            <text class="h" x="770" y="364" text-anchor="middle">Evaluation &amp; Acceptance</text>
+            <text class="t" x="770" y="392" text-anchor="middle">黄金集、回测、灰度、线上监控</text>
+            <text class="t" x="770" y="416" text-anchor="middle">通过后发布 RuleSet@vNext</text>
+            <path d="M320 144 H420" stroke="#17644d" stroke-width="3" marker-end="url(#arrow3)"></path>
+            <path d="M700 144 H790" stroke="#17644d" stroke-width="3" marker-end="url(#arrow3)"></path>
+            <path d="M530 228 C450 282 370 302 290 328" fill="none" stroke="#17644d" stroke-width="3" marker-end="url(#arrow3)"></path>
+            <path d="M420 388 H610" stroke="#17644d" stroke-width="3" marker-end="url(#arrow3)"></path>
+            <path d="M770 330 C710 270 646 240 596 228" fill="none" stroke="#17644d" stroke-width="3" marker-end="url(#arrow3)"></path>
+          </svg>
+        </div>
+        <div class="callout green">
+          <strong>最终理解：</strong>Runtime 像一线审核员，负责把当前案子处理清楚并留下完整卷宗；旁路 Agent 像策略分析师，负责从大量卷宗和反馈里发现模式；Evaluation 像质检和发布委员会，决定候选变化能不能进入生产。
+        </div>
+      </section>
+
+      <section id="example">
+        <h2>6. 详实示例：用户上传图文/短视频，按色情、政治等规则审核</h2>
+        <p>场景：用户上传一条 15 秒短视频，画面有人物出镜，背景疑似政治标语，文案和口播含“加群看更多”，整体有成人暗示营销倾向。系统需要按色情、政治、广告引流、未成年人等风险类型审核。</p>
+
+        <h3 id="runtime-flow">6.1 审核执行链路：读什么、调什么、写什么</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>步骤</th><th>Agent 动作</th><th>调用工具</th><th>读取 artifact / memory</th><th>写入 artifact / trace</th><th>关键边界</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>1. Intake</td>
+                <td>创建审核案卷，冻结上传对象快照。</td>
+                <td>媒体元数据读取、文件指纹、上传上下文查询。</td>
+                <td><code>RiskTaxonomy@v8</code>：色情、政治、引流、未成年人等风险分类。</td>
+                <td><code>RiskCase@case_10086</code>：content_type、upload_time、scene、user_id hash、status。</td>
+                <td>一开始就创建 case artifact，后续所有证据都挂到案卷上。</td>
+              </tr>
+              <tr>
+                <td>2. 内容解析</td>
+                <td>提取视频可审查信号。</td>
+                <td>抽帧、OCR、ASR、封面识别、音频分类、图像安全模型、文本安全模型。</td>
+                <td>读取模型配置 artifact：<code>ModelRegistry.img_safe@2026_05</code>、<code>PromptTemplate.review@v6</code>。</td>
+                <td><code>EvidenceBundle@case_10086/e01</code>：关键帧、OCR 文本、ASR 文本、模型分数、模型版本。</td>
+                <td>工具原始返回先是 trace；被采纳后才进入 EvidenceBundle。</td>
+              </tr>
+              <tr>
+                <td>3. 检索上下文</td>
+                <td>检索相似案例和相关规则说明。</td>
+                <td>similar_case_search、policy_search、reranker。</td>
+                <td>RAG index 指向 <code>RiskCase</code>、<code>RuleSet</code>、<code>PolicyDoc</code>；memory 提醒“近期软色情+私域引流上升”。</td>
+                <td><code>RetrievedContextRecord</code>：source_id、version、slice、score。</td>
+                <td>RAG 结果必须回指 artifact_id/version，不能只保存一段无来源文本。</td>
+              </tr>
+              <tr>
+                <td>4. 规则执行</td>
+                <td>把证据包交给规则引擎匹配生产规则。</td>
+                <td>rule_engine、action_matrix_resolver。</td>
+                <td><code>StrategyPack@community_review:v32</code>、<code>RuleSet.sexual@v18</code>、<code>RuleSet.political@v11</code>、<code>ActionMatrix@v14</code>。</td>
+                <td><code>RuleHitRecord</code>：S-103 成人暗示+私域引流；P-044 政治背景元素专项复核。</td>
+                <td>规则本体是 artifact；规则引擎是 tool；规则命中写入案卷后成为证据。</td>
+              </tr>
+              <tr>
+                <td>5. 决策草案</td>
+                <td>生成结构化风险结论和处置建议。</td>
+                <td>LLM decision composer、schema validator、risk gate。</td>
+                <td>读取处置约束：高风险封禁需人审；政治类不确定进入专项复核。</td>
+                <td><code>DecisionDraft</code>：risk_types、risk_level、recommended_action、basis、required_review_queue。</td>
+                <td>AI 输出是建议草案；高损害动作由审批/规则/人审 gate 决定。</td>
+              </tr>
+              <tr>
+                <td>6. 人审与反馈</td>
+                <td>审核员采纳、改判或补充证据。</td>
+                <td>human_review_queue、quality_review、appeal_system。</td>
+                <td>读取案卷全量视图与来源证据。</td>
+                <td><code>HumanReviewRecord</code>、<code>AppealRecord</code>、<code>QualityReviewRecord</code>。</td>
+                <td>人工改判不是备注，是训练评估和策略迭代的一等信号。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">RiskCase@case_10086
+  content_type: short_video
+  scene: community_post
+  risk_types:
+    - sexual_suggestive
+    - private_traffic_diversion
+    - political_sensitive_background
+  evidence:
+    - frame_007: sexual_suggestive_score=0.76, nudity_score=0.21, model=img_safe_2026_05
+    - asr: "加群 / 更多内容" private_traffic_score=0.84
+    - ocr: background_political_text_score=0.68, located_in_background=true
+  matched_rules:
+    - S-103@v18: 成人暗示 + 私域引流 -> 人工复核 + 限流
+    - P-044@v11: 政治敏感背景元素 -> 专项复核，不直接封禁
+  decision_draft:
+    action: limit_distribution_and_human_review
+    basis: StrategyPack@community_review:v32, ActionMatrix@v14
+  trace_ref: run_abc</div>
+
+        <h3 id="sidecar-flow">6.2 旁路 Agent：怎么整理转化 memory，再到 artifact</h3>
+        <p>旁路 Agent 不处理即时处罚，它定期分析大量案卷、申诉、质检和损失数据。它的第一步产物通常不是正式规则，而是 observation 或 memory insight。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>旁路阶段</th><th>输入</th><th>分析动作</th><th>输出</th><th>是否正式影响生产</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>聚类</td>
+                <td>最近 7/30 天 <code>RiskCase</code>、<code>HumanReviewRecord</code>、<code>AppealRecord</code>。</td>
+                <td>按风险类型、命中规则、申诉结果、人工改判、内容特征聚类。</td>
+                <td><code>CaseCluster</code> 或分析任务结果。</td>
+                <td>否。只是分析材料。</td>
+              </tr>
+              <tr>
+                <td>归因</td>
+                <td>case cluster + trace + tool raw output。</td>
+                <td>发现“政治敏感 OCR 背景误伤偏高”“S-103 命中后人工确认率高”。</td>
+                <td><code>ObservationCandidate</code>。</td>
+                <td>否。需要验证。</td>
+              </tr>
+              <tr>
+                <td>Memory insight</td>
+                <td>多条 observation + 来源案卷。</td>
+                <td>提炼为带 source、confidence、TTL 的经验摘要。</td>
+                <td><code>InsightMemory</code>：提醒 runtime 关注软色情+私域引流、政治背景误伤。</td>
+                <td>否。只能辅助上下文。</td>
+              </tr>
+              <tr>
+                <td>候选 artifact</td>
+                <td>InsightMemory + 支撑样本 + 指标。</td>
+                <td>把洞察转为可评估的策略候选。</td>
+                <td><code>RiskPatternDraft</code>、<code>RuleProposal</code>、<code>EvalSpec</code>。</td>
+                <td>仍否。进入评估。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">InsightMemory@im_2026_0527_01
+  summary: "社区短视频中软色情+私域引流组合风险上升；政治背景 OCR 误伤偏高。"
+  source_artifacts:
+    - CaseCluster@community_video_2026W21
+    - QualityReviewReport@2026W21
+  confidence: medium_high
+  ttl: 14d
+  usage: "提醒审核 Agent 加强相关维度检查；不得单独作为处罚依据。"
+
+RuleProposal@proposal_political_background_v12
+  target: RuleSet.political@v11
+  change: "新增主体性判断：政治敏感元素若只在背景中出现，且未被标题/口播强化，则降级为专项复核，不自动拦截。"
+  source_cases: [case_9032, case_10086, case_10112]
+  required_eval: EvalSpec@political_background_v12</div>
+
+        <h3 id="evolution-flow">6.3 自进化：评估、验收、发布、影响下一次审核</h3>
+        <div class="diagram" aria-label="评估驱动的自进化闭环">
+          <svg viewBox="0 0 1120 500" role="img">
+            <defs>
+              <marker id="arrow4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10Z" fill="#17644d"></path>
+              </marker>
+              <style>.h{font:800 15px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#16201b}.t{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#627067}.box{fill:#fff;stroke:#d9e0da;stroke-width:2}</style>
+            </defs>
+            <rect width="1120" height="500" rx="12" fill="#fbfcfa"></rect>
+            <g transform="translate(38 80)">
+              <rect class="box" x="0" y="0" width="150" height="88" rx="10" fill="#e3f0ea"></rect>
+              <text class="h" x="75" y="34" text-anchor="middle">Case Artifacts</text>
+              <text class="t" x="75" y="58" text-anchor="middle">案卷/证据/反馈</text>
+              <path d="M152 44 H196" stroke="#17644d" stroke-width="3" marker-end="url(#arrow4)"></path>
+            </g>
+            <g transform="translate(236 80)">
+              <rect class="box" x="0" y="0" width="150" height="88" rx="10" fill="#e4edf6"></rect>
+              <text class="h" x="75" y="34" text-anchor="middle">Observations</text>
+              <text class="t" x="75" y="58" text-anchor="middle">候选洞察</text>
+              <path d="M152 44 H196" stroke="#17644d" stroke-width="3" marker-end="url(#arrow4)"></path>
+            </g>
+            <g transform="translate(434 80)">
+              <rect class="box" x="0" y="0" width="150" height="88" rx="10" fill="#eee8f5"></rect>
+              <text class="h" x="75" y="34" text-anchor="middle">RuleProposal</text>
+              <text class="t" x="75" y="58" text-anchor="middle">候选策略</text>
+              <path d="M152 44 H196" stroke="#17644d" stroke-width="3" marker-end="url(#arrow4)"></path>
+            </g>
+            <g transform="translate(632 80)">
+              <rect class="box" x="0" y="0" width="150" height="88" rx="10" fill="#f4ead3"></rect>
+              <text class="h" x="75" y="34" text-anchor="middle">Evaluation</text>
+              <text class="t" x="75" y="58" text-anchor="middle">回测/灰度/分层</text>
+              <path d="M152 44 H196" stroke="#17644d" stroke-width="3" marker-end="url(#arrow4)"></path>
+            </g>
+            <g transform="translate(830 80)">
+              <rect class="box" x="0" y="0" width="150" height="88" rx="10" fill="#f6e5e1"></rect>
+              <text class="h" x="75" y="34" text-anchor="middle">Acceptance</text>
+              <text class="t" x="75" y="58" text-anchor="middle">验收/审批/条件</text>
+            </g>
+            <g transform="translate(290 284)">
+              <rect class="box" x="0" y="0" width="240" height="88" rx="10" fill="#fff"></rect>
+              <text class="h" x="120" y="34" text-anchor="middle">ReleaseRecord + RuleSet@v12</text>
+              <text class="t" x="120" y="58" text-anchor="middle">发布新版本，可回滚，可审计</text>
+            </g>
+            <g transform="translate(610 284)">
+              <rect class="box" x="0" y="0" width="240" height="88" rx="10" fill="#e3f0ea"></rect>
+              <text class="h" x="120" y="34" text-anchor="middle">Next Runtime</text>
+              <text class="t" x="120" y="58" text-anchor="middle">下一次审核读取新策略</text>
+            </g>
+            <path d="M905 170 C840 250 674 278 530 318" fill="none" stroke="#17644d" stroke-width="3" marker-end="url(#arrow4)"></path>
+            <path d="M530 328 H602" stroke="#17644d" stroke-width="3" marker-end="url(#arrow4)"></path>
+          </svg>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>评估对象</th><th>评估集/指标</th><th>通过标准示例</th><th>验收产物</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>政治背景主体性规则</td>
+                <td>黄金样本、背景文字样本、主体表达样本、低质量 OCR、新闻/讽刺语境、申诉成功样本。</td>
+                <td>政治背景误伤率下降 ≥10%；政治高危召回下降 ≤2%；人工复核量上升 ≤8%。</td>
+                <td><code>EvalReport@eval_2026_0527_01</code></td>
+              </tr>
+              <tr>
+                <td>软色情+私域引流组合风险</td>
+                <td>历史确认违规样本、边界样本、未成年人相关样本、人工改判样本。</td>
+                <td>人工确认率提升；误伤率不升；高危样本召回不下降。</td>
+                <td><code>EvalDecision@approve_gray_5pct</code></td>
+              </tr>
+              <tr>
+                <td>发布策略</td>
+                <td>5% 灰度流量、48 小时申诉率、投诉率、人工压力、风险损失。</td>
+                <td>申诉成功率不高于基线 3%；异常则自动回滚。</td>
+                <td><code>ReleaseRecord@release_2026_0528_01</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue">
+          <strong>下次审核如何被影响：</strong>新的审核 runtime 不会因为 memory 里“觉得政治背景误伤高”就改变判断；它会读取已经发布的 <code>RuleSet.political@v12</code> 和 <code>ActionMatrix@v15</code>。Memory 仍可提醒 Agent 关注相关维度，但正式处置依据来自已验收 artifact。
+        </div>
+      </section>
+
+      <div class="part">第三部分 · 行业先进经验：只用公开资料做校验</div>
+
+      <section id="industry">
+        <h2>7. 行业先进经验与论证</h2>
+        <p>公开资料很少直接使用“artifact-first memory/RAG”这套说法，但成熟系统公开展示了相同的治理逻辑：政策/规则、casework、人审、自动化、申诉、审计、QA、评估和透明度指标被放在一个闭环里。这些公开证据足以校验我们的设计方向。</p>
+
+        <div class="source-list">
+          <div class="source">
+            <strong>Agent Memory 研究：长期记忆让 Agent 从无状态生成器变成可适应系统。</strong>
+            <p>近期综述把 memory 定义为跨交互持久化、组织并选择性召回信息的能力，并强调写入过滤、冲突处理、延迟预算和隐私治理等工程问题。对应我们设计里的 memory 写入过滤、source 引用、TTL、冲突消解和 memory eval。来源：<a href="https://arxiv.org/abs/2603.07670">Memory for Autonomous LLM Agents</a>。</p>
+          </div>
+          <div class="source">
+            <strong>Cinder：Trust &amp; Safety 的 system of record。</strong>
+            <p>公开资料称其把 policy、casework、auditability、analytics 放在同一操作面，并记录 policy update、enforcement decision、agent action；还用同一批 labeled data benchmark human reviewers 与 AI agents。对应我们设计里的 artifact store、casework、audit trail、evaluation/QA。来源：<a href="https://cinder.ai/product/platform">Cinder Platform</a>。</p>
+          </div>
+          <div class="source">
+            <strong>YouTube：自动系统 + 人审 + 申诉复审。</strong>
+            <p>YouTube 公开说明自动系统利用历史人工审核数据识别潜在违规；高置信时可自动决策，多数情况下会标记给训练过的人审；申诉后由人工逐案复审。对应我们设计里的 runtime、human review、appeal feedback、评估数据飞轮。来源：<a href="https://support.google.com/youtube/answer/13304829?hl=en">How YouTube reviews content</a>。</p>
+          </div>
+          <div class="source">
+            <strong>TikTok：每条上传视频自动审核，不确定进入人工。</strong>
+            <p>TikTok 公开说明通过技术和审核团队执行社区规则；每个上传视频由自动系统审核，高置信违规会移除，置信不足时进入人工审核；也支持举报和申诉/救济。对应我们设计里的工具层、risk gate、人工复核和申诉记录。来源：<a href="https://www.tiktok.com/euonlinesafety/en/content-moderation/">TikTok Content Moderation</a>。</p>
+          </div>
+          <div class="source">
+            <strong>NIST AI RMF：Govern / Map / Measure / Manage。</strong>
+            <p>NIST AI RMF 是 AI 风险管理公开框架，强调在 AI 系统设计、开发、使用和评估中纳入可信风险管理。我们的“先评估再发布”对应 Measure/Manage，策略治理和责任归属对应 Govern。来源：<a href="https://www.nist.gov/itl/ai-risk-management-framework">NIST AI RMF</a>。</p>
+          </div>
+          <div class="source">
+            <strong>OpenTelemetry：trace/log/metric 是可观测性信号。</strong>
+            <p>OpenTelemetry 将 traces、metrics、logs 等定义为观测系统活动的 signals。它支持我们把 trace 定位为工程复现和观测层，而不是业务判罚依据。来源：<a href="https://opentelemetry.io/docs/concepts/signals/">OpenTelemetry Signals</a>。</p>
+          </div>
+          <div class="source">
+            <strong>W3C PROV：来源追溯可标准化表达。</strong>
+            <p>W3C PROV 提供 provenance 数据模型、约束和序列化，用于表达实体、活动和来源关系。风控案卷应能追溯模型、规则、工具、人工动作和版本。来源：<a href="https://www.w3.org/TR/prov-overview/">W3C PROV Overview</a>。</p>
+          </div>
+          <div class="source">
+            <strong>OWASP LLM Top 10：LLM 应用存在 prompt injection、data poisoning 等风险。</strong>
+            <p>OWASP 把 prompt injection、training data poisoning、insecure output handling 等列为 LLM 应用关键风险。这支持我们“不让 memory/RAG 直接改生产策略”“工具副作用要受 gate 控制”的边界。来源：<a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/">OWASP Top 10 for LLM Applications</a>。</p>
+          </div>
+        </div>
+
+        <div class="callout green">
+          <strong>行业校验结论：</strong>成熟实践并不是“AI 自己判、自己学、自己改规则”，而是自动化识别、人审、case 管理、政策/规则治理、QA/评估、申诉、审计和透明度一起构成闭环。我们讨论的 artifact-first 方案，本质上是把这套成熟风控治理能力用 AI Native 架构语言重新表达。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

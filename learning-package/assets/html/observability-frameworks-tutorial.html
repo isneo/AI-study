@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenTelemetry × LangSmith × LoongSuite 简易教程</title>
+<style>
+  :root{
+    --bg:#f7f8f6;
+    --paper:#fffffc;
+    --paper-2:#f1f4f1;
+    --ink:#222522;
+    --ink-2:#3d443f;
+    --muted:#6c746e;
+    --soft:#8f9891;
+    --line:#dfe4de;
+    --line-2:#cbd4cc;
+    --teal:#225f54;
+    --teal-2:#e6efec;
+    --blue:#2f5f8f;
+    --blue-2:#e7eef7;
+    --rust:#8b4d2e;
+    --rust-2:#f4ece7;
+    --violet:#674f85;
+    --violet-2:#eee9f4;
+    --amber:#8a671f;
+    --amber-2:#f4efd9;
+    --red:#a14343;
+    --red-2:#f7e8e8;
+    --code-bg:#111719;
+    --code-ink:#dce5e1;
+    --code-dim:#8fa19a;
+    --shadow:0 12px 30px rgba(34,37,34,.08);
+    --mono:"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+    --serif:"Source Serif 4",Georgia,"Noto Serif SC","Songti SC",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:22px}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.72 var(--sans);letter-spacing:0}
+  a{color:var(--teal);text-underline-offset:3px}
+  code{font:12.5px/1.55 var(--mono);background:#edf1ee;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:#23332f}
+  button{font:inherit}
+  .layout{display:grid;grid-template-columns:268px minmax(0,1fr);gap:34px;max-width:1460px;margin:0 auto;padding:30px 34px 84px}
+  .toc{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:16px;box-shadow:0 2px 12px rgba(34,37,34,.04)}
+  .toc-title{font-size:11px;font-weight:800;color:var(--teal);letter-spacing:.12em;margin:0 0 10px;text-transform:uppercase}
+  .toc a{display:block;padding:7px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13px}
+  .toc a:hover{background:var(--teal-2);color:var(--teal)}
+  .toc .mini{color:var(--soft);font-size:11.5px;margin:10px 8px 4px;font-weight:700;letter-spacing:.08em}
+  main{min-width:0}
+  header.hero{border-bottom:1px solid var(--line);padding:6px 0 24px;margin-bottom:26px}
+  .eyebrow{display:inline-block;color:var(--rust);font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+  h1{font:650 34px/1.18 var(--serif);letter-spacing:0;margin:0 0 10px;color:#1d201d}
+  .lead{font-size:16.5px;color:var(--ink-2);max-width:930px;margin:0 0 14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12.5px}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:3px 9px}
+  section{margin:42px 0 0}
+  h2{font:650 24px/1.24 var(--serif);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:baseline}
+  h2 .n{font:600 16px/1 var(--serif);color:var(--teal);min-width:24px}
+  h3{font-size:17px;margin:26px 0 10px;color:#1f2723}
+  h4{font-size:14.5px;margin:18px 0 8px;color:var(--teal)}
+  p{margin:8px 0}
+  .summary{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}
+  .summary > *,.stack-map > *,.tool-grid > *,.two-col > *,.decision > *,.checklist > *{min-width:0}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:18px 20px;box-shadow:0 2px 12px rgba(34,37,34,.04)}
+  .panel,.tool-card,.recipe,.stack-item,.step,.codebox,.result,.check{min-width:0}
+  .panel h3:first-child,.panel h4:first-child{margin-top:0}
+  .callout{border-radius:8px;padding:14px 16px;margin:14px 0;border:1px solid var(--line)}
+  .callout strong{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+  .callout.teal{background:var(--teal-2);border-color:#cbded8}
+  .callout.blue{background:var(--blue-2);border-color:#d0dcea}
+  .callout.rust{background:var(--rust-2);border-color:#e4d3c8}
+  .callout.amber{background:var(--amber-2);border-color:#e2d8aa}
+  .callout.violet{background:var(--violet-2);border-color:#d9cde8}
+  .stack-map{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .stack-item{border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:14px 14px 13px;min-height:128px}
+  .stack-item .tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;margin-bottom:8px}
+  .stack-item.otel .tag{background:var(--blue-2);color:var(--blue)}
+  .stack-item.loong .tag{background:var(--amber-2);color:var(--amber)}
+  .stack-item.langsmith .tag{background:var(--violet-2);color:var(--violet)}
+  .stack-item h3{margin:0 0 5px;font-size:16px}
+  .stack-item p{font-size:13.5px;color:var(--muted);margin:0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:#edf1ee;color:#202820;font-weight:750}
+  tr:nth-child(even) td{background:#fafbf9}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:16px 0;background:var(--paper)}
+  .table-wrap table{margin:0;min-width:900px;border:0}
+  .table-wrap th,.table-wrap td{border-top:0;border-left:0}
+  .table-wrap th:last-child,.table-wrap td:last-child{border-right:0}
+  .tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+  .tool-card{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:16px}
+  .tool-card h3{margin:0 0 8px;font-size:17px}
+  .tool-card ul{margin:8px 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}
+  .badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:760;margin:0 4px 5px 0;background:#edf1ee;color:var(--muted);border:1px solid var(--line)}
+  .badge.blue{background:var(--blue-2);color:var(--blue);border-color:#cbd9ea}
+  .badge.violet{background:var(--violet-2);color:var(--violet);border-color:#d8cce8}
+  .badge.amber{background:var(--amber-2);color:var(--amber);border-color:#e2d7ac}
+  .badge.teal{background:var(--teal-2);color:var(--teal);border-color:#cbded8}
+  .steps{counter-reset:step;display:grid;gap:10px;margin:12px 0}
+  .step{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:13px 15px 13px 48px}
+  .step::before{counter-increment:step;content:counter(step);position:absolute;left:14px;top:13px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:white;font-size:12px;font-weight:800}
+  .step b{display:block;margin-bottom:3px}
+  .step p{margin:0;color:var(--muted);font-size:13.5px}
+  .codebox{margin:14px 0;border-radius:8px;overflow:hidden;border:1px solid #24302d;background:var(--code-bg)}
+  .codebar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#18211f;color:#b6c8c0;border-bottom:1px solid #263431;padding:8px 10px 8px 14px;font:12px/1.3 var(--mono)}
+  .copy-btn,.small-btn{border:1px solid var(--line-2);background:var(--paper);color:var(--ink-2);border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px}
+  .copy-btn{background:#22302c;color:#dfeae5;border-color:#384841}
+  .copy-btn:hover{background:#2d3f39}
+  .small-btn:hover{background:var(--teal-2);border-color:#b8d0c8;color:var(--teal)}
+  pre{margin:0;padding:15px 16px 17px;overflow:auto;color:var(--code-ink);font:12.5px/1.62 var(--mono);tab-size:2}
+  pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit}
+  .note{font-size:13.5px;color:var(--muted)}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .recipe{border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:16px}
+  .recipe h3{margin:0 0 6px}
+  .recipe .fit{font-size:12px;color:var(--soft);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .check{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+  .check input{margin-top:4px;accent-color:var(--teal)}
+  .check label{cursor:pointer}
+  .check b{display:block}
+  .check span{display:block;color:var(--muted);font-size:13px}
+  .decision{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .result{background:#1b2421;color:#ecf4f0;border-radius:8px;padding:16px;min-height:230px}
+  .result h3{margin-top:0;color:white}
+  .result p{color:#cad8d2}
+  .result ul{padding-left:18px}
+  .result code{background:#27332f;color:#e1ece7;border-color:#3a4a44}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .tab-btn{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:7px 11px;cursor:pointer;font-size:13px}
+  .tab-btn.active{background:var(--teal);border-color:var(--teal);color:white}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  details{border:1px solid var(--line);background:var(--paper);border-radius:8px;margin:10px 0;overflow:hidden}
+  summary{cursor:pointer;padding:11px 14px;font-weight:750;color:var(--teal);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"+";display:inline-block;width:18px;color:var(--rust);font-weight:900}
+  details[open] summary::before{content:"-"}
+  details .body{border-top:1px solid var(--line);padding:12px 14px;color:var(--ink-2)}
+  .sources{columns:2;column-gap:26px}
+  .sources li{break-inside:avoid;margin:0 0 10px}
+  .footer-note{margin-top:28px;color:var(--soft);font-size:12.5px}
+  @media (max-width:1050px){
+    .layout{grid-template-columns:1fr;padding:20px}
+    .toc{position:static;max-height:none}
+    .summary,.decision,.two-col{grid-template-columns:1fr}
+    .stack-map,.tool-grid{grid-template-columns:1fr}
+    .checklist{grid-template-columns:1fr}
+    h1{font-size:29px}
+  }
+  @media print{
+    .toc,.copy-btn,.small-btn,.tabs{display:none}
+    .layout{display:block;max-width:none;padding:0}
+    body{background:white}
+    .panel,.tool-card,.recipe,.step,.stack-item{box-shadow:none}
+    pre{white-space:pre-wrap}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">Learning Map</div>
+    <a href="#top">0. 总览</a>
+    <a href="#positioning">1. 三者定位</a>
+    <a href="#otel">2. OpenTelemetry 教程</a>
+    <a href="#langsmith">3. LangSmith 教程与原理</a>
+    <a href="#loong">4. LoongSuite 教程</a>
+    <a href="#market">5. 业界产品地图</a>
+    <a href="#java">6. Java / Spring AI Alibaba</a>
+    <a href="#combo">7. 组合使用</a>
+    <a href="#decision">8. 决策面板</a>
+    <a href="#pitfalls">9. 常见坑</a>
+    <a href="#glossary">10. 术语卡</a>
+    <a href="#sources">11. 资料来源</a>
+    <div class="mini">导出</div>
+    <button class="small-btn" id="copyPromptTop" type="button">复制学习 prompt</button>
+  </nav>
+
+  <main id="top">
+    <header class="hero">
+      <span class="eyebrow">Observability for LLM Apps</span>
+      <h1>OpenTelemetry × LangSmith × LoongSuite 简易教程</h1>
+      <p class="lead">这份单文件手册把三个工具放在同一条链路里讲：从“采集什么数据”、到“怎么发出去”、再到“在哪里看 LLM/Agent 的每一步”。你可以直接照着代码跑一个最小 demo，也可以用最后的决策面板选择生产组合。</p>
+      <div class="meta">
+        <span class="chip">核验日期：2026-05-27</span>
+        <span class="chip">语言：Python + Java</span>
+        <span class="chip">目标：traces / LLM runs / evals / OTLP</span>
+      </div>
+    </header>
+
+    <section id="positioning">
+      <h2><span class="n">1</span>三者定位：先别把它们当同一类东西</h2>
+      <div class="summary">
+        <div class="panel">
+          <h3>一句话心智模型</h3>
+          <p><b>OpenTelemetry</b> 是开放标准和通用遥测管道；<b>LoongSuite</b> 是基于 OpenTelemetry 的增强采集套件；<b>LangSmith</b> 是面向 LLM/Agent 的可视化调试、评测和协作平台。</p>
+          <div class="callout teal">
+            <strong>最实用的组合</strong>
+            LoongSuite 或 OpenTelemetry 负责埋点和采集，OpenTelemetry Collector 负责分发，LangSmith 负责看清 prompt、模型调用、tool call、RAG、Agent step 和评测结果。
+          </div>
+        </div>
+        <div class="panel">
+          <h3>别混淆的边界</h3>
+          <p>OpenTelemetry 和 LoongSuite 本身不等于一个完整的“观测后台”。它们通常把数据导到 Jaeger、Grafana Tempo、Datadog、Prometheus、阿里云可观测或 LangSmith 这类后端。</p>
+          <p>LangSmith 可以接 OpenTelemetry trace，但它的强项不是替代所有 APM，而是把 LLM 应用的输入、输出、上下文、工具调用和评测组织起来。</p>
+        </div>
+      </div>
+
+      <div class="stack-map">
+        <div class="stack-item otel">
+          <span class="tag">STANDARD / PIPELINE</span>
+          <h3>OpenTelemetry</h3>
+          <p>统一 traces、metrics、logs 的 API、SDK、自动 instrumentation、Collector 和 OTLP 协议。</p>
+        </div>
+        <div class="stack-item loong">
+          <span class="tag">COLLECTION DISTRO</span>
+          <h3>LoongSuite</h3>
+          <p>阿里开源的统一可观测采集套件，Python Agent 是 OTel Python Agent 的定制发行版，并增强 GenAI/Agent 框架支持。</p>
+        </div>
+        <div class="stack-item langsmith">
+          <span class="tag">LLM PLATFORM</span>
+          <h3>LangSmith</h3>
+          <p>LLM 应用 tracing、prompt 调试、数据集、experiment、evaluator、人工反馈和监控平台。</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>维度</th><th>OpenTelemetry</th><th>LoongSuite</th><th>LangSmith</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>核心身份</td><td>开放标准 + SDK + Collector</td><td>OTel 增强发行版 + 采集 Agent</td><td>LLM/Agent 调试与评测平台</td></tr>
+            <tr><td>最关心的问题</td><td>一次请求跨服务经历了什么</td><td>怎样更低侵入地把遥测采出来</td><td>AI 为什么这么回答，哪一步错了</td></tr>
+            <tr><td>主要数据</td><td>traces、metrics、logs、资源属性</td><td>OTel 数据 + GenAI/Agent instrumentation</td><td>runs、traces、prompts、datasets、experiments、feedback</td></tr>
+            <tr><td>典型后端</td><td>Jaeger、Tempo、Datadog、Honeycomb、Prometheus 等</td><td>Jaeger、AgentScope Studio、阿里云可观测、任何 OTLP 后端</td><td>LangSmith SaaS 或自托管</td></tr>
+            <tr><td>接入风格</td><td>手动埋点 + 自动 instrumentation + Collector</td><td><code>loongsuite-instrument</code>、<code>loongsuite-bootstrap</code>、site bootstrap</td><td>SDK wrapper、<code>@traceable</code>、LangChain/LangGraph 集成、OTLP</td></tr>
+            <tr><td>最适合</td><td>公司统一可观测标准和生产链路</td><td>想快速接入 OTel，尤其是 Python/Java/Go 和 AI Agent 场景</td><td>Prompt/RAG/Agent 迭代、评测、线上质量分析</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="otel">
+      <h2><span class="n">2</span>OpenTelemetry 简易教程</h2>
+      <div class="tool-grid">
+        <div class="tool-card">
+          <span class="badge blue">API</span><span class="badge blue">SDK</span>
+          <h3>你在代码里创建 span</h3>
+          <p class="note">比如一次 RAG 检索、一次 LLM 调用、一次工具执行，都可以成为 span。</p>
+        </div>
+        <div class="tool-card">
+          <span class="badge teal">Instrumentation</span>
+          <h3>自动捕获常见框架</h3>
+          <p class="note">Flask、FastAPI、requests、数据库客户端等可以用自动 instrumentation 生成边界 span。</p>
+        </div>
+        <div class="tool-card">
+          <span class="badge amber">Collector</span>
+          <h3>统一接收和分发</h3>
+          <p class="note">应用发 OTLP 到 Collector，Collector 再转发给 Jaeger、Tempo、Datadog、LangSmith 等。</p>
+        </div>
+      </div>
+
+      <h3>2.1 最小上手路径</h3>
+      <div class="steps">
+        <div class="step"><b>先本地打印</b><p>用 console exporter 看到 trace 结构，确认 span 和属性正确。</p></div>
+        <div class="step"><b>再接 Collector</b><p>把 exporter 切成 OTLP，默认可以发到本地 <code>localhost:4317</code>。</p></div>
+        <div class="step"><b>最后接后端</b><p>Collector 负责 fan-out 到 Jaeger/Tempo/Datadog/LangSmith 等不同目标。</p></div>
+      </div>
+
+      <div class="tabs" data-tabs="otel-tabs">
+        <button class="tab-btn active" data-tab="otel-app" type="button">app.py</button>
+        <button class="tab-btn" data-tab="otel-run" type="button">运行命令</button>
+        <button class="tab-btn" data-tab="otel-collector" type="button">Collector 配置</button>
+      </div>
+
+      <div class="tab-panel active" id="otel-app">
+        <div class="codebox">
+          <div class="codebar"><span>OpenTelemetry 手动 span + Flask 自动 instrumentation</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># app.py
+# 目标：演示“一个 HTTP 请求”里如何手动补充 LLM/RAG 语义 span。
+# 运行时再用 opentelemetry-instrument 包住 Flask，
+# HTTP server span 会自动生成；下面的 rag.retrieve / llm.call 会挂在它下面。
+
+from flask import Flask, request, jsonify
+from opentelemetry import trace
+
+app = Flask(__name__)
+
+# tracer name 建议用稳定命名：公司/项目/模块。
+# 后端 UI 里可以用它过滤“这些 span 是哪个模块产生的”。
+tracer = trace.get_tracer("ai-study.otel-demo")
+
+
+def retrieve_context(question: str) -&gt; list[str]:
+    # span 命名建议用“领域动作”，不要用随机函数名。
+    # 好名字：rag.retrieve / vector.search / tool.payment_check
+    # 坏名字：func1 / test / call
+    with tracer.start_as_current_span("rag.retrieve") as span:
+        span.set_attribute("rag.query.length", len(question))
+        span.set_attribute("rag.top_k", 3)
+        span.set_attribute("db.system", "mock-vector-store")
+
+        # 生产环境不要把完整用户问题、完整文档内容直接写进 attribute，
+        # attribute 会进入观测后端，可能涉及隐私、合规和成本。
+        docs = [
+            "OpenTelemetry records traces, metrics, and logs.",
+            "LangSmith focuses on LLM app debugging and evaluation.",
+        ]
+        span.set_attribute("rag.documents.count", len(docs))
+        return docs
+
+
+def call_llm(question: str, context: list[str]) -&gt; str:
+    with tracer.start_as_current_span("llm.call") as span:
+        # gen_ai.* 是 OpenTelemetry GenAI 语义约定常见字段。
+        # 好处是后续可以跨平台聚合：按模型、provider、token、错误率看趋势。
+        span.set_attribute("gen_ai.operation.name", "chat")
+        span.set_attribute("gen_ai.system", "demo")
+        span.set_attribute("gen_ai.request.model", "demo-model")
+        span.set_attribute("gen_ai.usage.prompt_tokens", 42)
+        span.set_attribute("gen_ai.usage.completion_tokens", 16)
+
+        # 这里用 mock，真实项目里替换成 OpenAI / Anthropic / 本地模型调用。
+        return f"mock answer for: {question}; context_count={len(context)}"
+
+
+@app.get("/ask")
+def ask():
+    question = request.args.get("q", "what is tracing?")
+
+    # 这个顶层业务 span 会成为 HTTP request span 的子 span。
+    # 它把 RAG 和 LLM 两个内部步骤聚合成“处理一次 AI 请求”。
+    with tracer.start_as_current_span("assistant.answer") as span:
+        span.set_attribute("app.feature", "observability-demo")
+        span.set_attribute("app.question.length", len(question))
+
+        context = retrieve_context(question)
+        answer = call_llm(question, context)
+
+    return jsonify({"answer": answer})</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="otel-run">
+        <div class="codebox">
+          <div class="codebar"><span>先打印到终端，再切 OTLP</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 1. 创建隔离环境，避免污染系统 Python。
+python -m venv .venv
+source .venv/bin/activate
+
+# 2. 安装 Flask 和 OTel 发行包。
+# opentelemetry-distro 提供 opentelemetry-instrument 命令。
+# opentelemetry-exporter-otlp 用于把数据发给 Collector 或 SaaS 后端。
+pip install flask opentelemetry-distro opentelemetry-exporter-otlp
+
+# 3. 自动安装当前环境里可识别库的 instrumentation。
+# 例如 Flask / requests / SQLAlchemy 等会被自动补上边界 span。
+opentelemetry-bootstrap -a install
+
+# 4. 本地调试：先把 traces / metrics / logs 打到终端。
+# 这一步不用部署 Collector，适合确认 span 名称、父子关系、attribute 是否正确。
+opentelemetry-instrument \
+  --traces_exporter console \
+  --metrics_exporter console \
+  --logs_exporter console \
+  --service_name ai-study-otel-demo \
+  flask --app app run -p 8080
+
+# 5. 触发请求后，在终端里应该能看到：
+# - Flask 自动生成的 HTTP server span
+# - assistant.answer
+# - rag.retrieve
+# - llm.call
+curl "http://127.0.0.1:8080/ask?q=hello"
+
+# 6. 接 Collector：把 exporter 从 console 切成 otlp。
+# 默认 OTLP/gRPC 端口是 localhost:4317；OTLP/HTTP 常用 localhost:4318。
+opentelemetry-instrument \
+  --traces_exporter otlp \
+  --metrics_exporter otlp \
+  --logs_exporter otlp \
+  --service_name ai-study-otel-demo \
+  flask --app app run -p 8080</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="otel-collector">
+        <div class="codebox">
+          <div class="codebar"><span>otel-collector-config.yaml</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># otel-collector-config.yaml
+# 目标：本地启动一个 Collector，把收到的数据打印出来。
+# 等你确认数据正确后，再把 debug exporter 换成 Jaeger / Tempo / Datadog / LangSmith。
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        # SDK 通过 OTLP/gRPC 上报时用这个端口
+        endpoint: 0.0.0.0:4317
+      http:
+        # SDK 通过 OTLP/HTTP 上报时用这个端口
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    # batch 会把小批量遥测数据攒成批次再发出，
+    # 生产环境几乎都应该开启，能减少网络开销和后端压力。
+
+exporters:
+  debug:
+    # detailed 会打印完整 payload，适合本地调试；
+    # 生产环境不要开 detailed，可能输出 prompt、completion、用户数据。
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]</code></pre>
+        </div>
+        <div class="codebox">
+          <div class="codebar"><span>启动 Collector</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 启动 Collector。
+# - 4317：OTLP/gRPC
+# - 4318：OTLP/HTTP
+# - --rm：退出后自动删除容器，适合本地实验
+docker run --rm \
+  -p 4317:4317 -p 4318:4318 \
+  -v "$PWD/otel-collector-config.yaml:/etc/otelcol/config.yaml" \
+  otel/opentelemetry-collector:latest \
+  --config=/etc/otelcol/config.yaml</code></pre>
+        </div>
+      </div>
+
+      <div class="callout blue">
+        <strong>核心理解</strong>
+        OpenTelemetry 不负责替你判断“回答是否正确”。它负责把一次请求里发生了哪些步骤、耗时多少、错误在哪、上下游如何关联，按标准格式记录下来。
+      </div>
+    </section>
+
+    <section id="langsmith">
+      <h2><span class="n">3</span>LangSmith 简易教程与原理</h2>
+      <p>LangSmith 的入门重点不是“采集所有系统指标”，而是让你看到 LLM 应用的语义链路：用户输入、检索上下文、prompt、模型响应、工具调用、评测分数、人工反馈。</p>
+
+      <h3>3.1 最小 tracing demo</h3>
+      <div class="steps">
+        <div class="step"><b>创建 LangSmith API key</b><p>在 LangSmith 里拿 key，设置 <code>LANGSMITH_TRACING=true</code>。</p></div>
+        <div class="step"><b>wrap LLM client</b><p>用 <code>wrap_openai</code> 让 OpenAI 调用自动成为 nested span。</p></div>
+        <div class="step"><b>给业务函数加 <code>@traceable</code></b><p>把 RAG 检索、工具调用、agent 主流程组织成一棵 run tree。</p></div>
+      </div>
+
+      <div class="codebox">
+        <div class="codebar"><span>安装与环境变量</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 1. 创建环境并安装依赖。
+python -m venv .venv
+source .venv/bin/activate
+
+pip install -U langsmith openai
+
+# 2. 开启 LangSmith tracing。
+# LANGSMITH_PROJECT 建议按“应用-环境”命名，例如 risk-agent-prod / risk-agent-staging。
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY="&lt;your-langsmith-api-key&gt;"
+export LANGSMITH_PROJECT="ai-study-observability-dev"
+
+# 3. 模型供应商 key。
+# OPENAI_MODEL 不写死在代码里，方便 A/B 测试不同模型。
+export OPENAI_API_KEY="&lt;your-openai-api-key&gt;"
+export OPENAI_MODEL="&lt;your-chat-model&gt;"
+
+# 4. 如果你的账号不是默认 US 区域，额外设置 LANGSMITH_ENDPOINT。
+# export LANGSMITH_ENDPOINT="https://eu.api.smith.langchain.com"</code></pre>
+      </div>
+
+      <div class="codebox">
+        <div class="codebar"><span>app.py：业务 span + LLM span</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># app.py
+# 目标：让 LangSmith 看到一棵清楚的 run tree：
+# assistant
+#   ├─ get_context       run_type=retriever
+#   └─ OpenAI chat call  由 wrap_openai 自动记录
+
+import os
+from openai import OpenAI
+from langsmith import traceable
+from langsmith.wrappers import wrap_openai
+
+# wrap_openai 会自动捕获模型调用的 input / output / token / latency。
+# 这样你不需要手动给每次 client.chat.completions.create 加 trace。
+client = wrap_openai(OpenAI())
+
+
+@traceable(
+    name="get_context",
+    run_type="retriever",
+    metadata={"component": "mock-knowledge-base"},
+)
+def get_context(question: str) -&gt; str:
+    # 真实项目里这里会查向量库、知识库、搜索引擎或业务数据库。
+    # run_type="retriever" 会让 LangSmith 把它识别为“检索步骤”，
+    # 方便后续分析：是检索质量差，还是模型基于正确上下文答错了。
+    return (
+        "OpenTelemetry is a vendor-neutral telemetry standard. "
+        "LangSmith is focused on LLM app observability and evaluation."
+    )
+
+
+@traceable(
+    name="assistant",
+    run_type="chain",
+    tags=["tutorial", "observability"],
+    metadata={"app_version": "demo-v1"},
+)
+def assistant(question: str) -&gt; str:
+    # 这个函数会成为顶层业务 run。
+    # 它下面会自动挂 get_context 和 OpenAI 调用，形成父子结构。
+    context = get_context(question)
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Answer with the context below. "
+                "If the context is insufficient, say you do not know.\n\n"
+                f"Context: {context}"
+            ),
+        },
+        {"role": "user", "content": question},
+    ]
+
+    response = client.chat.completions.create(
+        model=os.environ["OPENAI_MODEL"],
+        messages=messages,
+        temperature=0,
+    )
+    return response.choices[0].message.content
+
+
+if __name__ == "__main__":
+    # 运行后去 LangSmith 项目里看 trace：
+    # 重点看 inputs / outputs / child runs / latency / token usage。
+    print(assistant("OpenTelemetry 和 LangSmith 有什么区别？"))</code></pre>
+      </div>
+
+      <h3>3.2 做一个最小评测</h3>
+      <p>Tracing 回答“发生了什么”，evaluation 回答“这次改动比上次好吗”。LangSmith 的基本评测三件套是：dataset、target function、evaluators。</p>
+      <div class="two-col">
+        <div class="recipe">
+          <div class="fit">dataset.py</div>
+          <div class="codebox">
+            <div class="codebar"><span>创建数据集</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># dataset.py
+# 目标：创建一组可重复运行的“题库”。
+# 每个 example 通常包含：
+# - inputs：给应用的输入
+# - outputs：参考答案或业务期望
+# - metadata：场景、难度、来源，方便后续筛选
+
+from langsmith import Client
+
+client = Client()
+
+dataset = client.create_dataset(
+    dataset_name="Observability QA",
+    description="Tiny examples for comparing observability answers.",
+)
+
+# 如果重复运行提示 dataset 已存在：
+# 1. 换一个 dataset_name，例如 Observability QA v2
+# 2. 或者在 LangSmith UI 里删除旧 dataset
+client.create_examples(
+    dataset_id=dataset.id,
+    examples=[
+        {
+            "inputs": {"question": "OpenTelemetry 是什么？"},
+            "outputs": {
+                "answer": "OpenTelemetry 是开放、厂商中立的可观测标准和遥测工具链。"
+            },
+            "metadata": {"topic": "otel", "difficulty": "easy"},
+        },
+        {
+            "inputs": {"question": "LangSmith 主要解决什么？"},
+            "outputs": {
+                "answer": "LangSmith 主要用于 LLM 应用 tracing、调试、评测和实验对比。"
+            },
+            "metadata": {"topic": "langsmith", "difficulty": "easy"},
+        },
+        {
+            "inputs": {"question": "LoongSuite 和 OpenTelemetry 是什么关系？"},
+            "outputs": {
+                "answer": "LoongSuite 可以理解为基于 OpenTelemetry 的增强采集套件。"
+            },
+            "metadata": {"topic": "loongsuite", "difficulty": "medium"},
+        },
+    ],
+)</code></pre>
+          </div>
+        </div>
+        <div class="recipe">
+          <div class="fit">eval.py</div>
+          <div class="codebox">
+            <div class="codebar"><span>运行实验</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># eval.py
+# 目标：用同一批 dataset 测一个应用版本，生成 experiment。
+# 以后你换 prompt / 换模型 / 换 RAG 参数，只要复用同一 dataset，
+# 就可以在 LangSmith 里横向比较多个 experiment。
+
+from langsmith import Client
+
+
+def target(inputs: dict) -&gt; dict:
+    # target 就是“被评测的应用”。
+    # 真实项目里替换成你的 assistant(question)、RAG pipeline 或 agent.invoke。
+    question = inputs["question"]
+    return {"answer": f"demo answer for: {question}"}
+
+
+def keyword_evaluator(inputs: dict, outputs: dict, reference_outputs: dict):
+    # evaluator 负责把一次输出转成结构化反馈。
+    # 返回的 key 会成为 LangSmith UI 里的指标名。
+    # score 建议用 0/1 或 0~1，方便做均值、趋势和阈值告警。
+    expected = reference_outputs["answer"]
+    got = outputs["answer"]
+
+    required_keywords = expected.split()[:2]
+    passed = any(word in got for word in required_keywords)
+
+    return {
+        "key": "contains_reference_keyword",
+        "score": 1 if passed else 0,
+        "comment": f"required_keywords={required_keywords}; got={got[:80]}",
+    }
+
+
+client = Client()
+
+client.evaluate(
+    target,
+    data="Observability QA",
+    evaluators=[keyword_evaluator],
+    experiment_prefix="observability-demo",
+    max_concurrency=2,  # 并发数；真实调用大模型时要结合限流和预算调低
+)</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <h3>3.3 用 OpenTelemetry 发到 LangSmith</h3>
+      <p>当你不是 LangChain/LangGraph 应用，或者团队已经统一 OTel，可以把 trace 通过 OTLP 发到 LangSmith。</p>
+      <div class="codebox">
+        <div class="codebar"><span>环境变量：OTLP 到 LangSmith</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 适合场景：你的应用不是 LangChain/LangGraph，
+# 但已经能产生标准 OpenTelemetry span，希望把它们送到 LangSmith。
+pip install openai opentelemetry-sdk opentelemetry-exporter-otlp
+
+# LangSmith 的 OTel endpoint。
+# 如果只发 traces，某些 exporter 需要在 endpoint 后追加 /v1/traces。
+export OTEL_EXPORTER_OTLP_ENDPOINT="https://api.smith.langchain.com/otel"
+
+# header 里放 API key 和项目名。
+# 项目名建议带环境：my-agent-dev / my-agent-prod。
+export OTEL_EXPORTER_OTLP_HEADERS="x-api-key=&lt;your-langsmith-api-key&gt;,Langsmith-Project=ai-study-observability-dev"</code></pre>
+      </div>
+
+      <h3>3.4 调试和评估到底怎么工作的</h3>
+      <div class="two-col">
+        <div class="panel">
+          <h3>调试：把一次回答拆成可回放的执行树</h3>
+          <p>LangSmith 的调试不是“读心”，而是把一次用户请求记录成一棵 run tree。顶层是一次 trace，里面挂着 prompt formatting、retriever、LLM call、tool call、parser、agent step 等子 run。</p>
+          <table>
+            <thead><tr><th>对象</th><th>记录什么</th><th>用来回答什么问题</th></tr></thead>
+            <tbody>
+              <tr><td><code>trace</code></td><td>一次完整请求</td><td>这次对话整体走了哪条路径？</td></tr>
+              <tr><td><code>run</code></td><td>一个离散步骤</td><td>是检索错、工具错，还是模型输出错？</td></tr>
+              <tr><td><code>metadata/tags</code></td><td>版本、环境、用户分组、实验标签</td><td>哪个版本、哪类用户、哪个场景出问题？</td></tr>
+              <tr><td><code>feedback</code></td><td>用户或 evaluator 的分数</td><td>这条链路质量如何？</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>评估：把应用版本放到同一套题库里比较</h3>
+          <p>Evaluation 的关键是可重复比较：同一批 dataset，分别跑不同 prompt、模型、RAG 参数或 agent 版本，再用 evaluator 打分并形成 experiment。</p>
+          <div class="steps">
+            <div class="step"><b>Dataset</b><p>准备输入、参考答案、上下文或业务期望。</p></div>
+            <div class="step"><b>Target</b><p>调用你的真实应用，而不是只测孤立 prompt。</p></div>
+            <div class="step"><b>Evaluator</b><p>规则代码、人类标注、LLM-as-judge、pairwise 对比都可以。</p></div>
+            <div class="step"><b>Experiment</b><p>保留每个样本的输出、分数和 trace，用于版本对比。</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout rust">
+        <strong>判断口径</strong>
+        调试看路径，评估看质量。trace 告诉你“发生了什么”，evaluator 告诉你“这件事好不好”。生产线上还可以对真实 runs/threads 做 online evaluation，用于发现质量下降、异常回答和安全风险。
+      </div>
+
+      <div class="callout violet">
+        <strong>核心理解</strong>
+        LangSmith 的价值在“语义可观测”：它让 trace 不只是耗时树，而是能读出 prompt、上下文、模型、工具、反馈、实验版本之间的关系。
+      </div>
+    </section>
+
+    <section id="loong">
+      <h2><span class="n">4</span>LoongSuite 简易教程</h2>
+      <p>LoongSuite 可以理解为“更偏采集落地的 OTel 增强套件”。它包含 LoongCollector、Python/Go/Java Agent 等组件。Python Agent 的 README 说明它是上游 OTel Python Agent 的定制发行版，并增强了 AI Agent 框架和 GenAI semantic conventions 支持。</p>
+
+      <div class="callout amber">
+        <strong>当前状态</strong>
+        GitHub README 显示 LoongSuite Python Agent 最新 release 为 <code>0.5.0</code>，发布日期为 2026-05-11。这个生态还在快速发展，实际生产接入前要固定版本并验证依赖解析。
+      </div>
+
+      <h3>4.1 推荐接入：loongsuite-instrument</h3>
+      <div class="steps">
+        <div class="step"><b>安装 distro</b><p><code>loongsuite-distro</code> 提供 <code>loongsuite-instrument</code> 和 <code>loongsuite-bootstrap</code>。</p></div>
+        <div class="step"><b>安装 instrumentation</b><p>用 bootstrap 从 release 安装 LoongSuite wheel，并配套安装兼容的 OTel instrumentation。</p></div>
+        <div class="step"><b>运行你的应用</b><p>用 console exporter 本地检查，再切 OTLP 发给 Collector 或后端。</p></div>
+      </div>
+
+      <div class="codebox">
+        <div class="codebar"><span>安装与本地运行</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 1. 创建隔离环境。
+python -m venv .venv
+source .venv/bin/activate
+
+# 2. 安装 LoongSuite Python distro。
+# distro 里包含 loongsuite-instrument / loongsuite-bootstrap 等命令。
+pip install loongsuite-distro
+
+# 3. 安装 LoongSuite instrumentation。
+# --latest 会从 LoongSuite release 安装较新的 instrumentation wheel。
+# 生产建议固定版本，不要每次构建都追 latest。
+loongsuite-bootstrap -a install --latest
+
+# 4. 轻量环境可以先 auto-detect：
+# 只为当前环境里已安装的库安装 instrumentation，减少依赖体积和冲突概率。
+loongsuite-bootstrap -a install --latest --auto-detect
+
+# 5. 本地调试：先打印到 console。
+# 观察点：
+# - 是否生成了预期的 LLM / Agent / tool / RAG span
+# - service_name 是否正确
+# - 有没有把敏感 prompt 或用户数据打出来
+loongsuite-instrument \
+  --traces_exporter console \
+  --metrics_exporter console \
+  --logs_exporter console \
+  --service_name ai-study-loong-demo \
+  python demo.py</code></pre>
+      </div>
+
+      <h3>4.2 生产/远端：用 OTLP 导出</h3>
+      <div class="codebox">
+        <div class="codebar"><span>LoongSuite 发送 OTLP</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 1. 安装 OTLP exporter，用来把遥测数据发给 Collector。
+pip install opentelemetry-exporter-otlp
+
+# 2. 服务名是所有后端里最重要的检索维度之一。
+# 建议格式：业务域-应用名-环境，例如 risk-review-agent-prod。
+export OTEL_SERVICE_NAME=ai-study-loong-demo
+
+# 3. gRPC 通常用 4317；HTTP/protobuf 通常用 4318。
+export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4317
+
+# 4. 切到 OTLP 后，数据不再打印到终端，而是进入 Collector。
+# 如果后端看不到数据，先检查 Collector 日志，再检查 endpoint/protocol 是否匹配。
+loongsuite-instrument \
+  --traces_exporter otlp \
+  --metrics_exporter otlp \
+  python demo.py</code></pre>
+      </div>
+
+      <h3>4.3 显式代码接入：只在你需要控制初始化时使用</h3>
+      <div class="codebox">
+        <div class="codebar"><span>Programmatic instrumentation 示例</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 显式初始化适合这些情况：
+# - 你不方便用 loongsuite-instrument 包启动命令
+# - 你需要在代码里精确控制 exporter / resource / sampling
+# - 你要把某些 instrumentation 按条件打开
+
+from opentelemetry import metrics, trace
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+# Resource 描述“是谁产生了这些遥测数据”。
+# service.name / deployment.environment / service.version 建议生产必填。
+resource = Resource.create(
+    {
+        "service.name": "ai-study-loong-demo",
+        "deployment.environment": "dev",
+        "service.version": "demo-v1",
+    }
+)
+
+# Trace provider：负责创建和导出 traces。
+tracer_provider = TracerProvider(resource=resource)
+tracer_provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+trace.set_tracer_provider(tracer_provider)
+
+# Metrics provider：负责导出 metrics。
+# ConsoleMetricExporter 只适合本地调试；生产应换成 OTLP exporter。
+metric_reader = PeriodicExportingMetricReader(ConsoleMetricExporter())
+metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
+
+# 以 AgentScope 为例，具体 instrumentor 取决于你安装的 LoongSuite instrumentation。
+# 如果 import 失败，说明当前环境没装对应 instrumentation 或版本不匹配。
+from opentelemetry.instrumentation.agentscope import AgentScopeInstrumentor
+
+AgentScopeInstrumentor().instrument()
+
+# 然后再启动你的 agent 应用。
+# 从这里开始，AgentScope 内部的关键步骤会被自动记录成 span。</code></pre>
+      </div>
+
+      <div class="callout amber">
+        <strong>核心理解</strong>
+        LoongSuite 更像“把 OpenTelemetry 在 AI 应用里更容易采起来”的工程套件。它不天然替代 LangSmith 的评测和 prompt 工作流，也不替代你的统一观测后端。
+      </div>
+    </section>
+
+    <section id="market">
+      <h2><span class="n">5</span>业界产品地图：开源、商业和 OTel-first 怎么看</h2>
+      <p>LLM observability 现在不是单点工具竞争，而是三条路线并行：一体化 LLMOps 平台、开源自托管平台、OpenTelemetry-first 采集/协议路线。选型时先看团队约束，而不是先看功能清单。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>产品 / 项目</th><th>类型</th><th>强项</th><th>适合场景</th><th>注意点</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><b>LangSmith</b></td><td>商业平台，LangChain 生态</td><td>Tracing、prompt、dataset、experiment、online eval、协作</td><td>LangChain/LangGraph 或需要成熟评测闭环</td><td>平台绑定较强，费用和数据留存要提前评估</td></tr>
+            <tr><td><b>Langfuse</b></td><td>开源 + 商业</td><td>开源自托管、prompt/evals/observability 一体，OTel 支持较积极</td><td>想要 LangSmith 类能力但更重视自托管</td><td>不同语言 SDK 能力不完全一致，Java 通常走 OTel</td></tr>
+            <tr><td><b>Arize Phoenix</b></td><td>开源，背后有 Arize AX</td><td>RAG/LLM debugging、OpenInference、OTLP 友好</td><td>偏数据科学、RAG 质量诊断、开源 PoC</td><td>企业治理能力通常看 Arize AX</td></tr>
+            <tr><td><b>Braintrust</b></td><td>商业平台</td><td>生产流量打分、回归评测、告警、把失败 trace 转 eval</td><td>评估和质量闭环优先级很高的团队</td><td>商业平台路线，需看预算和数据合规</td></tr>
+            <tr><td><b>Comet Opik</b></td><td>开源 + 商业</td><td>Tracing、evaluation、monitoring、CI/CD eval，自托管友好</td><td>想要开源 LangSmith 替代，并需要比较完整的 eval 面板</td><td>生态成熟度和集成深度要按语言验证</td></tr>
+            <tr><td><b>Helicone</b></td><td>开源 + 商业，Gateway 路线</td><td>成本、缓存、限流、provider routing、请求日志</td><td>多模型网关、成本治理、请求级分析</td><td>更偏 LLM Gateway，不是完整系统 APM</td></tr>
+            <tr><td><b>MLflow Tracing</b></td><td>开源 / Databricks 生态</td><td>GenAI trace 纳入 experiment、model registry、MLOps 流程</td><td>团队已经重度使用 MLflow</td><td>LLM 专用交互体验和 agent UI 需实测</td></tr>
+            <tr><td><b>OpenLIT / OpenLLMetry / Traceloop</b></td><td>OTel-first 开源/商业</td><td>基于 OpenTelemetry 自动采集，后端可替换</td><td>不想被某个 LLM 平台锁定，已有 OTel 后端</td><td>评估闭环通常需要另配平台或自研</td></tr>
+            <tr><td><b>Datadog / Grafana / Elastic / Honeycomb</b></td><td>通用 APM</td><td>系统级 traces、metrics、logs、告警、SRE 工作流</td><td>公司已有统一可观测体系</td><td>LLM prompt、RAG、eval 语义层通常要补仪表盘或插件</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>如果你更关心“AI 输出质量”</h3>
+          <p>优先看 LangSmith、Braintrust、Opik、Langfuse。它们把 trace、dataset、evaluator、experiment、人工反馈放在同一个工作流里，适合做 prompt 迭代和回归测试。</p>
+        </div>
+        <div class="panel">
+          <h3>如果你更关心“生产系统稳定性”</h3>
+          <p>优先把 OpenTelemetry、Collector、Grafana/Datadog/Elastic 打牢，再把 LLM 平台作为分支后端接入。这样日志、指标、链路和 AI 语义层不会割裂。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="java">
+      <h2><span class="n">6</span>Java 生态选型：可观测打底，评估外挂</h2>
+      <p>Java 生产系统里，最稳的基本盘是 <b>Spring/Micrometer + OpenTelemetry Java Agent + Collector</b>。LLM 专用调试和评估平台可以后接，不建议一开始就让某个 LLM 平台绕开公司的统一观测体系。</p>
+
+      <div class="callout teal">
+        <strong>推荐基线</strong>
+        Java App / Spring Boot / Spring AI / Spring AI Alibaba / LangChain4j → Micrometer Observation + OpenTelemetry Java Agent → OpenTelemetry Collector → 通用 APM + LLM 平台。
+      </div>
+
+      <div class="two-col">
+        <div class="recipe">
+          <h3>Spring AI / Spring Boot</h3>
+          <p>Spring AI 已经围绕 <code>ChatClient</code>、<code>ChatModel</code>、<code>EmbeddingModel</code>、<code>VectorStore</code> 等组件提供 metrics 和 tracing，底层延续 Spring 生态的 Micrometer 观察模型。</p>
+          <span class="badge teal">Spring AI</span><span class="badge blue">Micrometer</span><span class="badge amber">OTLP</span>
+        </div>
+        <div class="recipe">
+          <h3>LangChain4j</h3>
+          <p>LangChain4j 有 Micrometer metrics listener，指标命名跟 OpenTelemetry GenAI semantic conventions 对齐。复杂 agent / tool / RAG 步骤建议补手动 span。</p>
+          <span class="badge teal">LangChain4j</span><span class="badge blue">Micrometer</span><span class="badge violet">Manual spans</span>
+        </div>
+        <div class="recipe">
+          <h3>Spring AI Alibaba</h3>
+          <p>Spring AI Alibaba 基于 Spring AI 构建，重点补齐阿里云通义/百炼、DashScope、MCP、Agent Framework、Graph 工作流、Admin 可视化调试与评估等 Java-first 能力。</p>
+          <span class="badge teal">Spring AI</span><span class="badge amber">DashScope</span><span class="badge violet">Agent / Graph</span>
+        </div>
+        <div class="recipe">
+          <h3>LoongSuite + Spring AI Alibaba</h3>
+          <p>Spring AI Alibaba 负责应用开发和 agent 编排；LoongSuite / OTel Java Agent 负责低侵入采集；Collector 负责把 trace 分发到 APM、Langfuse、LangSmith 或阿里云可观测。</p>
+          <span class="badge amber">LoongSuite</span><span class="badge blue">OTel Collector</span><span class="badge teal">APM</span>
+        </div>
+      </div>
+
+      <h3>6.1 Spring Boot 基线依赖</h3>
+      <div class="codebox">
+        <div class="codebar"><span>pom.xml：Spring 侧观测依赖</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code>&lt;dependencies&gt;
+  &lt;!--
+    Actuator 是 Spring Boot 可观测入口：
+    - 暴露 health / metrics / prometheus 等端点
+    - 启用 Micrometer Observation 相关自动配置
+  --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+  &lt;/dependency&gt;
+
+  &lt;!--
+    把 Micrometer Observation / Tracing 桥接到 OpenTelemetry。
+    Spring 生态里很多库先产生 Micrometer observation，
+    这个 bridge 负责把它们转成 OTel span。
+  --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;io.micrometer&lt;/groupId&gt;
+    &lt;artifactId&gt;micrometer-tracing-bridge-otel&lt;/artifactId&gt;
+  &lt;/dependency&gt;
+
+  &lt;!--
+    OTLP exporter：把 trace 发给 OpenTelemetry Collector。
+    如果只想本地 Prometheus scrape metrics，也仍然可以只让 traces 走 OTLP。
+  --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;io.opentelemetry&lt;/groupId&gt;
+    &lt;artifactId&gt;opentelemetry-exporter-otlp&lt;/artifactId&gt;
+  &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+      </div>
+
+      <div class="codebox">
+        <div class="codebar"><span>application.properties：发到 Collector</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 应用名会进入 service.name，是排查问题时最常用的过滤字段。
+spring.application.name=ai-study-java-agent
+
+# 本地学习可以设为 1.0，表示 100% 采样。
+# 生产环境要结合 QPS、成本、链路价值调低，例如 0.05 或按规则采样。
+management.tracing.sampling.probability=1.0
+
+# Spring Boot 侧通过 OTLP/HTTP 把 traces 发给 Collector。
+# 4318/v1/traces 是 OTLP/HTTP traces 的常见路径。
+management.opentelemetry.tracing.export.otlp.endpoint=http://localhost:4318/v1/traces
+
+# metrics 可以按团队习惯走 Prometheus scrape 或 OTLP export。
+# prometheus 端点常用于 Grafana/Prometheus 体系。
+management.endpoints.web.exposure.include=health,info,metrics,prometheus</code></pre>
+      </div>
+
+      <h3>6.2 Java Agent 零侵入启动</h3>
+      <div class="codebox">
+        <div class="codebar"><span>OpenTelemetry Java Agent</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># 零侵入方式：不改代码，通过 -javaagent 做字节码增强。
+# 适合先把 HTTP、JDBC、Redis、Kafka 等常见调用链路采起来。
+
+# service.name 是后端 UI 里聚合服务的主键，务必稳定。
+export OTEL_SERVICE_NAME=ai-study-java-agent
+
+# Java Agent 默认可用 OTLP/gRPC；这里指向本地 Collector。
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+
+# traces / metrics 都走 OTLP；logs 是否接入按团队日志方案决定。
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_METRICS_EXPORTER=otlp
+
+# 给不同环境打标签，后端可按 dev/staging/prod 过滤。
+export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev,service.version=demo-v1
+
+java -javaagent:/opt/opentelemetry-javaagent.jar -jar app.jar</code></pre>
+      </div>
+
+      <h3>6.3 Java 手动 span：补齐 RAG / Agent 语义步骤</h3>
+      <div class="codebox">
+        <div class="codebar"><span>AssistantService.java：业务步骤手动埋点</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code>import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
+
+import java.util.List;
+
+public class AssistantService {
+
+    // tracer name 建议用稳定模块名，方便在后端过滤。
+    // 如果应用通过 OTel Java Agent 启动，GlobalOpenTelemetry 会拿到 agent 初始化的实例。
+    private static final Tracer tracer =
+            GlobalOpenTelemetry.getTracer("ai-study.java.assistant");
+
+    public String answer(String question) {
+        Span span = tracer.spanBuilder("assistant.answer").startSpan();
+
+        // makeCurrent() 会把当前 span 放进上下文；
+        // retrieveContext / callModel 里创建的 span 会自动成为它的子 span。
+        try (Scope scope = span.makeCurrent()) {
+            span.setAttribute("app.feature", "observability-demo");
+            span.setAttribute("app.question.length", question.length());
+
+            List&lt;String&gt; context = retrieveContext(question);
+            return callModel(question, context);
+        } catch (Exception e) {
+            // 记录异常，后端 UI 里才能看到错误栈和失败位置。
+            span.recordException(e);
+            span.setAttribute("error.type", e.getClass().getSimpleName());
+            throw e;
+        } finally {
+            // span 必须 end，否则后端会看到未完成或丢失的链路。
+            span.end();
+        }
+    }
+
+    private List&lt;String&gt; retrieveContext(String question) {
+        Span span = tracer.spanBuilder("rag.retrieve").startSpan();
+        try (Scope scope = span.makeCurrent()) {
+            span.setAttribute("rag.top_k", 3);
+            span.setAttribute("db.system", "mock-vector-store");
+
+            List&lt;String&gt; docs = List.of(
+                    "OpenTelemetry is a telemetry standard.",
+                    "LangSmith focuses on LLM debugging and evaluation."
+            );
+            span.setAttribute("rag.documents.count", docs.size());
+            return docs;
+        } finally {
+            span.end();
+        }
+    }
+
+    private String callModel(String question, List&lt;String&gt; context) {
+        Span span = tracer.spanBuilder("llm.call").startSpan();
+        try (Scope scope = span.makeCurrent()) {
+            span.setAttribute("gen_ai.operation.name", "chat");
+            span.setAttribute("gen_ai.system", "demo");
+            span.setAttribute("gen_ai.request.model", "demo-model");
+            span.setAttribute("gen_ai.usage.prompt_tokens", 42);
+            span.setAttribute("gen_ai.usage.completion_tokens", 16);
+
+            // 真实项目里这里替换成 Spring AI ChatClient 或 LangChain4j ChatModel。
+            return "mock answer for: " + question + "; context_count=" + context.size();
+        } finally {
+            span.end();
+        }
+    }
+}</code></pre>
+      </div>
+
+      <h3>6.4 Spring AI Alibaba：通义/百炼 + Agent Framework</h3>
+      <p>如果你的 Java 应用主要用阿里云通义模型、百炼平台，或者希望在 Java 里做 agent/workflow/multi-agent，Spring AI Alibaba 是比“裸 Spring AI + 自己拼组件”更贴近国内阿里生态的选择。官方 README 也把 Admin 定位成支持可视化 Agent 开发、observability、evaluation、MCP 管理的一站式平台。</p>
+
+      <div class="codebox">
+        <div class="codebar"><span>pom.xml：Spring AI Alibaba 依赖示例</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code>&lt;properties&gt;
+  &lt;!--
+    版本请以官方 release / Maven Central 为准。
+    建议在公司 BOM 里统一锁定 Spring Boot、Spring AI、Spring AI Alibaba 版本，
+    避免 Spring AI 与 Alibaba 扩展之间出现二方依赖不兼容。
+  --&gt;
+  &lt;spring-ai-alibaba.version&gt;1.1.2.1&lt;/spring-ai-alibaba.version&gt;
+&lt;/properties&gt;
+
+&lt;dependencies&gt;
+  &lt;!--
+    DashScope starter：自动装配通义/百炼相关 ChatModel、ChatClient 等 Bean。
+    如果你用 OpenAI / DeepSeek / 其他 provider，可以按官方文档换对应 starter。
+  --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;com.alibaba.cloud.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-alibaba-starter-dashscope&lt;/artifactId&gt;
+    &lt;version&gt;${spring-ai-alibaba.version}&lt;/version&gt;
+  &lt;/dependency&gt;
+
+  &lt;!--
+    Agent Framework：用于构建 ReactAgent、多 Agent、Sequential / Parallel / Routing / Loop 等流程。
+    如果你只是普通 Chat/RAG 应用，可以先不引入这层。
+  --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;com.alibaba.cloud.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-alibaba-agent-framework&lt;/artifactId&gt;
+    &lt;version&gt;${spring-ai-alibaba.version}&lt;/version&gt;
+  &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+      </div>
+
+      <div class="codebox">
+        <div class="codebar"><span>application.yml：DashScope / 通义模型配置</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code>spring:
+  application:
+    name: ai-study-spring-ai-alibaba
+
+  ai:
+    dashscope:
+      # 不要把真实 key 写进配置文件；从环境变量注入。
+      # 官方 quickstart 使用 AI_DASHSCOPE_API_KEY。
+      api-key: ${AI_DASHSCOPE_API_KEY}
+      chat:
+        options:
+          # 模型名按百炼/DashScope 控制台和当前套餐选择。
+          model: qwen-plus
+          temperature: 0.2
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces</code></pre>
+      </div>
+
+      <div class="codebox">
+        <div class="codebar"><span>ChatController.java：最小聊天接口 + 可观测边界</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code>import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/ai")
+public class ChatController {
+
+    private final ChatClient chatClient;
+    private final Tracer tracer =
+            GlobalOpenTelemetry.getTracer("ai-study.spring-ai-alibaba");
+
+    public ChatController(ChatClient.Builder builder) {
+        // defaultSystem 可以放稳定的业务角色说明。
+        // 不建议把易变 prompt 全散落在各处，后续评估和回滚会很痛。
+        this.chatClient = builder
+                .defaultSystem("You are a concise assistant for observability learning.")
+                .build();
+    }
+
+    @GetMapping("/chat")
+    public String chat(@RequestParam String input) {
+        Span span = tracer.spanBuilder("spring-ai-alibaba.chat").startSpan();
+
+        try (Scope scope = span.makeCurrent()) {
+            span.setAttribute("app.framework", "spring-ai-alibaba");
+            span.setAttribute("gen_ai.system", "dashscope");
+            span.setAttribute("gen_ai.request.model", "qwen-plus");
+            span.setAttribute("app.input.length", input.length());
+
+            // ChatClient 内部是否自动生成模型 span，取决于 Spring AI / 观测配置版本。
+            // 这里外层手动 span 的价值是稳定表达“业务调用边界”。
+            return chatClient.prompt()
+                    .user(input)
+                    .call()
+                    .content();
+        } catch (Exception e) {
+            span.recordException(e);
+            span.setAttribute("error.type", e.getClass().getSimpleName());
+            throw e;
+        } finally {
+            span.end();
+        }
+    }
+}</code></pre>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>问题</th><th>Spring AI Alibaba 的位置</th><th>怎么接可观测/评估</th></tr></thead>
+          <tbody>
+            <tr><td>我要接通义/百炼/DashScope</td><td>用 starter 快速获得模型适配和 Spring Boot 自动装配</td><td>Spring Observability + OTel Java Agent + Collector</td></tr>
+            <tr><td>我要做 Java Agent / 多 Agent / Workflow</td><td>用 Agent Framework；复杂状态流用 Graph</td><td>关键 agent node、tool、RAG 步骤补手动 span</td></tr>
+            <tr><td>我要本地调试 Agent</td><td>看 Spring AI Alibaba Admin / Studio 这类可视化工具</td><td>本地 trace 先接 debug / Jaeger，再接 Langfuse/Opik/LangSmith</td></tr>
+            <tr><td>我要线上评估</td><td>Admin 有 evaluation 方向，但企业闭环仍建议接专用评估平台或自建 dataset job</td><td>trace 进平台，失败样本沉淀成 dataset，CI/定时任务跑回归</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout rust">
+        <strong>选型口径</strong>
+        Spring AI Alibaba 不是 OpenTelemetry 或 LangSmith 的替代品。它解决“Java 应用如何接阿里模型、工具、MCP、Agent/Graph 编排”；可观测仍建议走 Micrometer + OTel + Collector，评估闭环再按自托管/商业需求接 Langfuse、Opik、LangSmith、Braintrust 或 Admin 能力。
+      </div>
+
+      <h3>6.5 Java 选型矩阵</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>场景</th><th>建议组合</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>标准 Spring Boot 后端</td><td>Actuator + Micrometer + OTel Java Agent + Collector</td><td>最贴合 Java/Spring 生产运维习惯，迁移风险低。</td></tr>
+            <tr><td>Spring AI 应用</td><td>Spring AI Observability + Micrometer + OTel 后端</td><td>能自然覆盖 ChatModel、EmbeddingModel、VectorStore 等核心组件。</td></tr>
+            <tr><td>Spring AI Alibaba 应用</td><td>Spring AI Alibaba + Micrometer/OTel + Collector + 可选 Admin</td><td>适合通义/百炼、MCP、Agent Framework、Graph、多 Agent 和阿里生态集成。</td></tr>
+            <tr><td>LangChain4j 应用</td><td>Micrometer metrics listener + 手动 OTel spans + Collector</td><td>指标可直接接 Java 生态，复杂 agent 语义用手动 span 补齐。</td></tr>
+            <tr><td>需要自托管 LLM 平台</td><td>OTLP → Langfuse / Phoenix / Opik</td><td>平台可换，数据不必绑定单一 SaaS。</td></tr>
+            <tr><td>需要强评估闭环</td><td>OTLP/SDK → Braintrust / LangSmith / Opik</td><td>重点是 dataset、evaluator、experiment、线上评分和告警。</td></tr>
+            <tr><td>阿里云或国内云原生体系</td><td>LoongSuite Java Agent + LoongCollector + OTel 后端</td><td>LoongSuite Java Agent 基于 OTel Java Agent，并增强阿里扩展和部分 AI agent 支持。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout amber">
+        <strong>实践建议</strong>
+        评估层不一定要纯 Java。常见做法是 Java 应用负责生产请求和 trace，上层用平台、Python job、CI 任务或 REST API 跑 eval。这样比强行寻找“纯 Java eval 框架”更现实，也更容易和数据科学工作流协作。
+      </div>
+    </section>
+
+    <section id="combo">
+      <h2><span class="n">7</span>怎么组合使用：从本地 demo 到生产</h2>
+      <div class="two-col">
+        <div class="recipe">
+          <h3>路线 A：只想学 tracing</h3>
+          <p>用 OpenTelemetry console exporter 或 Jaeger。成本最低，适合理解 span、trace、attribute、context propagation。</p>
+          <span class="badge blue">OpenTelemetry</span><span class="badge teal">Jaeger</span>
+        </div>
+        <div class="recipe">
+          <h3>路线 B：只想调 LLM 应用</h3>
+          <p>直接接 LangSmith SDK。最快看到 prompt、LLM call、retriever、tool call、agent run tree。</p>
+          <span class="badge violet">LangSmith</span><span class="badge teal">LLM App</span>
+        </div>
+        <div class="recipe">
+          <h3>路线 C：已有统一观测体系</h3>
+          <p>应用统一发 OTLP 到 Collector，再由 Collector 分发到系统 APM 和 LangSmith。</p>
+          <span class="badge blue">OTLP</span><span class="badge amber">Collector</span><span class="badge violet">LangSmith</span>
+        </div>
+        <div class="recipe">
+          <h3>路线 D：想低侵入采 Agent</h3>
+          <p>用 LoongSuite 做自动 instrumentation，OTLP 发 Collector，再按场景送 Jaeger、LangSmith 或阿里云可观测。</p>
+          <span class="badge amber">LoongSuite</span><span class="badge blue">OpenTelemetry</span>
+        </div>
+      </div>
+
+      <h3>7.1 Collector fan-out：同时发 LangSmith 和其他后端</h3>
+      <div class="codebox">
+        <div class="codebar"><span>otel-collector-fanout.yaml</span><button class="copy-btn" type="button">Copy</button></div>
+<pre><code># otel-collector-fanout.yaml
+# 目标：应用只发一次 OTLP 到 Collector，
+# Collector 再把同一份 trace 分发到多个后端。
+# 好处：应用不用关心每个后端的 endpoint、header、重试、采样和脱敏。
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+  # 生产建议在 Collector 层做脱敏/裁剪：
+  # - 删除完整 prompt / completion
+  # - 保留 prompt_hash / template_id / token / latency / status
+  # 这里仅示意，不同 Collector 发行版支持的 processor 会不同。
+  # attributes/redact:
+  #   actions:
+  #     - key: gen_ai.prompt.0.content
+  #       action: delete
+  #     - key: gen_ai.completion.0.content
+  #       action: delete
+
+exporters:
+  # 分支 1：发给 LangSmith，看 LLM / Agent 语义链路。
+  otlphttp/langsmith:
+    endpoint: https://api.smith.langchain.com/otel/v1/traces
+    headers:
+      x-api-key: ${env:LANGSMITH_API_KEY}
+      Langsmith-Project: ai-study-observability-prod
+
+  # 分支 2：本地打印，PoC 时保留；生产环境通常删除。
+  debug:
+    verbosity: normal
+
+  # 分支 3：示例占位。实际可换成 Tempo / Jaeger / Datadog / Elastic。
+  # otlphttp/tempo:
+  #   endpoint: http://tempo:4318
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/langsmith, debug]</code></pre>
+      </div>
+
+      <h3>7.2 推荐的学习顺序</h3>
+      <div class="checklist" id="learningChecklist">
+        <div class="check"><input id="c1" type="checkbox"><label for="c1"><b>第一天：OTel console</b><span>跑通 Flask demo，看到父子 span。</span></label></div>
+        <div class="check"><input id="c2" type="checkbox"><label for="c2"><b>第二天：Collector</b><span>把 exporter 从 console 切成 OTLP。</span></label></div>
+        <div class="check"><input id="c3" type="checkbox"><label for="c3"><b>第三天：LangSmith tracing</b><span>用 <code>@traceable</code> 看 RAG/LLM run tree。</span></label></div>
+        <div class="check"><input id="c4" type="checkbox"><label for="c4"><b>第四天：LangSmith eval</b><span>创建 dataset，跑一个最小 experiment。</span></label></div>
+        <div class="check"><input id="c5" type="checkbox"><label for="c5"><b>第五天：LoongSuite</b><span>用 <code>loongsuite-instrument</code> 低侵入采集 demo。</span></label></div>
+        <div class="check"><input id="c6" type="checkbox"><label for="c6"><b>第六天：组合架构</b><span>Collector fan-out 到 LangSmith 和系统后端。</span></label></div>
+      </div>
+    </section>
+
+    <section id="decision">
+      <h2><span class="n">8</span>决策面板：按你的场景选组合</h2>
+      <div class="decision">
+        <div class="panel">
+          <h3>选择你的约束</h3>
+            <div class="checklist" id="decisionChecks">
+              <div class="check"><input id="d-apm" type="checkbox" value="apm"><label for="d-apm"><b>公司已有 APM/监控后端</b><span>需要统一接入现有 Jaeger/Tempo/Datadog/Prometheus。</span></label></div>
+              <div class="check"><input id="d-java" type="checkbox" value="java"><label for="d-java"><b>Java / Spring 生态</b><span>需要贴合 Spring Boot、Spring AI、LangChain4j、Micrometer。</span></label></div>
+              <div class="check"><input id="d-llm" type="checkbox" value="llm"><label for="d-llm"><b>核心问题是 LLM 调试</b><span>需要看 prompt、上下文、模型输出、工具调用。</span></label></div>
+              <div class="check"><input id="d-eval" type="checkbox" value="eval"><label for="d-eval"><b>需要评测和实验对比</b><span>要 dataset、evaluator、experiment、人工反馈。</span></label></div>
+              <div class="check"><input id="d-lowcode" type="checkbox" value="lowcode"><label for="d-lowcode"><b>希望低侵入/自动采集</b><span>尽量少改业务代码，先把数据采起来。</span></label></div>
+            <div class="check"><input id="d-ali" type="checkbox" value="ali"><label for="d-ali"><b>在阿里/国内云原生生态</b><span>偏好 LoongCollector、阿里云可观测或相关生态。</span></label></div>
+            <div class="check"><input id="d-prod" type="checkbox" value="prod"><label for="d-prod"><b>准备进生产</b><span>关注采样、脱敏、成本、权限、数据留存。</span></label></div>
+          </div>
+          <p><button class="small-btn" id="copyDecision" type="button">复制选择为 JSON</button></p>
+        </div>
+        <div class="result" id="decisionResult">
+          <h3>推荐结果</h3>
+          <p>勾选左侧条件后，这里会生成推荐组合。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pitfalls">
+      <h2><span class="n">9</span>常见坑和生产提醒</h2>
+      <div class="two-col">
+        <div class="panel">
+          <h3>OpenTelemetry</h3>
+          <ul>
+            <li><b>只采 HTTP 边界不够</b>：LLM/RAG/Agent 内部步骤需要手动 span 或专用 instrumentation。</li>
+            <li><b>attribute 命名要稳定</b>：生产里不要随意生成高基数字段，比如把完整用户输入当 label。</li>
+            <li><b>Collector 是分界点</b>：采样、脱敏、路由、batch、重试最好在 Collector 层统一治理。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>LangSmith</h3>
+          <ul>
+            <li><b>注意敏感信息</b>：prompt、context、completion 可能包含用户数据，生产前要确认脱敏策略。</li>
+            <li><b>评测别只靠 LLM judge</b>：能用规则、精确匹配、业务指标时，优先补上确定性 evaluator。</li>
+            <li><b>项目隔离要清楚</b>：用 <code>LANGSMITH_PROJECT</code> 或 OTLP header 区分环境和应用。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>LoongSuite</h3>
+          <ul>
+            <li><b>固定版本</b>：LoongSuite 和 OTel 依赖关系要锁定，避免解析出不兼容版本。</li>
+            <li><b>先 auto-detect</b>：轻量环境可先让 bootstrap 只装当前项目需要的 instrumentation。</li>
+            <li><b>site-bootstrap 谨慎用</b>：它会影响启用环境里的 Python 进程，生产前要评估边界。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>组合架构</h3>
+          <ul>
+            <li><b>先画数据流</b>：应用 -> Agent/SDK -> Collector -> 后端，任何一步都要能本地验证。</li>
+            <li><b>先 trace 后 metric</b>：LLM 应用早期最需要解释链路，metrics 可以在核心路径稳定后补齐。</li>
+            <li><b>不要双重上报</b>：LangSmith SDK 和 OTel exporter 同时开时，要确认不会重复计费或重复 trace。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="glossary">
+      <h2><span class="n">10</span>术语卡：定义 + 举一反三 + 类比</h2>
+      <details open>
+        <summary>Trace / Span</summary>
+        <div class="body">
+          <p><b>定义：</b>Trace 是一次请求的完整链路，Span 是链路里的一个步骤。</p>
+          <p><b>举一反三：</b>一次 AI 问答 trace 里可能有 HTTP request span、retriever span、LLM span、tool span、database span。</p>
+          <p><b>类比：</b>Trace 像一张外卖订单全流程小票；Span 是“接单、备餐、骑手取餐、送达”这些独立环节。</p>
+        </div>
+      </details>
+      <details>
+        <summary>OTLP</summary>
+        <div class="body">
+          <p><b>定义：</b>OpenTelemetry Protocol，遥测数据在应用、Collector 和后端之间传输的标准协议。</p>
+          <p><b>举一反三：</b>LangSmith、Jaeger、Grafana Tempo、很多商业 APM 都可以接收或间接接收 OTLP。</p>
+          <p><b>类比：</b>像统一快递面单格式。不同快递站都能读懂，包裹就能被转运。</p>
+        </div>
+      </details>
+      <details>
+        <summary>Instrumentation</summary>
+        <div class="body">
+          <p><b>定义：</b>把观测逻辑接入应用的过程，可以手写，也可以由框架自动完成。</p>
+          <p><b>举一反三：</b>Flask instrumentation 自动记录 HTTP 请求；LangSmith <code>@traceable</code> 手动标记业务函数；LoongSuite instrumentation 针对 Agent 框架自动补充 GenAI span。</p>
+          <p><b>类比：</b>像在工厂流水线上装传感器，有些位置标准化可以自动装，有些关键工位要你自己指定。</p>
+        </div>
+      </details>
+      <details>
+        <summary>Evaluation / Experiment</summary>
+        <div class="body">
+          <p><b>定义：</b>Evaluation 是对 LLM 应用输出的量化评估；Experiment 是一次评测运行及其结果记录。</p>
+          <p><b>举一反三：</b>换 prompt、换模型、换 RAG top-k 后，都应该用同一批 dataset 跑 experiment 比较。</p>
+          <p><b>类比：</b>像考试和成绩单。Dataset 是题库，target 是答题学生，evaluator 是阅卷规则，experiment 是这次考试成绩。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="sources">
+      <h2><span class="n">11</span>资料来源</h2>
+      <ul class="sources">
+        <li><a href="https://opentelemetry.io/docs/what-is-opentelemetry/" target="_blank" rel="noreferrer">OpenTelemetry: What is OpenTelemetry?</a></li>
+        <li><a href="https://opentelemetry.io/docs/languages/python/getting-started/" target="_blank" rel="noreferrer">OpenTelemetry Python Getting Started</a></li>
+        <li><a href="https://opentelemetry.io/docs/languages/python/exporters/" target="_blank" rel="noreferrer">OpenTelemetry Python Exporters</a></li>
+        <li><a href="https://docs.langchain.com/langsmith/observability-quickstart" target="_blank" rel="noreferrer">LangSmith Tracing Quickstart</a></li>
+        <li><a href="https://docs.langchain.com/langsmith/trace-with-opentelemetry" target="_blank" rel="noreferrer">LangSmith Trace with OpenTelemetry</a></li>
+        <li><a href="https://docs.langchain.com/langsmith/evaluation-quickstart" target="_blank" rel="noreferrer">LangSmith Evaluation Quickstart</a></li>
+        <li><a href="https://docs.langchain.com/langsmith/observability-concepts" target="_blank" rel="noreferrer">LangSmith Observability Concepts</a></li>
+        <li><a href="https://docs.langchain.com/langsmith/evaluation-concepts" target="_blank" rel="noreferrer">LangSmith Evaluation Concepts</a></li>
+        <li><a href="https://github.com/alibaba/loongsuite-python-agent" target="_blank" rel="noreferrer">alibaba/loongsuite-python-agent</a></li>
+        <li><a href="https://github.com/alibaba/loongsuite-java-agent" target="_blank" rel="noreferrer">alibaba/loongsuite-java-agent</a></li>
+        <li><a href="https://www.alibabacloud.com/blog/alibaba-cloud-open-sources-loongsuite-crafting-a-high-performance-low-cost-observable-data-collection-suite-for-the-ai-era_602489" target="_blank" rel="noreferrer">Alibaba Cloud: LoongSuite open-source announcement</a></li>
+        <li><a href="https://docs.spring.io/spring-ai/reference/observability/index.html" target="_blank" rel="noreferrer">Spring AI Observability</a></li>
+        <li><a href="https://sca.aliyun.com/en/docs/ai/overview/" target="_blank" rel="noreferrer">Spring AI Alibaba Overview</a></li>
+        <li><a href="https://sca.aliyun.com/en/docs/ai/get-started/" target="_blank" rel="noreferrer">Spring AI Alibaba Quick Start</a></li>
+        <li><a href="https://github.com/alibaba/spring-ai-alibaba" target="_blank" rel="noreferrer">alibaba/spring-ai-alibaba</a></li>
+        <li><a href="https://opentelemetry.io/docs/languages/java/instrumentation/" target="_blank" rel="noreferrer">OpenTelemetry Java Instrumentation</a></li>
+        <li><a href="https://docs.langchain4j.dev/tutorials/observability/" target="_blank" rel="noreferrer">LangChain4j Observability</a></li>
+        <li><a href="https://langfuse.com/integrations/native/opentelemetry" target="_blank" rel="noreferrer">Langfuse OpenTelemetry Integration</a></li>
+        <li><a href="https://arize.com/docs/phoenix" target="_blank" rel="noreferrer">Arize Phoenix Documentation</a></li>
+        <li><a href="https://www.braintrust.dev/learn/ai-observability/v0" target="_blank" rel="noreferrer">Braintrust AI Observability</a></li>
+        <li><a href="https://github.com/comet-ml/opik" target="_blank" rel="noreferrer">Comet Opik</a></li>
+        <li><a href="https://docs.helicone.ai/quick-start" target="_blank" rel="noreferrer">Helicone Quick Start</a></li>
+      </ul>
+      <p class="footer-note">说明：代码示例为学习用最小示例，生产环境请补充采样、脱敏、错误处理、版本锁定、权限隔离和数据留存策略。</p>
+    </section>
+  </main>
+</div>
+
+<script>
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+  function copyText(text, btn) {
+    const done = () => {
+      if (!btn) return;
+      const old = btn.textContent;
+      btn.textContent = "Copied";
+      setTimeout(() => { btn.textContent = old; }, 1100);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+    done();
+  }
+
+  $$(".copy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const code = btn.closest(".codebox").querySelector("pre").innerText.trim();
+      copyText(code, btn);
+    });
+  });
+
+  $$(".tabs").forEach((tabs) => {
+    tabs.addEventListener("click", (event) => {
+      const btn = event.target.closest(".tab-btn");
+      if (!btn) return;
+      const target = btn.dataset.tab;
+      $$(".tab-btn", tabs).forEach((item) => item.classList.toggle("active", item === btn));
+      const groupPanels = $$(".tab-panel").filter((panel) => panel.id.startsWith(target.split("-")[0]));
+      groupPanels.forEach((panel) => panel.classList.toggle("active", panel.id === target));
+    });
+  });
+
+  const checklist = $("#learningChecklist");
+  if (checklist) {
+    $$("input[type='checkbox']", checklist).forEach((input) => {
+      const key = "ai-study-observability-" + input.id;
+      input.checked = localStorage.getItem(key) === "true";
+      input.addEventListener("change", () => localStorage.setItem(key, input.checked));
+    });
+  }
+
+  function decisionState() {
+    return $$("input[type='checkbox']", $("#decisionChecks"))
+      .filter((input) => input.checked)
+      .map((input) => input.value);
+  }
+
+  function renderDecision() {
+    const values = decisionState();
+    const has = (v) => values.includes(v);
+    let title = "推荐：";
+    let items = [];
+    let summary = "";
+
+    if (has("llm") || has("eval")) {
+      title += "LangSmith 作为 LLM 工作台";
+      items.push("用 LangSmith SDK 或 OTel endpoint 记录 prompt、context、LLM call、tool call。");
+      if (has("eval")) items.push("用 LangSmith dataset + evaluator 建立回归评测。");
+    } else {
+      title += "OpenTelemetry 作为主线";
+      items.push("先用 OTel console/Collector 跑通链路，再接现有观测后端。");
+    }
+
+    if (has("apm") || has("prod")) {
+      items.push("应用统一发 OTLP 到 OpenTelemetry Collector，由 Collector 做采样、batch、脱敏和 fan-out。");
+    }
+    if (has("java")) {
+      if (has("ali")) {
+        items.push("Java + 阿里生态优先评估 Spring AI Alibaba：用它接通义/百炼、DashScope、Agent Framework、Graph、MCP；可观测仍走 Micrometer + OTel + Collector。");
+      } else {
+        items.push("Java 侧优先用 Spring/Micrometer + OpenTelemetry Java Agent；Spring AI / Spring AI Alibaba / LangChain4j 的 LLM 语义步骤再补手动 span 或平台集成。");
+      }
+    }
+    if (has("lowcode") || has("ali")) {
+      items.push("评估 LoongSuite 的 loongsuite-instrument / loongsuite-bootstrap，优先用固定版本做 PoC。");
+    }
+    if (has("prod")) {
+      items.push("生产前补充：敏感字段脱敏、trace 采样、成本预算、项目/环境隔离、数据留存策略。");
+    }
+    if (values.length === 0) {
+      summary = "先按学习路线跑：OpenTelemetry console -> Collector -> LangSmith tracing -> LangSmith eval -> LoongSuite instrumentation。";
+      items = ["这是最稳的学习顺序，因为每一步都能独立验证。"];
+    } else {
+      summary = "当前选择：" + values.join(", ");
+    }
+
+    $("#decisionResult").innerHTML = `
+      <h3>${title}</h3>
+      <p>${summary}</p>
+      <ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>
+      <p><code>${buildStack(values).join(" -> ")}</code></p>
+    `;
+  }
+
+  function buildStack(values) {
+    const has = (v) => values.includes(v);
+    const stack = [];
+    if (has("java") && has("ali")) stack.push("Spring AI Alibaba");
+    if (has("java") && (has("lowcode") || has("ali"))) stack.push("LoongSuite Java Agent");
+    else if (has("java")) stack.push("Spring/Micrometer + OTel Java Agent");
+    else if (has("lowcode") || has("ali")) stack.push("LoongSuite Agent");
+    else stack.push("OpenTelemetry SDK/Instrumentation");
+    if (has("apm") || has("prod")) stack.push("OpenTelemetry Collector");
+    if (has("llm") || has("eval")) stack.push("LangSmith");
+    else stack.push("Jaeger/Tempo/APM");
+    if (has("eval")) stack.push("Datasets + Evaluators");
+    return stack;
+  }
+
+  const decisionChecks = $("#decisionChecks");
+  if (decisionChecks) {
+    $$("input[type='checkbox']", decisionChecks).forEach((input) => {
+      input.addEventListener("change", renderDecision);
+    });
+    renderDecision();
+  }
+
+  $("#copyDecision")?.addEventListener("click", (event) => {
+    const values = decisionState();
+    const payload = {
+      topic: "OpenTelemetry vs LangSmith vs LoongSuite vs Spring AI Alibaba adoption choice",
+      selected_constraints: values,
+      recommended_stack: buildStack(values),
+      next_prompt: "基于这些约束，帮我设计一个从本地 demo 到生产的 LLM observability 接入方案；如果是 Java/Spring/阿里生态，请包含 Spring AI Alibaba、Micrometer、OpenTelemetry Java Agent、Collector 和 eval 平台选择。"
+    };
+    copyText(JSON.stringify(payload, null, 2), event.currentTarget);
+  });
+
+  $("#copyPromptTop")?.addEventListener("click", (event) => {
+    const prompt = [
+      "我正在学习 OpenTelemetry、LangSmith、LoongSuite、Spring AI Alibaba。",
+      "请按我的场景给出接入方案：",
+      "- 应用类型：Python 或 Java/Spring/Spring AI Alibaba LLM/RAG/Agent",
+      "- 目标：tracing、调试、评测、生产监控",
+      "- 约束：已有监控后端/是否需要低侵入/是否要用 LangSmith eval/是否要自托管",
+      "请输出：架构图、依赖安装、最小代码、Collector 配置、Spring AI Alibaba 是否适合、Java 生态选型、上线检查清单。"
+    ].join("\\n");
+    copyText(prompt, event.currentTarget);
+  });
+</script>
+</body>
+</html>

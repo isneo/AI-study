@@ -20,6 +20,7 @@
 
 ## 本周可交付物
 
+- `近期议题调研总览`：[recent-agenda-research.html](recent-agenda-research.html)
 - `AI Native 风控 Agent 5 分钟讲述稿`
 - `Agent 落地选型矩阵`
 - `Memory in Risk Control 一页纸`
