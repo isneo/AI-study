@@ -3,16 +3,18 @@
 ## 推荐学习路径
 
 1. 读 [历史综合整理](01-discussions/history-synthesis.md)，先建立 2026-03 至 2026-05 的讨论主线。
-2. 看 [近期代办](01-discussions/near-term-todos.md)，确认下一步优先推进什么。
-3. 打开 [资料目录](resource-catalog.md)，按主题选择 HTML / Markdown / PDF 原始资料。
-4. 优先看 HTML 资料，适合在线快速浏览；再用 PDF 补充体系化海报和手册。
-5. 如果目标是面试或项目复盘，重点看 AI Native 风控、项目叙事、问题深挖、面试训练相关资料。
+2. 看 [双周资料索引](01-discussions/biweekly-index.md)，按最近两周的资料分区和主题路径复习。
+3. 看 [近期代办](01-discussions/near-term-todos.md)，确认下一步优先推进什么。
+4. 打开 [资料目录](resource-catalog.md)，按主题选择 HTML / Markdown / PDF 原始资料。
+5. 优先看 HTML 资料，适合在线快速浏览；再用 PDF 补充体系化海报和手册。
+6. 如果目标是面试或项目复盘，重点看 AI Native 风控、项目叙事、问题深挖、面试训练相关资料。
 
 ## 分类
 
 | 分类 | 目录 | 内容 |
 |---|---|---|
 | 综合整理 | `01-discussions/` | 历史主线、会议纪要、主题索引、待办 |
+| 双周索引 | `01-discussions/biweekly-index.md` | 按周/双周分区整理近期重点资料、主题分类和阅读路径 |
 | HTML 资料 | `assets/html/` | 可直接在线打开的交互式或长文资料 |
 | Markdown 资料 | `assets/markdown/` | 可继续编辑的协作框架、CLAUDE 配置、模式总结 |
 | PDF 资料 | `assets/pdf/` | 海报集、手册、风控方案、访谈整理 |
